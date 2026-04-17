@@ -588,6 +588,10 @@ tbody tr:hover { background: var(--bg); }
       <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
       Status
     </div>
+    <div class="nav-item" data-page="users" onclick="goTo('users')">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Usuários
+    </div>
   </div>
   <div class="sidebar-footer">SEA Agência · v2.0</div>
 </div>
@@ -708,6 +712,22 @@ tbody tr:hover { background: var(--bg); }
       <table>
         <thead><tr><th>Nome</th><th>Cor</th><th>Demandas</th><th></th></tr></thead>
         <tbody id="statusesTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── USUÁRIOS ── -->
+  <div class="page" id="page-users">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Usuários</div>
+        <div class="page-sub">Gerencie os acessos ao sistema</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th><th></th></tr></thead>
+        <tbody id="usersTable"></tbody>
       </table>
     </div>
   </div>
@@ -907,7 +927,7 @@ function goTo(page) {
   document.querySelectorAll('.nav-item').forEach(n => {
     n.classList.toggle('active', n.dataset.page === page);
   });
-  const titles = { dashboard:'Dashboard', demands:'Demandas', clients:'Clientes', statuses:'Status' };
+  const titles = { dashboard:'Dashboard', demands:'Demandas', clients:'Clientes', statuses:'Status', users:'Usuários' };
   document.getElementById('headerTitle').textContent = titles[page];
   buildHeaderActions(page);
   closeSidebar();
@@ -916,6 +936,7 @@ function goTo(page) {
   if (page === 'demands')   renderDemands();
   if (page === 'clients')   renderClients();
   if (page === 'statuses')  renderStatuses();
+  if (page === 'users')     renderUsers();
 }
 
 function buildHeaderActions(page) {
@@ -924,6 +945,7 @@ function buildHeaderActions(page) {
     demands:  `<button class="btn btn-primary btn-sm" onclick="openDemandForm()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Nova demanda</button>`,
     clients:  `<button class="btn btn-primary btn-sm" onclick="openClientForm()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Novo cliente</button>`,
     statuses: `<button class="btn btn-primary btn-sm" onclick="openStatusForm()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Novo status</button>`,
+    users:    `<button class="btn btn-primary btn-sm" onclick="openUserForm()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Novo usuário</button>`,
     dashboard:`<button class="btn btn-ghost btn-sm" onclick="exportPDF()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M12 4v12m0 0l-4-4m4 4l4-4"/><path d="M4 20h16"/></svg> Exportar PDF</button>
                <button class="btn btn-primary btn-sm" onclick="openDemandForm()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Nova demanda</button>`,
   };
@@ -1118,15 +1140,68 @@ function previewStatus(sel) {
   if (badge) { badge.style.background = st.color+'22'; badge.style.color = st.color; badge.innerHTML = `<span class="dot" style="background:${st.color}"></span>${st.name}`; }
 }
 
-function saveFromDetail(id) {
+async function openDemandForm() {
+  const clientOpts = clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  const statusOpts = statuses.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('formTitle').textContent = 'Nova Demanda';
+  document.getElementById('formBody').innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Data</label>
+      <input class="form-input" type="date" id="fDDate" value="${today}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Cliente</label>
+      <select class="form-select" id="fDClient"><option value="">Selecione...</option>${clientOpts}</select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Status</label>
+      <select class="form-select" id="fDStatus">${statusOpts}</select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descrição</label>
+      <input class="form-input" type="text" id="fDDesc" placeholder="Ex: Post do feed">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Observação</label>
+      <input class="form-input" type="text" id="fDObs" placeholder="Opcional">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="createDemand()">Salvar</button>
+    </div>
+  `;
+  openModal('formModal');
+}
+
+async function createDemand() {
+  const date     = document.getElementById('fDDate').value;
+  const clientId = document.getElementById('fDClient').value;
+  const statusId = document.getElementById('fDStatus').value;
+  const desc     = document.getElementById('fDDesc').value.trim();
+  const obs      = document.getElementById('fDObs').value.trim();
+  if (!date || !clientId || !statusId || !desc) { toast('Preencha todos os campos.'); return; }
+  const res = await API.post('/demandas', { data: date, cliente_id: clientId, status_id: statusId, descricao: desc, observacao: obs });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  demands.push({ id: res.id, date: res.data, clientId: res.cliente_id, statusId: res.status_id, desc: res.descricao, obs: res.observacao });
+  save();
+  closeModal('formModal');
+  toast('Demanda criada!');
+  if (currentPage === 'demands') renderDemands();
+  if (currentPage === 'dashboard') renderDashboard();
+}
+
+async function saveFromDetail(id) {
   const date     = document.getElementById('dDate').value;
   const clientId = document.getElementById('dClient').value;
   const statusId = document.getElementById('dStatus').value;
   const desc     = document.getElementById('dDesc').value.trim();
   const obs      = document.getElementById('dObs').value.trim();
   if (!date || !clientId || !statusId || !desc) { toast('Preencha todos os campos.'); return; }
+  const res = await API.put('/demandas/' + id, { data: date, cliente_id: clientId, status_id: statusId, descricao: desc, observacao: obs });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
   const i = demands.findIndex(d => d.id === id);
-  demands[i] = { ...demands[i], date, clientId, statusId, desc, obs };
+  demands[i] = { id, date, clientId, statusId, desc, obs };
   save();
   closeModal('detailModal');
   toast('Demanda atualizada!');
@@ -1134,8 +1209,10 @@ function saveFromDetail(id) {
   if (currentPage === 'dashboard') renderDashboard();
 }
 
-function deleteDemandFromDetail(id) {
+async function deleteDemandFromDetail(id) {
   if (!confirm('Excluir esta demanda?')) return;
+  const res = await API.del('/demandas/' + id);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
   demands = demands.filter(d => d.id !== id);
   save();
   closeModal('detailModal');
@@ -1262,14 +1339,19 @@ function openClientForm(editId) {
   openModal('formModal');
 }
 
-function saveClient(editId) {
+async function saveClient(editId) {
   const name = document.getElementById('fClientName').value.trim();
   if (!name) { toast('Informe o nome do cliente.'); return; }
+  let res;
   if (editId) {
+    res = await API.put('/clientes/' + editId, { nome: name });
+    if (res.erro) { toast('Erro: ' + res.erro); return; }
     const i = clients.findIndex(c => c.id === editId);
     clients[i].name = name;
   } else {
-    clients.push({ id: uid(), name });
+    res = await API.post('/clientes', { nome: name });
+    if (res.erro) { toast('Erro: ' + res.erro); return; }
+    clients.push({ id: res.id, name: res.nome });
   }
   save();
   closeModal('formModal');
@@ -1277,11 +1359,13 @@ function saveClient(editId) {
   renderClients();
 }
 
-function deleteClient(id) {
+async function deleteClient(id) {
   if (demands.some(d => d.clientId === id)) {
     toast('Remova as demandas deste cliente primeiro.'); return;
   }
   if (!confirm('Excluir este cliente?')) return;
+  const res = await API.del('/clientes/' + id);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
   clients = clients.filter(c => c.id !== id);
   save();
   toast('Cliente excluído.');
@@ -1346,14 +1430,19 @@ function pickColor(c) {
   });
 }
 
-function saveStatus(editId) {
+async function saveStatus(editId) {
   const name = document.getElementById('fStatusName').value.trim();
   if (!name) { toast('Informe o nome do status.'); return; }
+  let res;
   if (editId) {
+    res = await API.put('/status/' + editId, { nome: name, cor: pickedColor });
+    if (res.erro) { toast('Erro: ' + res.erro); return; }
     const i = statuses.findIndex(s => s.id === editId);
     statuses[i] = { ...statuses[i], name, color: pickedColor };
   } else {
-    statuses.push({ id: uid(), name, color: pickedColor });
+    res = await API.post('/status', { nome: name, cor: pickedColor });
+    if (res.erro) { toast('Erro: ' + res.erro); return; }
+    statuses.push({ id: res.id, name: res.nome, color: res.cor });
   }
   save();
   closeModal('formModal');
@@ -1361,15 +1450,95 @@ function saveStatus(editId) {
   renderStatuses();
 }
 
-function deleteStatus(id) {
+async function deleteStatus(id) {
   if (demands.some(d => d.statusId === id)) {
     toast('Remova as demandas com este status primeiro.'); return;
   }
   if (!confirm('Excluir este status?')) return;
+  const res = await API.del('/status/' + id);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
   statuses = statuses.filter(s => s.id !== id);
   save();
   toast('Status excluído.');
   renderStatuses();
+}
+
+// ═══════════════════════════════════════
+//  USUÁRIOS PAGE
+// ═══════════════════════════════════════
+let usuarios = [];
+
+async function renderUsers() {
+  const data = await API.get('/usuarios');
+  if (data.erro) { toast('Erro ao carregar usuários'); return; }
+  usuarios = data;
+  document.getElementById('usersTable').innerHTML = usuarios.map(u => `
+    <tr>
+      <td><strong>${u.nome}</strong></td>
+      <td>${u.email}</td>
+      <td><span style="padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;background:${u.papel==='admin'?'#18170F':'#E8E4DC'};color:${u.papel==='admin'?'#fff':'#18170F'}">${u.papel}</span></td>
+      <td><div class="row-actions">
+        <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">Excluir</button>
+      </div></td>
+    </tr>
+  `).join('');
+}
+
+function openUserForm() {
+  document.getElementById('formTitle').textContent = 'Novo Usuário';
+  document.getElementById('formBody').innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Nome</label>
+      <input class="form-input" type="text" id="fUserNome" placeholder="Nome completo">
+    </div>
+    <div class="form-group">
+      <label class="form-label">E-mail</label>
+      <input class="form-input" type="email" id="fUserEmail" placeholder="email@exemplo.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Senha</label>
+      <input class="form-input" type="password" id="fUserSenha" placeholder="Mínimo 6 caracteres">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Papel</label>
+      <select class="form-select" id="fUserPapel">
+        <option value="user">Usuário</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="createUser()">Salvar</button>
+    </div>
+  `;
+  openModal('formModal');
+}
+
+async function createUser() {
+  const nome  = document.getElementById('fUserNome').value.trim();
+  const email = document.getElementById('fUserEmail').value.trim();
+  const senha = document.getElementById('fUserSenha').value;
+  const papel = document.getElementById('fUserPapel').value;
+  if (!nome || !email || !senha) { toast('Preencha todos os campos.'); return; }
+  const res = await fetch('http://localhost:3000/api/auth/cadastro', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + API.token() },
+    body: JSON.stringify({ nome, email, senha, papel })
+  }).then(r => r.json());
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  closeModal('formModal');
+  toast('Usuário criado!');
+  renderUsers();
+}
+
+async function deleteUser(id) {
+  const usuario = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
+  if (usuario.id === id) { toast('Você não pode excluir seu próprio usuário.'); return; }
+  if (!confirm('Excluir este usuário?')) return;
+  const res = await API.del('/usuarios/' + id);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast('Usuário excluído.');
+  renderUsers();
 }
 
 // ═══════════════════════════════════════
