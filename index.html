@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEA — Controle de Demandas</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #F7F5F0;
+  --surface: #FFFFFF;
+  --surface2: #F0EDE6;
+  --border: #E8E4DC;
+  --text: #18170F;
+  --muted: #8C8878;
+  --accent: #18170F;
+  --sidebar-w: 240px;
+  --header-h: 58px;
+  --r: 14px;
+  --r-sm: 9px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.07);
+}
+
+body {
+  font-family: 'Instrument Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── SIDEBAR ─── */
+.sidebar {
+  position: fixed;
+  top: 0; left: 0;
+  width: var(--sidebar-w);
+  height: 100vh;
+  background: var(--text);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  z-index: 300;
+  transform: translateX(-100%);
+  transition: transform 0.28s cubic-bezier(.4,0,.2,1);
+}
+.sidebar.open { transform: translateX(0); }
+
+.sidebar-logo {
+  padding: 28px 24px 20px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: -0.4px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.sidebar-logo span { opacity: 0.4; font-weight: 600; }
+
+.sidebar-section {
+  padding: 18px 16px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0.35;
+}
+
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 4px 12px; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.65);
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 2px;
+}
+.nav-item svg { flex-shrink: 0; opacity: 0.7; }
+.nav-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.nav-item:hover svg { opacity: 1; }
+.nav-item.active { background: rgba(255,255,255,0.13); color: #fff; }
+.nav-item.active svg { opacity: 1; }
+
+.sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  font-size: 11px;
+  opacity: 0.3;
+}
+
+/* overlay */
+.sidebar-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 299;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+  backdrop-filter: blur(2px);
+}
+.sidebar-overlay.show { opacity: 1; pointer-events: all; }
+
+/* ─── HEADER ─── */
+header {
+  position: sticky; top: 0; z-index: 100;
+  height: var(--header-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+}
+
+.hamburger {
+  width: 36px; height: 36px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4.5px;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.hamburger:hover { background: var(--surface2); }
+.hamburger span {
+  display: block;
+  width: 16px; height: 1.5px;
+  background: var(--text);
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+
+.header-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  flex: 1;
+}
+
+.header-actions { display: flex; gap: 8px; margin-left: auto; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 100px;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--text); color: #fff; }
+.btn-primary:hover { opacity: 0.85; }
+.btn-ghost { background: none; border: 1.5px solid var(--border); color: var(--text); }
+.btn-ghost:hover { border-color: var(--text); }
+.btn-sm { padding: 6px 12px; font-size: 11px; }
+.btn-danger { background: #E74C3C22; color: #E74C3C; border: none; }
+.btn-danger:hover { background: #E74C3C33; }
+
+/* ─── MAIN ─── */
+main { padding: 28px 24px 60px; max-width: 1200px; margin: 0 auto; }
+
+/* ─── PAGE SYSTEM ─── */
+.page { display: none; }
+.page.active { display: block; animation: fadeUp 0.22s ease; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+/* ─── DASHBOARD ─── */
+.dash-week {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.week-label {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.week-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.week-nav button {
+  width: 30px; height: 30px;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.week-nav button:hover { border-color: var(--text); color: var(--text); }
+.week-nav .wk-txt { font-size: 12px; font-weight: 500; color: var(--muted); min-width: 100px; text-align: center; }
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px 18px;
+  transition: box-shadow 0.15s;
+}
+.stat-card:hover { box-shadow: var(--shadow); }
+.stat-card .num {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 28px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-card .lbl { font-size: 11px; color: var(--muted); font-weight: 500; }
+
+.filter-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 100px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--muted);
+  transition: all 0.15s;
+}
+.pill:hover { color: var(--text); border-color: var(--text); }
+.pill.active { background: var(--text); border-color: var(--text); color: #fff; }
+.pill .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.pill.active .dot { background: #fff !important; }
+.pill .cnt { font-size: 10px; opacity: 0.7; }
+
+.search-wrap { position: relative; margin-left: auto; }
+.search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+.search-input {
+  padding: 7px 10px 7px 30px;
+  border: 1.5px solid var(--border);
+  border-radius: 100px;
+  background: var(--surface);
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 12px;
+  color: var(--text);
+  outline: none;
+  width: 180px;
+  transition: border-color 0.15s;
+}
+.search-input:focus { border-color: var(--text); }
+
+/* clients grid */
+.clients-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));
+  gap: 14px;
+}
+
+.client-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+.client-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.card-name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+.card-dots { display: flex; gap: 4px; }
+.card-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+.card-body { padding: 8px 14px 12px; display: flex; flex-direction: column; gap: 3px; }
+
+.demand-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 8px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.demand-row:hover { background: var(--bg); }
+.demand-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.demand-info { flex: 1; min-width: 0; }
+.demand-date { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.demand-desc { font-size: 11.5px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+
+.empty-state {
+  grid-column: 1/-1;
+  text-align: center;
+  padding: 60px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.empty-state svg { opacity: 0.2; margin-bottom: 12px; }
+
+/* ─── PAGE HEADER ─── */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.page-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 22px;
+}
+.page-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* ─── TABLE ─── */
+.table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  text-align: left;
+  padding: 11px 16px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+tbody td {
+  padding: 11px 16px;
+  font-size: 12.5px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr { transition: background 0.1s; }
+tbody tr:hover { background: var(--bg); }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+.row-actions { display: flex; gap: 6px; }
+
+/* ─── FORM / MODAL ─── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(4px);
+  z-index: 400;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+  padding: 20px;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--surface);
+  border-radius: 18px;
+  width: 100%; max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 28px;
+  transform: translateY(10px) scale(0.98);
+  transition: transform 0.22s cubic-bezier(.4,0,.2,1);
+  position: relative;
+}
+.modal-overlay.open .modal { transform: translateY(0) scale(1); }
+
+.modal-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  margin-bottom: 20px;
+  padding-right: 32px;
+}
+
+.modal-close {
+  position: absolute; top: 20px; right: 20px;
+  width: 30px; height: 30px; border-radius: 50%;
+  border: 1px solid var(--border); background: none;
+  cursor: pointer; color: var(--muted); font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.modal-close:hover { background: var(--bg); color: var(--text); }
+
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 6px; }
+
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-sm);
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--surface);
+  outline: none;
+  transition: border-color 0.15s;
+  appearance: none;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--text); }
+.form-textarea { resize: vertical; min-height: 80px; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* detail modal */
+.detail-status {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 12px; border-radius: 100px;
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.4px;
+  margin-bottom: 16px;
+}
+.detail-date { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 30px; margin-bottom: 6px; }
+.detail-client { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 16px; }
+.detail-desc {
+  font-size: 14px; line-height: 1.55;
+  background: var(--bg); border-radius: 10px;
+  padding: 14px; margin-bottom: 14px;
+}
+.detail-obs {
+  font-size: 13px; line-height: 1.5; color: var(--muted);
+  background: var(--bg); border-radius: 10px;
+  padding: 12px; margin-bottom: 6px;
+}
+.detail-obs-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 4px; }
+
+/* color swatch picker */
+.color-options { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.color-swatch {
+  width: 28px; height: 28px; border-radius: 50%;
+  cursor: pointer; border: 3px solid transparent;
+  transition: all 0.15s;
+}
+.color-swatch.selected { border-color: var(--text); transform: scale(1.15); }
+
+/* ─── TOAST ─── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--text); color: #fff;
+  padding: 12px 20px; border-radius: 100px;
+  font-size: 13px; font-weight: 500;
+  z-index: 999;
+  transform: translateY(20px);
+  opacity: 0;
+  transition: all 0.25s;
+  pointer-events: none;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+@media (max-width: 600px) {
+  main { padding: 20px 16px 60px; }
+  .form-row { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-logo">SEA <span>/ demandas</span></div>
+  <div class="sidebar-nav">
+    <div class="sidebar-section">Visão Geral</div>
+    <div class="nav-item active" data-page="dashboard" onclick="goTo('dashboard')">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </div>
+    <div class="sidebar-section">Cadastros</div>
+    <div class="nav-item" data-page="demands" onclick="goTo('demands')">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+      Demandas
+    </div>
+    <div class="nav-item" data-page="clients" onclick="goTo('clients')">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      Clientes
+    </div>
+    <div class="nav-item" data-page="statuses" onclick="goTo('statuses')">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      Status
+    </div>
+  </div>
+  <div class="sidebar-footer">SEA Agência · v2.0</div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <button class="hamburger" id="hamburger" onclick="toggleSidebar()">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="header-title" id="headerTitle">Dashboard</div>
+  <div class="header-actions" id="headerActions"></div>
+</header>
+
+<!-- MAIN -->
+<main>
+
+  <!-- ── DASHBOARD ── -->
+  <div class="page active" id="page-dashboard">
+    <!-- date range + search: rendered once -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:20px">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted)">De</span>
+        <input type="date" class="form-input" id="dashDateFrom" style="padding:7px 10px;font-size:12px;width:148px" oninput="renderDashboard()">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted)">Até</span>
+        <input type="date" class="form-input" id="dashDateTo" style="padding:7px 10px;font-size:12px;width:148px" oninput="renderDashboard()">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted)">&nbsp;</span>
+        <button class="btn btn-ghost btn-sm" onclick="resetDashDates()" style="align-self:flex-end">Semana atual</button>
+      </div>
+      <div style="margin-left:auto;align-self:flex-end">
+        <div class="search-wrap">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input class="search-input" id="dashSearch" type="text" placeholder="Buscar cliente…" oninput="renderDashboard()">
+        </div>
+      </div>
+    </div>
+    <div class="stats-row" id="dashStats"></div>
+    <div class="filter-bar" id="dashFilters"></div>
+    <div class="clients-grid" id="dashGrid"></div>
+  </div>
+
+  <!-- ── DEMANDAS ── -->
+  <div class="page" id="page-demands">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Demandas</div>
+      </div>
+    </div>
+    <!-- FILTER BAR: rendered once, never rebuilt -->
+    <div class="table-wrap" style="margin-bottom:14px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;padding:16px;background:var(--surface2);border-bottom:1px solid var(--border);border-radius:var(--r) var(--r) 0 0">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted)">De</span>
+          <input type="date" class="form-input" id="fDateFrom" style="padding:7px 10px;font-size:12px;width:148px" oninput="applyDemandsFilter()">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted)">Até</span>
+          <input type="date" class="form-input" id="fDateTo" style="padding:7px 10px;font-size:12px;width:148px" oninput="applyDemandsFilter()">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted)">Cliente</span>
+          <select class="form-select" id="fClientFilter" style="padding:7px 10px;font-size:12px" onchange="applyDemandsFilter()">
+            <option value="all">Todos</option>
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted)">Status</span>
+          <select class="form-select" id="fStatusFilter" style="padding:7px 10px;font-size:12px" onchange="applyDemandsFilter()">
+            <option value="all">Todos</option>
+          </select>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="resetDemandsFilter()" style="align-self:flex-end">Redefinir</button>
+      </div>
+      <div style="padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);border-radius:0">
+        <span style="font-size:12px;color:var(--muted)" id="demandsSub"></span>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th><th>Cliente</th><th>Descrição</th><th>Status</th><th>Observação</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="demandsTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── CLIENTES ── -->
+  <div class="page" id="page-clients">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Clientes</div>
+        <div class="page-sub" id="clientsSub"></div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Nome</th><th>Demandas</th><th></th></tr></thead>
+        <tbody id="clientsTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── STATUS ── -->
+  <div class="page" id="page-statuses">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Status</div>
+        <div class="page-sub">Configure os status das demandas</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Nome</th><th>Cor</th><th>Demandas</th><th></th></tr></thead>
+        <tbody id="statusesTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MODAL FORM -->
+<div class="modal-overlay" id="formModal">
+  <div class="modal">
+    <div class="modal-title" id="formTitle"></div>
+    <button class="modal-close" onclick="closeModal('formModal')">×</button>
+    <div id="formBody"></div>
+  </div>
+</div>
+
+<!-- MODAL DETAIL -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('detailModal')">×</button>
+    <div id="detailBody"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  STORAGE
+// ═══════════════════════════════════════
+const STORE = {
+  get(k) { try { return JSON.parse(localStorage.getItem('sea_'+k)) } catch { return null; } },
+  set(k,v) { localStorage.setItem('sea_'+k, JSON.stringify(v)); }
+};
+
+// ═══════════════════════════════════════
+//  SEED DATA
+// ═══════════════════════════════════════
+function seed() {
+  // Re-seed if never seeded OR if demo data is stale (dates don't match current week)
+  const _now = new Date();
+  const _dow = _now.getDay() === 0 ? 6 : _now.getDay() - 1;
+  const _mon = new Date(_now); _mon.setDate(_now.getDate() - _dow); _mon.setHours(0,0,0,0);
+  const _from = _mon.toISOString().slice(0,10);
+  const _existing = STORE.get('demands') || [];
+  const _hasCurrentWeek = _existing.some(d => d.date >= _from);
+  if (STORE.get('seeded') && _hasCurrentWeek) return;
+  {
+    STORE.set('statuses', [
+      { id: 's1', name: 'Pronto pra postar',    color: '#27AE60' },
+      { id: 's2', name: 'Arquivo não enviado',   color: '#E74C3C' },
+      { id: 's3', name: 'Aguardando aprovação',  color: '#E67E22' },
+      { id: 's4', name: 'Alteração solicitada',  color: '#E6B800' },
+    ]);
+    STORE.set('clients', [
+      { id: 'c1', name: 'Bella Estética' },
+      { id: 'c2', name: 'Café Raiz' },
+      { id: 'c3', name: 'Studio Move' },
+      { id: 'c4', name: 'Tech Solutions' },
+      { id: 'c5', name: 'Clínica Sorrir' },
+    ]);
+    const statuses = ['s1','s2','s3','s4'];
+    const descs = ['Post do feed','Reels da semana','Stories promocional','Post de engajamento','Carrossel informativo'];
+    const obs = ['Verificar antes de postar','Aguardar confirmação','Sem observações','Prioridade alta',''];
+    const demands = [];
+    // base = Monday of current week so demo data always appears in default filter
+    const now = new Date();
+    const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1; // Mon=0
+    const monday = new Date(now); monday.setDate(now.getDate() - dayOfWeek);
+    monday.setHours(0,0,0,0);
+    for (let w = 0; w < 2; w++) {
+      ['c1','c2','c3','c4','c5'].forEach(cid => {
+        for (let i = 0; i < 5; i++) {
+          const day = new Date(monday); day.setDate(monday.getDate() + w*7 + i);
+          const dd = String(day.getDate()).padStart(2,'0');
+          const mm = String(day.getMonth()+1).padStart(2,'0');
+          demands.push({
+            id: 'dem_'+Math.random().toString(36).slice(2),
+            date: `${day.getFullYear()}-${mm}-${dd}`,
+            clientId: cid,
+            statusId: statuses[Math.floor(Math.random()*4)],
+            desc: descs[Math.floor(Math.random()*descs.length)],
+            obs: obs[Math.floor(Math.random()*obs.length)],
+          });
+        }
+      });
+    }
+    STORE.set('demands', demands);
+    STORE.set('seeded', true);
+  }
+}
+
+// ═══════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════
+let statuses = [], clients = [], demands = [];
+let dashFilter = 'all';
+
+function load() {
+  statuses = STORE.get('statuses') || [];
+  clients  = STORE.get('clients')  || [];
+  demands  = STORE.get('demands')  || [];
+}
+function save() {
+  STORE.set('statuses', statuses);
+  STORE.set('clients',  clients);
+  STORE.set('demands',  demands);
+}
+
+function getStatus(id) { return statuses.find(s => s.id === id) || { name: '—', color: '#ccc' }; }
+function getClient(id) { return clients.find(c => c.id === id) || { name: '—' }; }
+function uid() { return '_' + Math.random().toString(36).slice(2); }
+
+// ═══════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════
+let currentPage = 'dashboard';
+
+function goTo(page) {
+  currentPage = page;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.toggle('active', n.dataset.page === page);
+  });
+  const titles = { dashboard:'Dashboard', demands:'Demandas', clients:'Clientes', statuses:'Status' };
+  document.getElementById('headerTitle').textContent = titles[page];
+  buildHeaderActions(page);
+  closeSidebar();
+
+  if (page === 'dashboard') renderDashboard();
+  if (page === 'demands')   renderDemands();
+  if (page === 'clients')   renderClients();
+  if (page === 'statuses')  renderStatuses();
+}
+
+function buildHeaderActions(page) {
+  const el = document.getElementById('headerActions');
+  const map = {
+    demands:  `<button class="btn btn-primary btn-sm" onclick="openDemandForm()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Nova demanda</button>`,
+    clients:  `<button class="btn btn-primary btn-sm" onclick="openClientForm()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Novo cliente</button>`,
+    statuses: `<button class="btn btn-primary btn-sm" onclick="openStatusForm()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Novo status</button>`,
+    dashboard:`<button class="btn btn-ghost btn-sm" onclick="exportPDF()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M12 4v12m0 0l-4-4m4 4l4-4"/><path d="M4 20h16"/></svg> Exportar PDF</button>
+               <button class="btn btn-primary btn-sm" onclick="openDemandForm()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Nova demanda</button>`,
+  };
+  el.innerHTML = map[page] || '';
+}
+
+// ═══════════════════════════════════════
+//  SIDEBAR
+// ═══════════════════════════════════════
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+}
+
+// ═══════════════════════════════════════
+//  DATE UTILS
+// ═══════════════════════════════════════
+function fmtDate(iso) {
+  const [y,m,d] = iso.split('-'); return `${d}/${m}`;
+}
+function fmtDateFull(iso) {
+  const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`;
+}
+
+function currentWeekRange() {
+  const now = new Date();
+  const dow = now.getDay() === 0 ? 6 : now.getDay() - 1;
+  const mon = new Date(now); mon.setDate(now.getDate() - dow); mon.setHours(0,0,0,0);
+  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+  return {
+    from: mon.toISOString().slice(0,10),
+    to:   sun.toISOString().slice(0,10)
+  };
+}
+
+function initDashDates() {
+  const { from, to } = currentWeekRange();
+  const elFrom = document.getElementById('dashDateFrom');
+  const elTo   = document.getElementById('dashDateTo');
+  if (elFrom) elFrom.value = from;
+  if (elTo)   elTo.value   = to;
+}
+
+function resetDashDates() {
+  initDashDates();
+  renderDashboard();
+}
+
+// ═══════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════
+function renderDashboard() {
+  const dateFrom = document.getElementById('dashDateFrom')?.value || '';
+  const dateTo   = document.getElementById('dashDateTo')?.value   || '';
+
+  const filtered = demands.filter(d => {
+    if (dateFrom && d.date < dateFrom) return false;
+    if (dateTo   && d.date > dateTo)   return false;
+    return true;
+  });
+
+  // stats
+  const cnt = {};
+  statuses.forEach(s => cnt[s.id] = 0);
+  filtered.forEach(d => { if (cnt[d.statusId] !== undefined) cnt[d.statusId]++; });
+
+  let statsHtml = `<div class="stat-card"><div class="num">${filtered.length}</div><div class="lbl">Total no período</div></div>`;
+  statuses.forEach(s => {
+    statsHtml += `<div class="stat-card" style="border-left:3px solid ${s.color}">
+      <div class="num" style="color:${s.color}">${cnt[s.id]||0}</div>
+      <div class="lbl">${s.name}</div>
+    </div>`;
+  });
+  document.getElementById('dashStats').innerHTML = statsHtml;
+
+  // filter pills
+  let pillsHtml = `<div class="pill ${dashFilter==='all'?'active':''}" onclick="setDashFilter('all')">Todos <span class="cnt">${filtered.length}</span></div>`;
+  statuses.forEach(s => {
+    pillsHtml += `<div class="pill ${dashFilter===s.id?'active':''}" onclick="setDashFilter('${s.id}')">
+      <span class="dot" style="background:${s.color}"></span>${s.name} <span class="cnt">${cnt[s.id]||0}</span>
+    </div>`;
+  });
+  document.getElementById('dashFilters').innerHTML = pillsHtml;
+
+  // grid
+  const search = document.getElementById('dashSearch')?.value.toLowerCase() || '';
+  const activeClients = clients.filter(c => {
+    if (!c.name.toLowerCase().includes(search)) return false;
+    const cDemands = filtered.filter(d => d.clientId === c.id);
+    if (!cDemands.length) return false;
+    if (dashFilter !== 'all' && !cDemands.some(d => d.statusId === dashFilter)) return false;
+    return true;
+  });
+
+  if (!activeClients.length) {
+    document.getElementById('dashGrid').innerHTML = `<div class="empty-state"><svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg><p>Nenhuma demanda encontrada nesse período.</p></div>`;
+    return;
+  }
+
+  document.getElementById('dashGrid').innerHTML = activeClients.map(c => {
+    const cDemands = filtered.filter(d => d.clientId === c.id && (dashFilter === 'all' || d.statusId === dashFilter));
+    const allDots  = filtered.filter(d => d.clientId === c.id).map(d => {
+      const st = getStatus(d.statusId);
+      return `<div class="card-dot" style="background:${st.color}" title="${fmtDate(d.date)}: ${d.desc}"></div>`;
+    }).join('');
+    const rows = cDemands.map(d => {
+      const st = getStatus(d.statusId);
+      return `<div class="demand-row" onclick="openDetail('${d.id}')">
+        <div class="demand-dot" style="background:${st.color}"></div>
+        <div class="demand-info">
+          <div class="demand-date">${fmtDate(d.date)}</div>
+          <div class="demand-desc">${d.desc}</div>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="client-card">
+      <div class="card-head">
+        <div class="card-name">${c.name}</div>
+        <div class="card-dots">${allDots}</div>
+      </div>
+      <div class="card-body">${rows}</div>
+    </div>`;
+  }).join('');
+}
+function setDashFilter(f) {
+  dashFilter = f;
+  renderDashboard();
+}
+
+// ═══════════════════════════════════════
+//  DETAIL / EDIT MODAL
+// ═══════════════════════════════════════
+function openDetail(id) {
+  const d = demands.find(x => x.id === id);
+  if (!d) return;
+  const st = getStatus(d.statusId);
+  const cl = getClient(d.clientId);
+
+  const clientOpts = clients.map(c =>
+    `<option value="${c.id}" ${d.clientId===c.id?'selected':''}>${c.name}</option>`).join('');
+  const statusOpts = statuses.map(s =>
+    `<option value="${s.id}" ${d.statusId===s.id?'selected':''}>${s.name}</option>`).join('');
+
+  document.getElementById('detailBody').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:2px">Editando demanda</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${cl.name} · ${fmtDateFull(d.date)}</div>
+      </div>
+      <span id="detailBadge" class="badge" style="background:${st.color}22;color:${st.color}"><span class="dot" style="background:${st.color}"></span>${st.name}</span>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Data do post</label>
+        <input class="form-input" type="date" id="dDate" value="${d.date}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cliente</label>
+        <select class="form-select" id="dClient">${clientOpts}</select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Status</label>
+      <select class="form-select" id="dStatus" onchange="previewStatus(this)">${statusOpts}</select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descrição</label>
+      <input class="form-input" type="text" id="dDesc" value="${d.desc}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Observação</label>
+      <textarea class="form-textarea" id="dObs">${d.obs||''}</textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-danger btn-sm" onclick="deleteDemandFromDetail('${d.id}')">Excluir</button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn btn-ghost" onclick="closeModal('detailModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveFromDetail('${d.id}')">Salvar alterações</button>
+      </div>
+    </div>
+  `;
+  openModal('detailModal');
+}
+
+function previewStatus(sel) {
+  const st = getStatus(sel.value);
+  const badge = document.getElementById('detailBadge');
+  if (badge) { badge.style.background = st.color+'22'; badge.style.color = st.color; badge.innerHTML = `<span class="dot" style="background:${st.color}"></span>${st.name}`; }
+}
+
+function saveFromDetail(id) {
+  const date     = document.getElementById('dDate').value;
+  const clientId = document.getElementById('dClient').value;
+  const statusId = document.getElementById('dStatus').value;
+  const desc     = document.getElementById('dDesc').value.trim();
+  const obs      = document.getElementById('dObs').value.trim();
+  if (!date || !clientId || !statusId || !desc) { toast('Preencha todos os campos.'); return; }
+  const i = demands.findIndex(d => d.id === id);
+  demands[i] = { ...demands[i], date, clientId, statusId, desc, obs };
+  save();
+  closeModal('detailModal');
+  toast('Demanda atualizada!');
+  if (currentPage === 'demands') renderDemands();
+  if (currentPage === 'dashboard') renderDashboard();
+}
+
+function deleteDemandFromDetail(id) {
+  if (!confirm('Excluir esta demanda?')) return;
+  demands = demands.filter(d => d.id !== id);
+  save();
+  closeModal('detailModal');
+  toast('Demanda excluída.');
+  if (currentPage === 'demands') renderDemands();
+  if (currentPage === 'dashboard') renderDashboard();
+}
+// ═══════════════════════════════════════
+//  DEMANDS PAGE
+// ═══════════════════════════════════════
+function initDemandsFilters() {
+  const { from, to } = currentWeekRange();
+  const elFrom = document.getElementById('fDateFrom');
+  const elTo   = document.getElementById('fDateTo');
+  if (elFrom) elFrom.value = from;
+  if (elTo)   elTo.value   = to;
+  populateFilterSelects();
+  applyDemandsFilter();
+}
+
+function populateFilterSelects() {
+  const cSel = document.getElementById('fClientFilter');
+  const sSel = document.getElementById('fStatusFilter');
+  if (!cSel || !sSel) return;
+
+  const curC = cSel.value, curS = sSel.value;
+
+  cSel.innerHTML = '<option value="all">Todos os clientes</option>' +
+    clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  sSel.innerHTML = '<option value="all">Todos os status</option>' +
+    statuses.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+
+  if (curC) cSel.value = curC;
+  if (curS) sSel.value = curS;
+}
+
+function applyDemandsFilter() {
+  const dateFrom   = document.getElementById('fDateFrom')?.value || '';
+  const dateTo     = document.getElementById('fDateTo')?.value   || '';
+  const clientId   = document.getElementById('fClientFilter')?.value || 'all';
+  const statusId   = document.getElementById('fStatusFilter')?.value || 'all';
+
+  let filtered = [...demands].sort((a,b) => b.date.localeCompare(a.date));
+  if (dateFrom) filtered = filtered.filter(d => d.date >= dateFrom);
+  if (dateTo)   filtered = filtered.filter(d => d.date <= dateTo);
+  if (clientId !== 'all') filtered = filtered.filter(d => d.clientId === clientId);
+  if (statusId !== 'all') filtered = filtered.filter(d => d.statusId === statusId);
+
+  const sub = document.getElementById('demandsSub');
+  if (sub) sub.textContent = `${filtered.length} de ${demands.length} demanda${demands.length!==1?'s':''}`;
+
+  if (!filtered.length) {
+    document.getElementById('demandsTable').innerHTML =
+      `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">Nenhuma demanda encontrada com esses filtros.</td></tr>`;
+    return;
+  }
+
+  document.getElementById('demandsTable').innerHTML = filtered.map(d => {
+    const st = getStatus(d.statusId);
+    const cl = getClient(d.clientId);
+    return `<tr style="cursor:pointer" onclick="openDetail('${d.id}')">
+      <td>${fmtDateFull(d.date)}</td>
+      <td><strong>${cl.name}</strong></td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.desc}</td>
+      <td><span class="badge" style="background:${st.color}22;color:${st.color}"><span class="dot" style="background:${st.color}"></span>${st.name}</span></td>
+      <td style="color:var(--muted);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.obs||'—'}</td>
+      <td onclick="event.stopPropagation()"><div class="row-actions">
+        <button class="btn btn-danger btn-sm" onclick="deleteDemand('${d.id}')">Excluir</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function resetDemandsFilter() {
+  const { from, to } = currentWeekRange();
+  const elFrom = document.getElementById('fDateFrom');
+  const elTo   = document.getElementById('fDateTo');
+  if (elFrom) elFrom.value = from;
+  if (elTo)   elTo.value   = to;
+  document.getElementById('fClientFilter').value = 'all';
+  document.getElementById('fStatusFilter').value = 'all';
+  applyDemandsFilter();
+}
+
+function renderDemands() {
+  populateFilterSelects();
+  applyDemandsFilter();
+}
+// ═══════════════════════════════════════
+//  CLIENTS PAGE
+// ═══════════════════════════════════════
+function renderClients() {
+  document.getElementById('clientsSub').textContent = `${clients.length} cliente${clients.length!==1?'s':''}`;
+  if (!clients.length) {
+    document.getElementById('clientsTable').innerHTML = `<tr><td colspan="3" style="text-align:center;padding:40px;color:var(--muted)">Nenhum cliente cadastrado.</td></tr>`;
+    return;
+  }
+  document.getElementById('clientsTable').innerHTML = clients.map(c => {
+    const total = demands.filter(d => d.clientId === c.id).length;
+    return `<tr>
+      <td><strong>${c.name}</strong></td>
+      <td style="color:var(--muted)">${total} demanda${total!==1?'s':''}</td>
+      <td><div class="row-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openClientForm('${c.id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteClient('${c.id}')">Excluir</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function openClientForm(editId) {
+  const editing = editId ? clients.find(c => c.id === editId) : null;
+  document.getElementById('formTitle').textContent = editing ? 'Editar Cliente' : 'Novo Cliente';
+  document.getElementById('formBody').innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Nome do cliente</label>
+      <input class="form-input" type="text" id="fClientName" placeholder="Ex: Bella Estética" value="${editing?.name||''}">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveClient('${editId||''}')">Salvar</button>
+    </div>
+  `;
+  openModal('formModal');
+}
+
+function saveClient(editId) {
+  const name = document.getElementById('fClientName').value.trim();
+  if (!name) { toast('Informe o nome do cliente.'); return; }
+  if (editId) {
+    const i = clients.findIndex(c => c.id === editId);
+    clients[i].name = name;
+  } else {
+    clients.push({ id: uid(), name });
+  }
+  save();
+  closeModal('formModal');
+  toast(editId ? 'Cliente atualizado!' : 'Cliente criado!');
+  renderClients();
+}
+
+function deleteClient(id) {
+  if (demands.some(d => d.clientId === id)) {
+    toast('Remova as demandas deste cliente primeiro.'); return;
+  }
+  if (!confirm('Excluir este cliente?')) return;
+  clients = clients.filter(c => c.id !== id);
+  save();
+  toast('Cliente excluído.');
+  renderClients();
+}
+
+// ═══════════════════════════════════════
+//  STATUSES PAGE
+// ═══════════════════════════════════════
+const PRESET_COLORS = ['#27AE60','#E74C3C','#E67E22','#E6B800','#3498DB','#9B59B6','#1ABC9C','#E91E63','#FF5722','#607D8B'];
+let pickedColor = '#27AE60';
+
+function renderStatuses() {
+  if (!statuses.length) {
+    document.getElementById('statusesTable').innerHTML = `<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--muted)">Nenhum status cadastrado.</td></tr>`;
+    return;
+  }
+  document.getElementById('statusesTable').innerHTML = statuses.map(s => {
+    const total = demands.filter(d => d.statusId === s.id).length;
+    return `<tr>
+      <td><strong>${s.name}</strong></td>
+      <td><span style="display:inline-block;width:18px;height:18px;border-radius:50%;background:${s.color};vertical-align:middle"></span></td>
+      <td style="color:var(--muted)">${total} demanda${total!==1?'s':''}</td>
+      <td><div class="row-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openStatusForm('${s.id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteStatus('${s.id}')">Excluir</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function openStatusForm(editId) {
+  const editing = editId ? statuses.find(s => s.id === editId) : null;
+  pickedColor = editing?.color || '#27AE60';
+  document.getElementById('formTitle').textContent = editing ? 'Editar Status' : 'Novo Status';
+
+  const swatches = PRESET_COLORS.map(c =>
+    `<div class="color-swatch ${c===pickedColor?'selected':''}" style="background:${c}" data-color="${c}" onclick="pickColor('${c}')"></div>`
+  ).join('');
+
+  document.getElementById('formBody').innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Nome do status</label>
+      <input class="form-input" type="text" id="fStatusName" placeholder="Ex: Aguardando aprovação" value="${editing?.name||''}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Cor</label>
+      <div class="color-options" id="colorOptions">${swatches}</div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveStatus('${editId||''}')">Salvar</button>
+    </div>
+  `;
+  openModal('formModal');
+}
+
+function pickColor(c) {
+  pickedColor = c;
+  document.querySelectorAll('.color-swatch').forEach(el => {
+    el.classList.toggle('selected', el.dataset.color === c);
+  });
+}
+
+function saveStatus(editId) {
+  const name = document.getElementById('fStatusName').value.trim();
+  if (!name) { toast('Informe o nome do status.'); return; }
+  if (editId) {
+    const i = statuses.findIndex(s => s.id === editId);
+    statuses[i] = { ...statuses[i], name, color: pickedColor };
+  } else {
+    statuses.push({ id: uid(), name, color: pickedColor });
+  }
+  save();
+  closeModal('formModal');
+  toast(editId ? 'Status atualizado!' : 'Status criado!');
+  renderStatuses();
+}
+
+function deleteStatus(id) {
+  if (demands.some(d => d.statusId === id)) {
+    toast('Remova as demandas com este status primeiro.'); return;
+  }
+  if (!confirm('Excluir este status?')) return;
+  statuses = statuses.filter(s => s.id !== id);
+  save();
+  toast('Status excluído.');
+  renderStatuses();
+}
+
+// ═══════════════════════════════════════
+//  MODAL HELPERS
+// ═══════════════════════════════════════
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+// ═══════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ═══════════════════════════════════════
+//  EXPORT PDF
+// ═══════════════════════════════════════
+function exportPDF() {
+  const dateFrom = document.getElementById('dashDateFrom')?.value || '';
+  const dateTo   = document.getElementById('dashDateTo')?.value   || '';
+  const weekDemands = demands.filter(d => {
+    if (dateFrom && d.date < dateFrom) return false;
+    if (dateTo   && d.date > dateTo)   return false;
+    return true;
+  });
+  const range = dateFrom && dateTo ? `${fmtDate(dateFrom)} – ${fmtDate(dateTo)}` : 'Período selecionado';
+
+  const cnt = {};
+  statuses.forEach(s => cnt[s.id] = 0);
+  weekDemands.forEach(d => { if(cnt[d.statusId]!==undefined) cnt[d.statusId]++; });
+
+  const pending = weekDemands.filter(d => {
+    const st = getStatus(d.statusId);
+    return st.color !== '#27AE60';
+  });
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>SEA — Relatório ${range}</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Instrument Sans',sans-serif;color:#18170F;background:#fff;padding:40px;font-size:13px}
+h1{font-family:'Syne',sans-serif;font-weight:800;font-size:24px;margin-bottom:4px}
+.sub{color:#8C8878;font-size:12px;margin-bottom:32px}
+h2{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:0.6px;margin:28px 0 12px;padding-bottom:6px;border-bottom:2px solid #18170F}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:8px}
+.sc{border-radius:10px;padding:14px 16px;border-left:3px solid}
+.sc .n{font-family:'Syne',sans-serif;font-weight:800;font-size:22px}
+.sc .l{font-size:11px;margin-top:2px;font-weight:500}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:8px 10px;background:#F7F5F0;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:0.4px;color:#8C8878}
+td{padding:8px 10px;border-bottom:1px solid #F0EDE8;vertical-align:middle}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.footer{margin-top:40px;padding-top:16px;border-top:1px solid #E8E4DC;font-size:11px;color:#8C8878;display:flex;justify-content:space-between}
+.print-btn{padding:8px 20px;border-radius:100px;border:none;background:#18170F;color:#fff;font-family:'Instrument Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer}
+@media print{.no-print{display:none}}
+</style></head><body>
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
+  <div><h1>SEA — Relatório Semanal</h1><div class="sub">Semana de ${range} · Gerado em ${new Date().toLocaleDateString('pt-BR')}</div></div>
+  <button class="print-btn no-print" onclick="window.print()">Imprimir / Salvar PDF</button>
+</div>
+<h2>Resumo por status</h2>
+<div class="grid">
+${statuses.map(s=>`<div class="sc" style="border-color:${s.color};background:${s.color}18"><div class="n" style="color:${s.color}">${cnt[s.id]||0}</div><div class="l" style="color:${s.color}">${s.name}</div></div>`).join('')}
+</div>
+<h2>Posts pendentes</h2>
+${pending.length===0?'<p style="color:#8C8878">Nenhum post pendente esta semana 🎉</p>':`
+<table><thead><tr><th>Data</th><th>Cliente</th><th>Descrição</th><th>Status</th><th>Observação</th></tr></thead>
+<tbody>${pending.map(d=>{const st=getStatus(d.statusId);const cl=getClient(d.clientId);return`<tr>
+<td>${fmtDateFull(d.date)}</td><td><strong>${cl.name}</strong></td><td>${d.desc}</td>
+<td><span class="badge" style="background:${st.color}22;color:${st.color}"><span class="dot" style="background:${st.color}"></span>${st.name}</span></td>
+<td style="color:#8C8878">${d.obs||'—'}</td></tr>`}).join('')}</tbody></table>`}
+<h2>Todas as demandas da semana</h2>
+<table><thead><tr><th>Data</th><th>Cliente</th><th>Descrição</th><th>Status</th></tr></thead>
+<tbody>${weekDemands.sort((a,b)=>a.date.localeCompare(b.date)).map(d=>{const st=getStatus(d.statusId);const cl=getClient(d.clientId);return`<tr>
+<td>${fmtDateFull(d.date)}</td><td><strong>${cl.name}</strong></td><td>${d.desc}</td>
+<td><span class="badge" style="background:${st.color}22;color:${st.color}"><span class="dot" style="background:${st.color}"></span>${st.name}</span></td></tr>`}).join('')}</tbody></table>
+<div class="footer"><span>SEA — Controle de Demandas</span><span>Semana ${range}</span></div>
+</body></html>`;
+
+  const w = window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+}
+
+// ═══════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════
+seed();
+load();
+initDashDates();
+initDemandsFilters();
+buildHeaderActions('dashboard');
+renderDashboard();
+</script>
+</body>
+</html>
