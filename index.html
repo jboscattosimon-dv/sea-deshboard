@@ -530,6 +530,39 @@ tbody tr:hover { background: var(--bg); }
 </head>
 <body>
 
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" style="
+  position:fixed;inset:0;background:#F7F5F0;z-index:9999;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Instrument Sans',sans-serif;
+">
+  <div style="width:100%;max-width:380px;padding:24px">
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;margin-bottom:6px">SEA</div>
+    <div style="color:#8C8878;font-size:13px;margin-bottom:32px">Controle de Demandas</div>
+    <div id="loginError" style="display:none;background:#FEE;border:1px solid #E74C3C;color:#E74C3C;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px"></div>
+    <div style="margin-bottom:14px">
+      <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px">E-mail</label>
+      <input id="loginEmail" type="email" placeholder="seu@email.com" style="
+        width:100%;padding:10px 14px;border:1.5px solid #E8E4DC;border-radius:9px;
+        font-family:'Instrument Sans',sans-serif;font-size:14px;outline:none;
+        background:#fff;
+      ">
+    </div>
+    <div style="margin-bottom:24px">
+      <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px">Senha</label>
+      <input id="loginSenha" type="password" placeholder="••••••••" style="
+        width:100%;padding:10px 14px;border:1.5px solid #E8E4DC;border-radius:9px;
+        font-family:'Instrument Sans',sans-serif;font-size:14px;outline:none;
+        background:#fff;
+      " onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button onclick="doLogin()" style="
+      width:100%;padding:12px;background:#18170F;color:#fff;border:none;border-radius:9px;
+      font-family:'Instrument Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;
+    ">Entrar</button>
+  </div>
+</div>
+
 <!-- SIDEBAR OVERLAY -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
@@ -703,7 +736,59 @@ tbody tr:hover { background: var(--bg); }
 
 <script>
 // ═══════════════════════════════════════
-//  STORAGE
+//  API CLIENT
+// ═══════════════════════════════════════
+const API_URL = 'http://localhost:3000/api';
+
+const API = {
+  token() { return localStorage.getItem('sea_token'); },
+  headers() { return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token() }; },
+  async get(path) {
+    const r = await fetch(API_URL + path, { headers: this.headers() });
+    return r.json();
+  },
+  async post(path, body) {
+    const r = await fetch(API_URL + path, { method: 'POST', headers: this.headers(), body: JSON.stringify(body) });
+    return r.json();
+  },
+  async put(path, body) {
+    const r = await fetch(API_URL + path, { method: 'PUT', headers: this.headers(), body: JSON.stringify(body) });
+    return r.json();
+  },
+  async del(path) {
+    const r = await fetch(API_URL + path, { method: 'DELETE', headers: this.headers() });
+    return r.json();
+  }
+};
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value;
+  const senha = document.getElementById('loginSenha').value;
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+  try {
+    const res = await fetch(API_URL + '/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, senha })
+    });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.erro || 'Erro ao fazer login'; errEl.style.display = 'block'; return; }
+    localStorage.setItem('sea_token', data.token);
+    localStorage.setItem('sea_usuario', JSON.stringify(data.usuario));
+    document.getElementById('loginScreen').style.display = 'none';
+    await loadFromAPI();
+    initDashDates();
+    initDemandsFilters();
+    buildHeaderActions('dashboard');
+    renderDashboard();
+  } catch(e) {
+    errEl.textContent = 'Erro de conexão com o servidor'; errEl.style.display = 'block';
+  }
+}
+
+// ═══════════════════════════════════════
+//  STORAGE (cache local)
 // ═══════════════════════════════════════
 const STORE = {
   get(k) { try { return JSON.parse(localStorage.getItem('sea_'+k)) } catch { return null; } },
@@ -773,11 +858,33 @@ function seed() {
 let statuses = [], clients = [], demands = [];
 let dashFilter = 'all';
 
+async function loadFromAPI() {
+  const [st, cl, dem] = await Promise.all([
+    API.get('/status'),
+    API.get('/clientes'),
+    API.get('/demandas')
+  ]);
+  statuses = (st || []).map(s => ({ id: s.id, name: s.nome, color: s.cor }));
+  clients  = (cl || []).map(c => ({ id: c.id, name: c.nome }));
+  demands  = (dem || []).map(d => ({
+    id: d.id,
+    date: d.data,
+    clientId: d.cliente_id,
+    statusId: d.status_id,
+    desc: d.descricao,
+    obs: d.observacao
+  }));
+  STORE.set('statuses', statuses);
+  STORE.set('clients', clients);
+  STORE.set('demands', demands);
+}
+
 function load() {
   statuses = STORE.get('statuses') || [];
   clients  = STORE.get('clients')  || [];
   demands  = STORE.get('demands')  || [];
 }
+
 function save() {
   STORE.set('statuses', statuses);
   STORE.set('clients',  clients);
@@ -1363,12 +1470,25 @@ ${pending.length===0?'<p style="color:#8C8878">Nenhum post pendente esta semana 
 // ═══════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════
-seed();
-load();
-initDashDates();
-initDemandsFilters();
-buildHeaderActions('dashboard');
-renderDashboard();
+(async () => {
+  const token = localStorage.getItem('sea_token');
+  if (token) {
+    try {
+      await loadFromAPI();
+      document.getElementById('loginScreen').style.display = 'none';
+    } catch(e) {
+      localStorage.removeItem('sea_token');
+      load();
+    }
+  } else {
+    seed();
+    load();
+  }
+  initDashDates();
+  initDemandsFilters();
+  buildHeaderActions('dashboard');
+  renderDashboard();
+})();
 </script>
 </body>
 </html>
