@@ -813,7 +813,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
 // ═══════════════════════════════════════
 //  API CLIENT
 // ═══════════════════════════════════════
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'https://sea-deshboard-production.up.railway.app/api';
 
 const API = {
   token() { return localStorage.getItem('sea_token'); },
@@ -1575,7 +1575,7 @@ async function createUser() {
   const senha = document.getElementById('fUserSenha').value;
   const papel = document.getElementById('fUserPapel').value;
   if (!nome || !email || !senha) { toast('Preencha todos os campos.'); return; }
-  const res = await fetch('http://localhost:3000/api/auth/cadastro', {
+  const res = await fetch(API_URL + '/auth/cadastro', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + API.token() },
     body: JSON.stringify({ nome, email, senha, papel })
