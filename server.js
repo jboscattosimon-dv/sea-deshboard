@@ -7,6 +7,7 @@ const demandaRoutes = require('./routes/demandas');
 const usuarioRoutes = require('./routes/usuarios');
 const clienteRoutes = require('./routes/clientes');
 const statusRoutes = require('./routes/status');
+const formatoRoutes = require('./routes/formatos');
 
 const app = express();
 app.use(cors());
@@ -18,6 +19,7 @@ app.use('/api/demandas', demandaRoutes);
 app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/clientes', clienteRoutes);
 app.use('/api/status', statusRoutes);
+app.use('/api/formatos', formatoRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));

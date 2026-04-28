@@ -5,29 +5,36 @@ const router = express.Router();
 
 router.use(authMiddleware);
 
-// Listar todos
 router.get('/', async (req, res) => {
   const { data, error } = await supabase
     .from('usuarios')
-    .select('id, nome, email, papel, criado_em');
-
+    .select('id, nome, email, papel, permissoes, criado_em');
   if (error) return res.status(500).json({ erro: error.message });
   res.json(data);
 });
 
-// Buscar por ID
 router.get('/:id', async (req, res) => {
   const { data, error } = await supabase
     .from('usuarios')
-    .select('id, nome, email, papel, criado_em')
+    .select('id, nome, email, papel, permissoes, criado_em')
     .eq('id', req.params.id)
     .single();
-
   if (error) return res.status(404).json({ erro: 'Usuário não encontrado' });
   res.json(data);
 });
 
-// Excluir
+router.put('/:id', async (req, res) => {
+  const { permissoes } = req.body;
+  const { data, error } = await supabase
+    .from('usuarios')
+    .update({ permissoes })
+    .eq('id', req.params.id)
+    .select('id, nome, email, papel, permissoes')
+    .single();
+  if (error) return res.status(400).json({ erro: error.message });
+  res.json(data);
+});
+
 router.delete('/:id', async (req, res) => {
   const { error } = await supabase.from('usuarios').delete().eq('id', req.params.id);
   if (error) return res.status(400).json({ erro: error.message });

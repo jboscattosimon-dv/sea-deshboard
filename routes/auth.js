@@ -24,7 +24,7 @@ router.post('/login', async (req, res) => {
     { expiresIn: '8h' }
   );
 
-  res.json({ token, usuario: { id: data.id, nome: data.nome, papel: data.papel } });
+  res.json({ token, usuario: { id: data.id, nome: data.nome, papel: data.papel, permissoes: data.permissoes || {} } });
 });
 
 // Cadastro

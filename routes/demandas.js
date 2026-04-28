@@ -8,17 +8,17 @@ router.use(authMiddleware);
 router.get('/', async (req, res) => {
   const { data, error } = await supabase
     .from('demandas')
-    .select('*, clientes(nome), status(nome, cor)')
+    .select('*, clientes(nome), status(nome, cor), formatos(nome)')
     .order('data', { ascending: false });
   if (error) return res.status(500).json({ erro: error.message });
   res.json(data);
 });
 
 router.post('/', async (req, res) => {
-  const { data: date, cliente_id, status_id, descricao, observacao } = req.body;
+  const { data: date, cliente_id, status_id, formato_id, descricao, observacao } = req.body;
   const { data, error } = await supabase
     .from('demandas')
-    .insert([{ data: date, cliente_id, status_id, descricao, observacao, criado_por: req.usuario.id }])
+    .insert([{ data: date, cliente_id, status_id, formato_id: formato_id || null, descricao, observacao, criado_por: req.usuario.id }])
     .select()
     .single();
   if (error) return res.status(400).json({ erro: error.message });
@@ -26,10 +26,10 @@ router.post('/', async (req, res) => {
 });
 
 router.put('/:id', async (req, res) => {
-  const { data: date, cliente_id, status_id, descricao, observacao } = req.body;
+  const { data: date, cliente_id, status_id, formato_id, descricao, observacao } = req.body;
   const { data, error } = await supabase
     .from('demandas')
-    .update({ data: date, cliente_id, status_id, descricao, observacao })
+    .update({ data: date, cliente_id, status_id, formato_id: formato_id || null, descricao, observacao })
     .eq('id', req.params.id)
     .select()
     .single();
