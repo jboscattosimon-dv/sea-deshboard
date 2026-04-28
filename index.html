@@ -854,12 +854,20 @@ const API = {
     return r.json();
   },
   async put(path, body) {
-    const r = await fetch(API_URL + path, { method: 'PUT', headers: this.headers(), body: JSON.stringify(body) });
-    return r.json();
+    try {
+      const r = await fetch(API_URL + path, { method: 'PUT', headers: this.headers(), body: JSON.stringify(body) });
+      const data = await r.json();
+      if (!r.ok) return { erro: data?.erro || `Erro ${r.status}` };
+      return data || {};
+    } catch(e) { return { erro: e.message }; }
   },
   async del(path) {
-    const r = await fetch(API_URL + path, { method: 'DELETE', headers: this.headers() });
-    return r.json();
+    try {
+      const r = await fetch(API_URL + path, { method: 'DELETE', headers: this.headers() });
+      const data = await r.json();
+      if (!r.ok) return { erro: data?.erro || `Erro ${r.status}` };
+      return data || {};
+    } catch(e) { return { erro: e.message }; }
   }
 };
 
@@ -1289,15 +1297,17 @@ async function saveFromDetail(id) {
   const desc     = document.getElementById('dDesc').value.trim();
   const obs      = document.getElementById('dObs').value.trim();
   if (!date || !clientId || !statusId || !desc) { toast('Preencha todos os campos.'); return; }
-  const res = await API.put('/demandas/' + id, { data: date, cliente_id: clientId, status_id: statusId, descricao: desc, observacao: obs });
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  const i = demands.findIndex(d => d.id === id);
-  demands[i] = { id, date, clientId, statusId, desc, obs };
-  save();
-  closeModal('detailModal');
-  toast('Demanda atualizada!');
-  if (currentPage === 'demands') renderDemands();
-  if (currentPage === 'dashboard') renderDashboard();
+  try {
+    const res = await API.put('/demandas/' + id, { data: date, cliente_id: clientId, status_id: statusId, descricao: desc, observacao: obs });
+    if (res.erro) { toast('Erro ao salvar: ' + res.erro); return; }
+    const i = demands.findIndex(d => d.id === id);
+    if (i >= 0) demands[i] = { id, date, clientId, statusId, desc, obs };
+    save();
+    closeModal('detailModal');
+    toast('Demanda atualizada!');
+    if (currentPage === 'demands') renderDemands();
+    if (currentPage === 'dashboard') renderDashboard();
+  } catch(e) { toast('Erro inesperado: ' + e.message); }
 }
 
 async function deleteDemandFromDetail(id) {
@@ -1310,6 +1320,17 @@ async function deleteDemandFromDetail(id) {
   toast('Demanda excluída.');
   if (currentPage === 'demands') renderDemands();
   if (currentPage === 'dashboard') renderDashboard();
+}
+
+async function deleteDemand(id) {
+  if (!confirm('Excluir esta demanda?')) return;
+  const res = await API.del('/demandas/' + id);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  demands = demands.filter(d => d.id !== id);
+  save();
+  toast('Demanda excluída.');
+  renderDemands();
+  renderDashboard();
 }
 // ═══════════════════════════════════════
 //  DEMANDS PAGE
@@ -1433,34 +1454,38 @@ function openClientForm(editId) {
 async function saveClient(editId) {
   const name = document.getElementById('fClientName').value.trim();
   if (!name) { toast('Informe o nome do cliente.'); return; }
-  let res;
-  if (editId) {
-    res = await API.put('/clientes/' + editId, { nome: name });
-    if (res.erro) { toast('Erro: ' + res.erro); return; }
-    const i = clients.findIndex(c => c.id === editId);
-    clients[i].name = name;
-  } else {
-    res = await API.post('/clientes', { nome: name });
-    if (res.erro) { toast('Erro: ' + res.erro); return; }
-    clients.push({ id: res.id, name: res.nome });
-  }
-  save();
-  closeModal('formModal');
-  toast(editId ? 'Cliente atualizado!' : 'Cliente criado!');
-  renderClients();
+  try {
+    let res;
+    if (editId) {
+      res = await API.put('/clientes/' + editId, { nome: name });
+      if (res.erro) { toast('Erro ao salvar: ' + res.erro); return; }
+      const i = clients.findIndex(c => c.id === editId);
+      if (i >= 0) clients[i].name = name;
+    } else {
+      res = await API.post('/clientes', { nome: name });
+      if (res.erro) { toast('Erro ao criar: ' + res.erro); return; }
+      clients.push({ id: res.id, name: res.nome });
+    }
+    save();
+    closeModal('formModal');
+    toast(editId ? 'Cliente atualizado!' : 'Cliente criado!');
+    renderClients();
+  } catch(e) { toast('Erro inesperado: ' + e.message); }
 }
 
 async function deleteClient(id) {
   if (demands.some(d => d.clientId === id)) {
-    toast('Remova as demandas deste cliente primeiro.'); return;
+    toast('Este cliente possui demandas vinculadas. Exclua as demandas antes.'); return;
   }
   if (!confirm('Excluir este cliente?')) return;
-  const res = await API.del('/clientes/' + id);
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  clients = clients.filter(c => c.id !== id);
-  save();
-  toast('Cliente excluído.');
-  renderClients();
+  try {
+    const res = await API.del('/clientes/' + id);
+    if (res.erro) { toast('Erro ao excluir: ' + res.erro); return; }
+    clients = clients.filter(c => c.id !== id);
+    save();
+    toast('Cliente excluído.');
+    renderClients();
+  } catch(e) { toast('Erro inesperado: ' + e.message); }
 }
 
 // ═══════════════════════════════════════
@@ -1524,34 +1549,38 @@ function pickColor(c) {
 async function saveStatus(editId) {
   const name = document.getElementById('fStatusName').value.trim();
   if (!name) { toast('Informe o nome do status.'); return; }
-  let res;
-  if (editId) {
-    res = await API.put('/status/' + editId, { nome: name, cor: pickedColor });
-    if (res.erro) { toast('Erro: ' + res.erro); return; }
-    const i = statuses.findIndex(s => s.id === editId);
-    statuses[i] = { ...statuses[i], name, color: pickedColor };
-  } else {
-    res = await API.post('/status', { nome: name, cor: pickedColor });
-    if (res.erro) { toast('Erro: ' + res.erro); return; }
-    statuses.push({ id: res.id, name: res.nome, color: res.cor });
-  }
-  save();
-  closeModal('formModal');
-  toast(editId ? 'Status atualizado!' : 'Status criado!');
-  renderStatuses();
+  try {
+    let res;
+    if (editId) {
+      res = await API.put('/status/' + editId, { nome: name, cor: pickedColor });
+      if (res.erro) { toast('Erro ao salvar: ' + res.erro); return; }
+      const i = statuses.findIndex(s => s.id === editId);
+      if (i >= 0) statuses[i] = { ...statuses[i], name, color: pickedColor };
+    } else {
+      res = await API.post('/status', { nome: name, cor: pickedColor });
+      if (res.erro) { toast('Erro ao criar: ' + res.erro); return; }
+      statuses.push({ id: res.id, name: res.nome, color: res.cor });
+    }
+    save();
+    closeModal('formModal');
+    toast(editId ? 'Status atualizado!' : 'Status criado!');
+    renderStatuses();
+  } catch(e) { toast('Erro inesperado: ' + e.message); }
 }
 
 async function deleteStatus(id) {
   if (demands.some(d => d.statusId === id)) {
-    toast('Remova as demandas com este status primeiro.'); return;
+    toast('Este status possui demandas vinculadas. Troque o status das demandas antes de excluir.'); return;
   }
   if (!confirm('Excluir este status?')) return;
-  const res = await API.del('/status/' + id);
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  statuses = statuses.filter(s => s.id !== id);
-  save();
-  toast('Status excluído.');
-  renderStatuses();
+  try {
+    const res = await API.del('/status/' + id);
+    if (res.erro) { toast('Erro ao excluir: ' + res.erro); return; }
+    statuses = statuses.filter(s => s.id !== id);
+    save();
+    toast('Status excluído.');
+    renderStatuses();
+  } catch(e) { toast('Erro inesperado: ' + e.message); }
 }
 
 // ═══════════════════════════════════════
