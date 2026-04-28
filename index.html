@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SEA — Controle de Demandas</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%231B2857'/%3E%3Ctext x='50' y='75' font-family='Georgia,serif' font-size='74' font-weight='bold' fill='white' text-anchor='middle'%3ES%3C/text%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -592,8 +593,12 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
   font-family:'Instrument Sans',sans-serif;
 ">
   <div style="width:100%;max-width:380px;padding:24px">
-    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;margin-bottom:6px">SEA</div>
-    <div style="color:#8C8878;font-size:13px;margin-bottom:32px">Controle de Demandas</div>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 88" width="180" height="53" style="display:block;margin-bottom:28px">
+      <text x="150" y="56" font-family="Georgia,'Times New Roman',serif" font-size="66" font-weight="bold" fill="#1B2857" text-anchor="middle" letter-spacing="-2">SEA</text>
+      <line x1="8" y1="66" x2="292" y2="66" stroke="#1B2857" stroke-width="1.2"/>
+      <line x1="8" y1="70" x2="292" y2="70" stroke="#1B2857" stroke-width="1.2"/>
+      <text x="150" y="85" font-family="Georgia,'Times New Roman',serif" font-size="10.5" fill="#1B2857" text-anchor="middle" letter-spacing="4.5">AGÊNCIA DE MARKETING</text>
+    </svg>
     <div id="loginError" style="display:none;background:#FEE;border:1px solid #E74C3C;color:#E74C3C;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px"></div>
     <div style="margin-bottom:14px">
       <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px">E-mail</label>
@@ -623,7 +628,14 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
 
 <!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
-  <div class="sidebar-logo">SEA <span>/ demandas</span></div>
+  <div class="sidebar-logo" style="padding:20px 24px 18px">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 88" width="148" height="44">
+      <text x="150" y="56" font-family="Georgia,'Times New Roman',serif" font-size="66" font-weight="bold" fill="white" text-anchor="middle" letter-spacing="-2">SEA</text>
+      <line x1="8" y1="66" x2="292" y2="66" stroke="white" stroke-width="1.2" opacity="0.45"/>
+      <line x1="8" y1="70" x2="292" y2="70" stroke="white" stroke-width="1.2" opacity="0.45"/>
+      <text x="150" y="85" font-family="Georgia,'Times New Roman',serif" font-size="10.5" fill="white" text-anchor="middle" letter-spacing="4.5" opacity="0.6">AGÊNCIA DE MARKETING</text>
+    </svg>
+  </div>
   <div class="sidebar-nav">
     <div class="sidebar-section">Visão Geral</div>
     <div class="nav-item active" data-page="dashboard" onclick="goTo('dashboard')">
@@ -1768,9 +1780,13 @@ tbody tr:last-child td{border-bottom:none}
   </div>
   <div class="header">
     <div>
-      <div class="agency">SEA</div>
-      <div class="agency-sub">Relatório de Demandas</div>
-      ${clientName ? `<div class="client-label">${clientName}</div>` : ''}
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 88" width="160" height="47" style="display:block">
+        <text x="150" y="56" font-family="Georgia,'Times New Roman',serif" font-size="66" font-weight="bold" fill="#1B2857" text-anchor="middle" letter-spacing="-2">SEA</text>
+        <line x1="8" y1="66" x2="292" y2="66" stroke="#1B2857" stroke-width="1.2"/>
+        <line x1="8" y1="70" x2="292" y2="70" stroke="#1B2857" stroke-width="1.2"/>
+        <text x="150" y="85" font-family="Georgia,'Times New Roman',serif" font-size="10.5" fill="#1B2857" text-anchor="middle" letter-spacing="4.5">AGÊNCIA DE MARKETING</text>
+      </svg>
+      ${clientName ? `<div class="client-label" style="margin-top:10px">${clientName}</div>` : ''}
       ${statusName ? `<div style="font-size:12px;color:#888;margin-top:4px">Filtro: ${statusName}</div>` : ''}
     </div>
     <div class="report-info">
