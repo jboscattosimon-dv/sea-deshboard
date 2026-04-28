@@ -809,6 +809,15 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
   </div>
 </div>
 
+<!-- MODAL EXPORTAR PDF -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-title">Exportar Relatório PDF</div>
+    <button class="modal-close" onclick="closeModal('exportModal')">×</button>
+    <div id="exportBody"></div>
+  </div>
+</div>
+
 <script>
 // ═══════════════════════════════════════
 //  API CLIENT
@@ -1001,7 +1010,7 @@ function buildHeaderActions(page) {
     clients:  `<button class="btn btn-primary btn-sm" onclick="openClientForm()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Novo cliente</button>`,
     statuses: `<button class="btn btn-primary btn-sm" onclick="openStatusForm()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Novo status</button>`,
     users:    `<button class="btn btn-primary btn-sm" onclick="openUserForm()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Novo usuário</button>`,
-    dashboard:`<button class="btn btn-ghost btn-sm" onclick="exportPDF()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M12 4v12m0 0l-4-4m4 4l4-4"/><path d="M4 20h16"/></svg> Exportar PDF</button>
+    dashboard:`<button class="btn btn-ghost btn-sm" onclick="openExportModal()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M12 4v12m0 0l-4-4m4 4l4-4"/><path d="M4 20h16"/></svg> Exportar PDF</button>
                <button class="btn btn-primary btn-sm" onclick="openDemandForm()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Nova demanda</button>`,
   };
   el.innerHTML = map[page] || '';
@@ -1622,71 +1631,195 @@ function toast(msg) {
 // ═══════════════════════════════════════
 //  EXPORT PDF
 // ═══════════════════════════════════════
-function exportPDF() {
+function openExportModal() {
   const dateFrom = document.getElementById('dashDateFrom')?.value || '';
   const dateTo   = document.getElementById('dashDateTo')?.value   || '';
-  const weekDemands = demands.filter(d => {
+
+  const clientOpts = `<option value="all">Todos os clientes</option>` +
+    clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  const statusOpts = `<option value="all">Todos os status</option>` +
+    statuses.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+
+  document.getElementById('exportBody').innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Período</label>
+      <div class="form-row">
+        <div>
+          <span style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px">De</span>
+          <input type="date" class="form-input" id="expDateFrom" value="${dateFrom}" style="font-size:12px">
+        </div>
+        <div>
+          <span style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px">Até</span>
+          <input type="date" class="form-input" id="expDateTo" value="${dateTo}" style="font-size:12px">
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Cliente</label>
+      <select class="form-select" id="expClient">${clientOpts}</select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Status</label>
+      <select class="form-select" id="expStatus">${statusOpts}</select>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('exportModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="exportPDF()">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M12 4v12m0 0l-4-4m4 4l4-4"/><path d="M4 20h16"/></svg>
+        Gerar PDF
+      </button>
+    </div>
+  `;
+  openModal('exportModal');
+}
+
+function exportPDF() {
+  const dateFrom = document.getElementById('expDateFrom')?.value || '';
+  const dateTo   = document.getElementById('expDateTo')?.value   || '';
+  const clientId = document.getElementById('expClient')?.value   || 'all';
+  const statusId = document.getElementById('expStatus')?.value   || 'all';
+
+  closeModal('exportModal');
+
+  const filtered = demands.filter(d => {
     if (dateFrom && d.date < dateFrom) return false;
     if (dateTo   && d.date > dateTo)   return false;
+    if (clientId !== 'all' && d.clientId !== clientId) return false;
+    if (statusId !== 'all' && d.statusId !== statusId) return false;
     return true;
-  });
-  const range = dateFrom && dateTo ? `${fmtDate(dateFrom)} – ${fmtDate(dateTo)}` : 'Período selecionado';
+  }).sort((a, b) => a.date.localeCompare(b.date));
+
+  const range      = dateFrom && dateTo ? `${fmtDateFull(dateFrom)} a ${fmtDateFull(dateTo)}` : 'Período selecionado';
+  const clientName = clientId !== 'all' ? getClient(clientId).name : null;
+  const statusName = statusId !== 'all' ? getStatus(statusId).name : null;
 
   const cnt = {};
   statuses.forEach(s => cnt[s.id] = 0);
-  weekDemands.forEach(d => { if(cnt[d.statusId]!==undefined) cnt[d.statusId]++; });
+  filtered.forEach(d => { if (cnt[d.statusId] !== undefined) cnt[d.statusId]++; });
 
-  const pending = weekDemands.filter(d => {
+  const totalDone    = filtered.filter(d => getStatus(d.statusId).color === '#27AE60').length;
+  const totalPending = filtered.length - totalDone;
+  const showClient   = clientId === 'all';
+
+  const tableRows = filtered.map(d => {
     const st = getStatus(d.statusId);
-    return st.color !== '#27AE60';
-  });
+    const cl = getClient(d.clientId);
+    return `<tr>
+      <td style="white-space:nowrap;color:#555">${fmtDateFull(d.date)}</td>
+      ${showClient ? `<td><strong>${cl.name}</strong></td>` : ''}
+      <td>${d.desc}</td>
+      <td><span class="badge" style="background:${st.color}18;color:${st.color};border:1px solid ${st.color}35">
+        <span class="dot" style="background:${st.color}"></span>${st.name}
+      </span></td>
+      <td style="color:#888;font-size:11px">${d.obs || '—'}</td>
+    </tr>`;
+  }).join('');
 
-  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-<title>SEA — Relatório ${range}</title>
+  const statusChips = statuses
+    .filter(s => cnt[s.id] > 0)
+    .map(s => `<span class="chip" style="background:${s.color}15;color:${s.color};border:1px solid ${s.color}30">
+      <span class="dot" style="background:${s.color}"></span>${s.name} <strong>${cnt[s.id]}</strong>
+    </span>`).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Relatório SEA · ${range}</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Instrument Sans',sans-serif;color:#18170F;background:#fff;padding:40px;font-size:13px}
-h1{font-family:'Syne',sans-serif;font-weight:800;font-size:24px;margin-bottom:4px}
-.sub{color:#8C8878;font-size:12px;margin-bottom:32px}
-h2{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:0.6px;margin:28px 0 12px;padding-bottom:6px;border-bottom:2px solid #18170F}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:8px}
-.sc{border-radius:10px;padding:14px 16px;border-left:3px solid}
-.sc .n{font-family:'Syne',sans-serif;font-weight:800;font-size:22px}
-.sc .l{font-size:11px;margin-top:2px;font-weight:500}
+body{font-family:'Instrument Sans',sans-serif;color:#1a1a1a;background:#fff;font-size:13px}
+.page{max-width:780px;margin:0 auto;padding:48px 44px}
+.print-bar{background:#F5F5F5;border-radius:10px;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:32px}
+.print-bar span{font-size:12px;color:#777}
+.print-btn{padding:8px 20px;border-radius:100px;border:none;background:#1a1a1a;color:#fff;font-family:'Instrument Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer}
+.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;padding-bottom:24px;border-bottom:2px solid #1a1a1a}
+.agency{font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:-0.5px}
+.agency-sub{font-size:12px;color:#999;margin-top:3px}
+.client-label{font-size:14px;font-weight:600;margin-top:8px;color:#1a1a1a}
+.report-info{text-align:right}
+.report-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#aaa;margin-bottom:4px}
+.report-period{font-family:'Syne',sans-serif;font-weight:700;font-size:15px}
+.report-meta{font-size:11px;color:#aaa;margin-top:3px}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px}
+.sum-card{border:1px solid #EBEBEB;border-radius:10px;padding:16px 18px}
+.sum-card .num{font-family:'Syne',sans-serif;font-weight:800;font-size:30px;line-height:1;margin-bottom:5px}
+.sum-card .lbl{font-size:11px;color:#999;font-weight:500}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:28px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:100px;font-size:11px;font-weight:600}
+.dot{width:6px;height:6px;border-radius:50%;display:inline-block;flex-shrink:0}
+.section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#aaa;margin-bottom:12px}
 table{width:100%;border-collapse:collapse;font-size:12px}
-th{text-align:left;padding:8px 10px;background:#F7F5F0;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:0.4px;color:#8C8878}
-td{padding:8px 10px;border-bottom:1px solid #F0EDE8;vertical-align:middle}
-.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600}
-.dot{width:7px;height:7px;border-radius:50%;display:inline-block}
-.footer{margin-top:40px;padding-top:16px;border-top:1px solid #E8E4DC;font-size:11px;color:#8C8878;display:flex;justify-content:space-between}
-.print-btn{padding:8px 20px;border-radius:100px;border:none;background:#18170F;color:#fff;font-family:'Instrument Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer}
-@media print{.no-print{display:none}}
-</style></head><body>
-<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
-  <div><h1>SEA — Relatório Semanal</h1><div class="sub">Semana de ${range} · Gerado em ${new Date().toLocaleDateString('pt-BR')}</div></div>
-  <button class="print-btn no-print" onclick="window.print()">Imprimir / Salvar PDF</button>
+thead th{text-align:left;padding:10px 12px;background:#F8F8F8;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#aaa;border-bottom:1px solid #EBEBEB}
+tbody td{padding:10px 12px;border-bottom:1px solid #F4F4F4;vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:100px;font-size:11px;font-weight:600}
+.footer{margin-top:40px;padding-top:16px;border-top:1px solid #EBEBEB;display:flex;justify-content:space-between;font-size:11px;color:#bbb}
+.empty{text-align:center;padding:40px;color:#bbb;border:1px dashed #ddd;border-radius:10px;font-size:13px}
+@media print{.print-bar{display:none!important}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="print-bar">
+    <span>Pré-visualização · Use "Salvar como PDF" na janela de impressão</span>
+    <button class="print-btn" onclick="window.print()">Imprimir / Salvar PDF</button>
+  </div>
+  <div class="header">
+    <div>
+      <div class="agency">SEA</div>
+      <div class="agency-sub">Relatório de Demandas</div>
+      ${clientName ? `<div class="client-label">${clientName}</div>` : ''}
+      ${statusName ? `<div style="font-size:12px;color:#888;margin-top:4px">Filtro: ${statusName}</div>` : ''}
+    </div>
+    <div class="report-info">
+      <div class="report-label">Período</div>
+      <div class="report-period">${range}</div>
+      <div class="report-meta">Emitido em ${new Date().toLocaleDateString('pt-BR')}</div>
+    </div>
+  </div>
+  <div class="summary">
+    <div class="sum-card">
+      <div class="num">${filtered.length}</div>
+      <div class="lbl">Total de demandas</div>
+    </div>
+    <div class="sum-card" style="border-color:#27AE6040">
+      <div class="num" style="color:#27AE60">${totalDone}</div>
+      <div class="lbl">Concluídas</div>
+    </div>
+    <div class="sum-card" style="border-color:#E74C3C40">
+      <div class="num" style="color:#E74C3C">${totalPending}</div>
+      <div class="lbl">Pendentes</div>
+    </div>
+  </div>
+  ${statusChips ? `<div class="section-title">Por status</div><div class="chips">${statusChips}</div>` : ''}
+  ${filtered.length === 0
+    ? `<div class="empty">Nenhuma demanda encontrada para os filtros selecionados.</div>`
+    : `<div>
+        <div class="section-title">Demandas do período</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              ${showClient ? '<th>Cliente</th>' : ''}
+              <th>Descrição</th>
+              <th>Status</th>
+              <th>Observação</th>
+            </tr>
+          </thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>`}
+  <div class="footer">
+    <span>SEA — Controle de Demandas</span>
+    <span>${range}${clientName ? ' · ' + clientName : ''}</span>
+  </div>
 </div>
-<h2>Resumo por status</h2>
-<div class="grid">
-${statuses.map(s=>`<div class="sc" style="border-color:${s.color};background:${s.color}18"><div class="n" style="color:${s.color}">${cnt[s.id]||0}</div><div class="l" style="color:${s.color}">${s.name}</div></div>`).join('')}
-</div>
-<h2>Posts pendentes</h2>
-${pending.length===0?'<p style="color:#8C8878">Nenhum post pendente esta semana 🎉</p>':`
-<table><thead><tr><th>Data</th><th>Cliente</th><th>Descrição</th><th>Status</th><th>Observação</th></tr></thead>
-<tbody>${pending.map(d=>{const st=getStatus(d.statusId);const cl=getClient(d.clientId);return`<tr>
-<td>${fmtDateFull(d.date)}</td><td><strong>${cl.name}</strong></td><td>${d.desc}</td>
-<td><span class="badge" style="background:${st.color}22;color:${st.color}"><span class="dot" style="background:${st.color}"></span>${st.name}</span></td>
-<td style="color:#8C8878">${d.obs||'—'}</td></tr>`}).join('')}</tbody></table>`}
-<h2>Todas as demandas da semana</h2>
-<table><thead><tr><th>Data</th><th>Cliente</th><th>Descrição</th><th>Status</th></tr></thead>
-<tbody>${weekDemands.sort((a,b)=>a.date.localeCompare(b.date)).map(d=>{const st=getStatus(d.statusId);const cl=getClient(d.clientId);return`<tr>
-<td>${fmtDateFull(d.date)}</td><td><strong>${cl.name}</strong></td><td>${d.desc}</td>
-<td><span class="badge" style="background:${st.color}22;color:${st.color}"><span class="dot" style="background:${st.color}"></span>${st.name}</span></td></tr>`}).join('')}</tbody></table>
-<div class="footer"><span>SEA — Controle de Demandas</span><span>Semana ${range}</span></div>
-</body></html>`;
+</body>
+</html>`;
 
-  const w = window.open('','_blank');
+  const w = window.open('', '_blank');
   w.document.write(html);
   w.document.close();
 }
