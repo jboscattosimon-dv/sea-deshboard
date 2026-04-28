@@ -13,7 +13,8 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   const { nome, cor } = req.body;
-  const { data, error } = await supabase.from('status').insert([{ nome, cor }]).select().single();
+  const id = 's_' + Math.random().toString(36).slice(2, 10);
+  const { data, error } = await supabase.from('status').insert([{ id, nome, cor }]).select().single();
   if (error) return res.status(400).json({ erro: error.message });
   res.status(201).json(data);
 });
