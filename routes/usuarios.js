@@ -1,4 +1,5 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const supabase = require('../supabase');
 const authMiddleware = require('../middleware/auth');
 const router = express.Router();
@@ -24,10 +25,17 @@ router.get('/:id', async (req, res) => {
 });
 
 router.put('/:id', async (req, res) => {
-  const { permissoes } = req.body;
+  const { nome, email, papel, senha, permissoes } = req.body;
+  const updates = {};
+  if (permissoes !== undefined) updates.permissoes = permissoes;
+  if (nome)  updates.nome  = nome;
+  if (email) updates.email = email;
+  if (papel) updates.papel = papel;
+  if (senha) updates.senha_hash = await bcrypt.hash(senha, 10);
+
   const { data, error } = await supabase
     .from('usuarios')
-    .update({ permissoes })
+    .update(updates)
     .eq('id', req.params.id)
     .select('id, nome, email, papel, permissoes')
     .single();

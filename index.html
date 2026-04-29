@@ -823,7 +823,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th><th></th></tr></thead>
+        <thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th><th style="width:220px"></th></tr></thead>
         <tbody id="usersTable"></tbody>
       </table>
     </div>
@@ -1735,7 +1735,8 @@ async function renderUsers() {
       <td>${u.email}</td>
       <td><span style="padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;background:${u.papel==='admin'?'#18170F':'#E8E4DC'};color:${u.papel==='admin'?'#fff':'#18170F'}">${u.papel}</span></td>
       <td><div class="row-actions">
-        ${u.papel !== 'admin' && me.papel === 'admin' ? `<button class="btn btn-ghost btn-sm" onclick="openPermissoes('${u.id}')">Permissões</button>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="openUserEditForm('${u.id}')">Editar</button>
+        ${u.papel !== 'admin' ? `<button class="btn btn-ghost btn-sm" onclick="openPermissoes('${u.id}')">Permissões</button>` : ''}
         <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">Excluir</button>
       </div></td>
     </tr>
@@ -1786,6 +1787,54 @@ async function createUser() {
   if (res.erro) { toast('Erro: ' + res.erro); return; }
   closeModal('formModal');
   toast('Usuário criado!');
+  renderUsers();
+}
+
+function openUserEditForm(userId) {
+  const u = usuarios.find(x => x.id === userId);
+  if (!u) return;
+  document.getElementById('formTitle').textContent = 'Editar Usuário';
+  document.getElementById('formBody').innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Nome</label>
+      <input class="form-input" type="text" id="eUserNome" value="${u.nome}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">E-mail</label>
+      <input class="form-input" type="email" id="eUserEmail" value="${u.email}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nova senha <span style="font-weight:400;color:var(--muted)">(deixe em branco para não alterar)</span></label>
+      <input class="form-input" type="password" id="eUserSenha" placeholder="Mínimo 6 caracteres">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Papel</label>
+      <select class="form-select" id="eUserPapel">
+        <option value="user" ${u.papel==='user'?'selected':''}>Usuário</option>
+        <option value="admin" ${u.papel==='admin'?'selected':''}>Admin</option>
+      </select>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveUserEdit('${userId}')">Salvar</button>
+    </div>
+  `;
+  openModal('formModal');
+}
+
+async function saveUserEdit(userId) {
+  const nome  = document.getElementById('eUserNome').value.trim();
+  const email = document.getElementById('eUserEmail').value.trim();
+  const senha = document.getElementById('eUserSenha').value;
+  const papel = document.getElementById('eUserPapel').value;
+  if (!nome || !email) { toast('Nome e e-mail são obrigatórios.'); return; }
+  if (senha && senha.length < 6) { toast('Senha deve ter pelo menos 6 caracteres.'); return; }
+  const body = { nome, email, papel };
+  if (senha) body.senha = senha;
+  const res = await API.put('/usuarios/' + userId, body);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  closeModal('formModal');
+  toast('Usuário atualizado!');
   renderUsers();
 }
 
