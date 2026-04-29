@@ -651,9 +651,14 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
       <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
       Formatos
     </div>
-    <div class="nav-item" data-page="users" onclick="goTo('users')" id="navUsers"
+    <div class="nav-item" data-page="users" onclick="goTo('users')" id="navUsers">
       <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       Usuários
+    </div>
+    <div class="sidebar-section">Auditoria</div>
+    <div class="nav-item" data-page="history" onclick="goTo('history')" id="navHistory">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Histórico
     </div>
   </div>
   <div class="sidebar-footer" style="display:flex;align-items:center;justify-content:space-between;opacity:1">
@@ -825,6 +830,52 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
       <table>
         <thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th><th style="width:220px"></th></tr></thead>
         <tbody id="usersTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="page" id="page-history">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Histórico</div>
+        <div class="page-sub">Registro de todas as alterações do sistema</div>
+      </div>
+    </div>
+    <div class="filter-bar" style="margin-bottom:16px">
+      <div class="filter-group">
+        <label class="filter-label">De</label>
+        <input type="date" class="form-input" id="hDateFrom">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Até</label>
+        <input type="date" class="form-input" id="hDateTo">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Tipo</label>
+        <select class="form-select" id="hTipoFilter">
+          <option value="all">Todos</option>
+          <option value="criado">Criado</option>
+          <option value="atualizado">Atualizado</option>
+          <option value="excluido">Excluído</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Entidade</label>
+        <select class="form-select" id="hEntidadeFilter">
+          <option value="all">Todas</option>
+          <option value="demanda">Demanda</option>
+          <option value="cliente">Cliente</option>
+          <option value="status">Status</option>
+          <option value="usuario">Usuário</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="applyHistoryFilter()">Filtrar</button>
+      <button class="btn btn-ghost btn-sm" onclick="resetHistoryFilter()">Limpar</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Data/Hora</th><th>Tipo</th><th>Entidade</th><th>Descrição</th><th>Usuário</th></tr></thead>
+        <tbody id="historyTable"></tbody>
       </table>
     </div>
   </div>
@@ -1061,8 +1112,8 @@ function goTo(page) {
   document.querySelectorAll('.nav-item').forEach(n => {
     n.classList.toggle('active', n.dataset.page === page);
   });
-  const titles = { dashboard:'Dashboard', demands:'Demandas', clients:'Clientes', statuses:'Status', formats:'Formatos', users:'Usuários' };
-  document.getElementById('headerTitle').textContent = titles[page];
+  const titles = { dashboard:'Dashboard', demands:'Demandas', clients:'Clientes', statuses:'Status', formats:'Formatos', users:'Usuários', history:'Histórico' };
+  document.getElementById('headerTitle').textContent = titles[page] || page;
   buildHeaderActions(page);
   closeSidebar();
 
@@ -1072,6 +1123,7 @@ function goTo(page) {
   if (page === 'statuses')  renderStatuses();
   if (page === 'formats')   renderFormats();
   if (page === 'users')     renderUsers();
+  if (page === 'history')   renderHistory();
 }
 
 function buildHeaderActions(page) {
@@ -1337,6 +1389,7 @@ async function createDemand() {
   if (res.erro) { toast('Erro: ' + res.erro); return; }
   demands.push({ id: res.id, date: res.data, clientId: res.cliente_id, statusId: res.status_id, formatoId: res.formato_id || null, desc: res.descricao, obs: res.observacao });
   save();
+  logHistorico('criado', 'demanda', res.id, `Demanda criada: ${desc}`);
   closeModal('formModal');
   toast('Demanda criada!');
   if (currentPage === 'demands') renderDemands();
@@ -1357,6 +1410,7 @@ async function saveFromDetail(id) {
     const i = demands.findIndex(d => d.id === id);
     if (i >= 0) demands[i] = { id, date, clientId, statusId, formatoId, desc, obs };
     save();
+    logHistorico('atualizado', 'demanda', id, `Demanda atualizada: ${desc}`);
     closeModal('detailModal');
     toast('Demanda atualizada!');
     if (currentPage === 'demands') renderDemands();
@@ -1366,8 +1420,10 @@ async function saveFromDetail(id) {
 
 async function deleteDemandFromDetail(id) {
   if (!confirm('Excluir esta demanda?')) return;
+  const d = demands.find(x => x.id === id);
   const res = await API.del('/demandas/' + id);
   if (res.erro) { toast('Erro: ' + res.erro); return; }
+  logHistorico('excluido', 'demanda', id, `Demanda excluída: ${d?.desc || id}`);
   demands = demands.filter(d => d.id !== id);
   save();
   closeModal('detailModal');
@@ -1378,8 +1434,10 @@ async function deleteDemandFromDetail(id) {
 
 async function deleteDemand(id) {
   if (!confirm('Excluir esta demanda?')) return;
+  const d = demands.find(x => x.id === id);
   const res = await API.del('/demandas/' + id);
   if (res.erro) { toast('Erro: ' + res.erro); return; }
+  logHistorico('excluido', 'demanda', id, `Demanda excluída: ${d?.desc || id}`);
   demands = demands.filter(d => d.id !== id);
   save();
   toast('Demanda excluída.');
@@ -1527,10 +1585,12 @@ async function saveClient(editId) {
       if (res.erro) { toast('Erro ao salvar: ' + res.erro); return; }
       const i = clients.findIndex(c => c.id === editId);
       if (i >= 0) clients[i].name = name;
+      logHistorico('atualizado', 'cliente', editId, `Cliente atualizado: ${name}`);
     } else {
       res = await API.post('/clientes', { nome: name });
       if (res.erro) { toast('Erro ao criar: ' + res.erro); return; }
       clients.push({ id: res.id, name: res.nome });
+      logHistorico('criado', 'cliente', res.id, `Cliente criado: ${name}`);
     }
     save();
     closeModal('formModal');
@@ -1545,8 +1605,10 @@ async function deleteClient(id) {
   }
   if (!confirm('Excluir este cliente?')) return;
   try {
+    const c = clients.find(x => x.id === id);
     const res = await API.del('/clientes/' + id);
     if (res.erro) { toast('Erro ao excluir: ' + res.erro); return; }
+    logHistorico('excluido', 'cliente', id, `Cliente excluído: ${c?.name || id}`);
     clients = clients.filter(c => c.id !== id);
     save();
     toast('Cliente excluído.');
@@ -1622,10 +1684,12 @@ async function saveStatus(editId) {
       if (res.erro) { toast('Erro ao salvar: ' + res.erro); return; }
       const i = statuses.findIndex(s => s.id === editId);
       if (i >= 0) statuses[i] = { ...statuses[i], name, color: pickedColor };
+      logHistorico('atualizado', 'status', editId, `Status atualizado: ${name}`);
     } else {
       res = await API.post('/status', { nome: name, cor: pickedColor });
       if (res.erro) { toast('Erro ao criar: ' + res.erro); return; }
       statuses.push({ id: res.id, name: res.nome, color: res.cor });
+      logHistorico('criado', 'status', res.id, `Status criado: ${name}`);
     }
     save();
     closeModal('formModal');
@@ -1640,8 +1704,10 @@ async function deleteStatus(id) {
   }
   if (!confirm('Excluir este status?')) return;
   try {
+    const s = statuses.find(x => x.id === id);
     const res = await API.del('/status/' + id);
     if (res.erro) { toast('Erro ao excluir: ' + res.erro); return; }
+    logHistorico('excluido', 'status', id, `Status excluído: ${s?.name || id}`);
     statuses = statuses.filter(s => s.id !== id);
     save();
     toast('Status excluído.');
@@ -1785,6 +1851,7 @@ async function createUser() {
     body: JSON.stringify({ nome, email, senha, papel })
   }).then(r => r.json());
   if (res.erro) { toast('Erro: ' + res.erro); return; }
+  logHistorico('criado', 'usuario', res.id || '', `Usuário criado: ${nome}`);
   closeModal('formModal');
   toast('Usuário criado!');
   renderUsers();
@@ -1859,6 +1926,7 @@ function openPermissoes(userId) {
     { key: 'statuses',  label: 'Status' },
     { key: 'formats',   label: 'Formatos' },
     { key: 'users',     label: 'Usuários' },
+    { key: 'history',   label: 'Histórico' },
   ];
 
   function chk(page, perm) {
@@ -1899,7 +1967,7 @@ function openPermissoes(userId) {
 }
 
 async function savePermissoes(userId) {
-  const pages = ['dashboard','demands','clients','statuses','formats','users'];
+  const pages = ['dashboard','demands','clients','statuses','formats','users','history'];
   const perms = ['visualizar','acessar','exibir_menu'];
   const permissoes = {};
   pages.forEach(page => {
@@ -1920,14 +1988,75 @@ function applyPermissions() {
   const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
   if (!u || u.papel === 'admin') return;
   const perms = u.permissoes || {};
-  const pages = ['dashboard','demands','clients','statuses','formats','users'];
-  const navIds = { dashboard:'', demands:'', clients:'', statuses:'', formats:'navFormats', users:'navUsers' };
+  const pages = ['dashboard','demands','clients','statuses','formats','users','history'];
+  const navIds = { dashboard:'', demands:'', clients:'', statuses:'', formats:'navFormats', users:'navUsers', history:'navHistory' };
   pages.forEach(page => {
     const pagePerm = perms[page];
     if (!pagePerm) return;
     const navEl = document.querySelector(`.nav-item[data-page="${page}"]`);
     if (navEl && pagePerm.exibir_menu === false) navEl.style.display = 'none';
   });
+}
+
+// ═══════════════════════════════════════
+//  HISTÓRICO
+// ═══════════════════════════════════════
+let historicoData = [];
+
+function logHistorico(tipo, entidade, entidade_id, descricao) {
+  const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
+  API.post('/historico', { tipo, entidade, entidade_id: String(entidade_id || ''), descricao, usuario_nome: u.nome || 'Sistema' }).catch(() => {});
+}
+
+async function renderHistory() {
+  document.getElementById('historyTable').innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted)">Carregando...</td></tr>`;
+  const res = await API.get('/historico');
+  if (res.erro || !Array.isArray(res)) { toast('Erro ao carregar histórico.'); return; }
+  historicoData = res;
+  applyHistoryFilter();
+}
+
+function applyHistoryFilter() {
+  const dateFrom   = document.getElementById('hDateFrom')?.value   || '';
+  const dateTo     = document.getElementById('hDateTo')?.value     || '';
+  const tipoFilter = document.getElementById('hTipoFilter')?.value || 'all';
+  const entFilter  = document.getElementById('hEntidadeFilter')?.value || 'all';
+
+  let rows = historicoData;
+  if (dateFrom) rows = rows.filter(r => r.criado_em && r.criado_em.slice(0,10) >= dateFrom);
+  if (dateTo)   rows = rows.filter(r => r.criado_em && r.criado_em.slice(0,10) <= dateTo);
+  if (tipoFilter !== 'all') rows = rows.filter(r => r.tipo === tipoFilter);
+  if (entFilter  !== 'all') rows = rows.filter(r => r.entidade === entFilter);
+
+  const tbody = document.getElementById('historyTable');
+  if (!tbody) return;
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted)">Nenhum registro encontrado.</td></tr>`;
+    return;
+  }
+
+  const typeColors = { criado:'#27AE60', atualizado:'#3498DB', excluido:'#E74C3C' };
+  tbody.innerHTML = rows.map(r => {
+    const dt = new Date(r.criado_em);
+    const dtStr = isNaN(dt) ? r.criado_em : dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+    const color = typeColors[r.tipo] || '#999';
+    return `<tr>
+      <td style="color:var(--muted);font-size:12px;white-space:nowrap">${dtStr}</td>
+      <td><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;background:${color}22;color:${color};text-transform:capitalize">${r.tipo}</span></td>
+      <td style="font-weight:500;text-transform:capitalize">${r.entidade}</td>
+      <td style="color:var(--text)">${r.descricao || ''}</td>
+      <td style="color:var(--muted);font-size:12px">${r.usuario_nome || ''}</td>
+    </tr>`;
+  }).join('');
+}
+
+function resetHistoryFilter() {
+  document.getElementById('hDateFrom').value = '';
+  document.getElementById('hDateTo').value = '';
+  document.getElementById('hTipoFilter').value = 'all';
+  document.getElementById('hEntidadeFilter').value = 'all';
+  applyHistoryFilter();
 }
 
 // ═══════════════════════════════════════

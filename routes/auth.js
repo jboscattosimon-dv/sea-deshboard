@@ -29,12 +29,12 @@ router.post('/login', async (req, res) => {
 
 // Cadastro
 router.post('/cadastro', async (req, res) => {
-  const { nome, email, senha, papel } = req.body;
+  const { nome, email, senha, papel, permissoes } = req.body;
   const senha_hash = await bcrypt.hash(senha, 10);
 
   const { data, error } = await supabase
     .from('usuarios')
-    .insert([{ nome, email, senha_hash, papel: papel || 'user' }])
+    .insert([{ nome, email, senha_hash, papel: papel || 'user', permissoes: permissoes || {} }])
     .select()
     .single();
 
