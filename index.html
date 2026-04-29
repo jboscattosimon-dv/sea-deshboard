@@ -2005,7 +2005,9 @@ let historicoData = [];
 
 function logHistorico(tipo, entidade, entidade_id, descricao) {
   const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
-  API.post('/historico', { tipo, entidade, entidade_id: String(entidade_id || ''), descricao, usuario_nome: u.nome || 'Sistema' }).catch(() => {});
+  API.post('/historico', { tipo, entidade, entidade_id: String(entidade_id || ''), descricao, usuario_nome: u.nome || 'Sistema' })
+    .then(r => { if (r.erro) console.warn('[historico]', r.erro); })
+    .catch(e => console.warn('[historico]', e.message));
 }
 
 async function renderHistory() {
