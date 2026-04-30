@@ -1424,7 +1424,7 @@ async function deleteDemandFromDetail(id) {
   const res = await API.del('/demandas/' + id);
   if (res.erro) { toast('Erro: ' + res.erro); return; }
   logHistorico('excluido', 'demanda', id, `Demanda excluída: ${d?.desc || id}`);
-  demands = demands.filter(d => d.id !== id);
+  demands = demands.filter(x => x.id !== id);
   save();
   closeModal('detailModal');
   toast('Demanda excluída.');
@@ -1438,7 +1438,7 @@ async function deleteDemand(id) {
   const res = await API.del('/demandas/' + id);
   if (res.erro) { toast('Erro: ' + res.erro); return; }
   logHistorico('excluido', 'demanda', id, `Demanda excluída: ${d?.desc || id}`);
-  demands = demands.filter(d => d.id !== id);
+  demands = demands.filter(x => x.id !== id);
   save();
   toast('Demanda excluída.');
   renderDemands();
@@ -1609,7 +1609,7 @@ async function deleteClient(id) {
     const res = await API.del('/clientes/' + id);
     if (res.erro) { toast('Erro ao excluir: ' + res.erro); return; }
     logHistorico('excluido', 'cliente', id, `Cliente excluído: ${c?.name || id}`);
-    clients = clients.filter(c => c.id !== id);
+    clients = clients.filter(x => x.id !== id);
     save();
     toast('Cliente excluído.');
     renderClients();
@@ -1708,7 +1708,7 @@ async function deleteStatus(id) {
     const res = await API.del('/status/' + id);
     if (res.erro) { toast('Erro ao excluir: ' + res.erro); return; }
     logHistorico('excluido', 'status', id, `Status excluído: ${s?.name || id}`);
-    statuses = statuses.filter(s => s.id !== id);
+    statuses = statuses.filter(x => x.id !== id);
     save();
     toast('Status excluído.');
     renderStatuses();
@@ -1769,6 +1769,7 @@ async function saveFormat(editId) {
   save();
   closeModal('formModal');
   toast(editId ? 'Formato atualizado!' : 'Formato criado!');
+  logHistorico(editId ? 'atualizado' : 'criado', 'formato', editId || res.id, editId ? `Formato atualizado: ${name}` : `Formato criado: ${name}`);
   renderFormats();
 }
 
@@ -1777,11 +1778,13 @@ async function deleteFormat(id) {
     toast('Remova as demandas com este formato primeiro.'); return;
   }
   if (!confirm('Excluir este formato?')) return;
+  const fmt = formats.find(f => f.id === id);
   const res = await API.del('/formatos/' + id);
   if (res.erro) { toast('Erro: ' + res.erro); return; }
   formats = formats.filter(f => f.id !== id);
   save();
   toast('Formato excluído.');
+  logHistorico('excluido', 'formato', id, `Formato excluído: ${fmt?.name || id}`);
   renderFormats();
 }
 
@@ -1902,6 +1905,7 @@ async function saveUserEdit(userId) {
   if (res.erro) { toast('Erro: ' + res.erro); return; }
   closeModal('formModal');
   toast('Usuário atualizado!');
+  logHistorico('atualizado', 'usuario', userId, `Usuário atualizado: ${nome} (${papel})`);
   renderUsers();
 }
 
@@ -1909,9 +1913,11 @@ async function deleteUser(id) {
   const usuario = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
   if (usuario.id === id) { toast('Você não pode excluir seu próprio usuário.'); return; }
   if (!confirm('Excluir este usuário?')) return;
+  const uDel = usuarios.find(x => x.id === id);
   const res = await API.del('/usuarios/' + id);
   if (res.erro) { toast('Erro: ' + res.erro); return; }
   toast('Usuário excluído.');
+  logHistorico('excluido', 'usuario', id, `Usuário excluído: ${uDel?.nome || id}`);
   renderUsers();
 }
 
@@ -1981,6 +1987,8 @@ async function savePermissoes(userId) {
   if (res.erro) { toast('Erro: ' + res.erro); return; }
   closeModal('formModal');
   toast('Permissões salvas!');
+  const uPerm = usuarios.find(x => x.id === userId);
+  logHistorico('atualizado', 'usuario', userId, `Permissões atualizadas: ${uPerm?.nome || userId}`);
   renderUsers();
 }
 
@@ -2060,6 +2068,7 @@ function resetHistoryFilter() {
   document.getElementById('hEntidadeFilter').value = 'all';
   applyHistoryFilter();
 }
+
 
 // ═══════════════════════════════════════
 //  MODAL HELPERS

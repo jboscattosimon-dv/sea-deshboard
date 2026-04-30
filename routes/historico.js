@@ -16,11 +16,18 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const { tipo, entidade, entidade_id, descricao, usuario_nome } = req.body;
+  const { tipo, entidade, entidade_id, descricao } = req.body;
   const id = 'h_' + Math.random().toString(36).slice(2, 10);
   const { data, error } = await supabase
     .from('historico')
-    .insert([{ id, tipo, entidade, entidade_id, descricao, usuario_nome }])
+    .insert([{
+      id,
+      tipo,
+      entidade,
+      entidade_id: entidade_id || null,
+      descricao: descricao || null,
+      usuario_nome: req.usuario.nome
+    }])
     .select()
     .single();
   if (error) return res.status(400).json({ erro: error.message });
