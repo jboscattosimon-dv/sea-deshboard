@@ -732,10 +732,6 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
       <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       Dashboard
     </div>
-    <div class="nav-item" data-page="checklist" onclick="goTo('checklist')" id="navChecklist">
-      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-      Painel do Dia
-    </div>
     <div class="sidebar-section">Cadastros</div>
     <div class="nav-item" data-page="demands" onclick="goTo('demands')">
       <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
@@ -857,11 +853,28 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
         </div>
         <button class="btn btn-ghost btn-sm" onclick="resetDemandsFilter()" style="align-self:flex-end">Redefinir</button>
       </div>
-      <div style="padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);border-radius:0">
-        <span style="font-size:12px;color:var(--muted)" id="demandsSub"></span>
+      <!-- sub-bar: contagem + filtro postado + toggle view -->
+      <div style="padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--muted);flex:1" id="demandsSub"></span>
+        <!-- postado filter -->
+        <select class="form-select" id="fPostadoFilter" style="padding:5px 10px;font-size:12px;width:auto" onchange="applyDemandsFilter()">
+          <option value="all">Todos</option>
+          <option value="pendente">Pendentes</option>
+          <option value="postado">Postados</option>
+        </select>
+        <!-- view toggle -->
+        <div style="display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+          <button id="btnViewTable" onclick="setDemandsView('table')" title="Tabela" style="padding:5px 10px;border:none;background:var(--primary);color:#fff;cursor:pointer;display:flex;align-items:center">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 10h18M3 6h18M3 14h18M3 18h18"/></svg>
+          </button>
+          <button id="btnViewCards" onclick="setDemandsView('cards')" title="Cards por cliente" style="padding:5px 10px;border:none;border-left:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;display:flex;align-items:center">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/><rect x="14" y="16" width="7" height="5" rx="1"/></svg>
+          </button>
+        </div>
       </div>
     </div>
-    <div class="table-wrap">
+    <!-- TABLE VIEW -->
+    <div class="table-wrap" id="demandsTableWrap">
       <table>
         <thead>
           <tr>
@@ -871,6 +884,8 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
         <tbody id="demandsTable"></tbody>
       </table>
     </div>
+    <!-- CARDS VIEW -->
+    <div id="demandsCardsWrap" style="display:none"></div>
   </div>
 
   <!-- ── CLIENTES ── -->
@@ -984,41 +999,6 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     </div>
   </div>
 
-  <!-- ── PAINEL DO DIA ── -->
-  <div class="page" id="page-checklist">
-    <div class="page-header" style="flex-wrap:wrap;gap:12px">
-      <div>
-        <div class="page-title">Painel do Dia</div>
-        <div class="page-sub" id="checklistSub">Acompanhe as postagens do dia</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <button onclick="checklistPrevDay()" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">‹</button>
-        <input type="date" id="checklistDate" class="form-input" style="width:148px;font-size:13px;padding:7px 10px" onchange="renderChecklist()">
-        <button onclick="checklistNextDay()" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">›</button>
-        <button onclick="checklistGoToday()" style="height:32px;padding:0 14px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:12px;font-weight:600;cursor:pointer">Hoje</button>
-      </div>
-    </div>
-
-    <!-- progress bar -->
-    <div id="checklistProgress" style="margin-bottom:20px;display:none">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <span id="checklistProgressLabel" style="font-size:13px;font-weight:600;color:var(--text)"></span>
-        <span id="checklistProgressPct" style="font-size:12px;color:var(--muted)"></span>
-      </div>
-      <div style="height:6px;background:var(--border);border-radius:100px;overflow:hidden">
-        <div id="checklistProgressBar" style="height:100%;background:linear-gradient(90deg,#27AE60,#2ecc71);border-radius:100px;transition:width 0.4s ease"></div>
-      </div>
-    </div>
-
-    <!-- filter tabs -->
-    <div style="display:flex;gap:6px;margin-bottom:20px" id="checklistTabs">
-      <button onclick="setChecklistTab('all')"      id="ctab-all"      class="ctab ctab-active">Todos</button>
-      <button onclick="setChecklistTab('pendente')" id="ctab-pendente" class="ctab">Pendentes</button>
-      <button onclick="setChecklistTab('postado')"  id="ctab-postado"  class="ctab">Postados</button>
-    </div>
-
-    <div id="checklistGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px"></div>
-  </div>
 
 </main>
 
@@ -1254,13 +1234,12 @@ function goTo(page) {
   document.querySelectorAll('.nav-item').forEach(n => {
     n.classList.toggle('active', n.dataset.page === page);
   });
-  const titles = { dashboard:'Dashboard', checklist:'Painel do Dia', demands:'Demandas', clients:'Clientes', statuses:'Status', formats:'Formatos', users:'Usuários', history:'Histórico' };
+  const titles = { dashboard:'Dashboard', demands:'Demandas', clients:'Clientes', statuses:'Status', formats:'Formatos', users:'Usuários', history:'Histórico' };
   document.getElementById('headerTitle').textContent = titles[page] || page;
   buildHeaderActions(page);
   closeSidebar();
 
   if (page === 'dashboard') renderDashboard();
-  if (page === 'checklist') renderChecklist();
   if (page === 'demands')   renderDemands();
   if (page === 'clients')   renderClients();
   if (page === 'statuses')  renderStatuses();
@@ -1624,12 +1603,27 @@ function populateFilterSelects() {
   if (curF && fSel) fSel.value = curF;
 }
 
+let demandsView = 'table';
+
+function setDemandsView(v) {
+  demandsView = v;
+  const isTable = v === 'table';
+  document.getElementById('demandsTableWrap').style.display = isTable ? '' : 'none';
+  document.getElementById('demandsCardsWrap').style.display = isTable ? 'none' : '';
+  const btnT = document.getElementById('btnViewTable');
+  const btnC = document.getElementById('btnViewCards');
+  if (btnT) { btnT.style.background = isTable ? 'var(--primary)' : 'var(--surface)'; btnT.style.color = isTable ? '#fff' : 'var(--muted)'; }
+  if (btnC) { btnC.style.background = isTable ? 'var(--surface)' : 'var(--primary)'; btnC.style.color = isTable ? 'var(--muted)' : '#fff'; }
+  applyDemandsFilter();
+}
+
 function applyDemandsFilter() {
   const dateFrom   = document.getElementById('fDateFrom')?.value || '';
   const dateTo     = document.getElementById('fDateTo')?.value   || '';
   const clientId   = document.getElementById('fClientFilter')?.value || 'all';
   const statusId   = document.getElementById('fStatusFilter')?.value || 'all';
   const formatoId  = document.getElementById('fFormatoFilter')?.value || 'all';
+  const postadoF   = document.getElementById('fPostadoFilter')?.value || 'all';
 
   let filtered = [...demands].sort((a,b) => b.date.localeCompare(a.date));
   if (dateFrom) filtered = filtered.filter(d => d.date >= dateFrom);
@@ -1637,33 +1631,119 @@ function applyDemandsFilter() {
   if (clientId !== 'all')  filtered = filtered.filter(d => d.clientId === clientId);
   if (statusId !== 'all')  filtered = filtered.filter(d => d.statusId === statusId);
   if (formatoId !== 'all') filtered = filtered.filter(d => d.formatoId === formatoId);
+  if (postadoF === 'pendente') filtered = filtered.filter(d => !d.postado);
+  if (postadoF === 'postado')  filtered = filtered.filter(d =>  d.postado);
 
   const sub = document.getElementById('demandsSub');
-  if (sub) sub.textContent = `${filtered.length} de ${demands.length} demanda${demands.length!==1?'s':''}`;
+  const postados = filtered.filter(d => d.postado).length;
+  if (sub) sub.textContent = `${filtered.length} de ${demands.length} demanda${demands.length!==1?'s':''} · ${postados} postada${postados!==1?'s':''}`;
 
+  if (demandsView === 'table') {
+    renderDemandsTable(filtered);
+  } else {
+    renderDemandsCards(filtered);
+  }
+}
+
+function renderDemandsTable(filtered) {
   if (!filtered.length) {
     document.getElementById('demandsTable').innerHTML =
       `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">Nenhuma demanda encontrada com esses filtros.</td></tr>`;
     return;
   }
-
   const editDemands = canEdit('demands');
   document.getElementById('demandsTable').innerHTML = filtered.map(d => {
     const st = getStatus(d.statusId);
     const cl = getClient(d.clientId);
     const fmt = getFormat(d.formatoId);
-    return `<tr style="cursor:pointer" onclick="openDetail('${d.id}')">
+    const postedStyle = d.postado ? 'opacity:0.55;' : '';
+    return `<tr style="cursor:pointer;${postedStyle}" onclick="openDetail('${d.id}')">
       <td>${fmtDateFull(d.date)}</td>
       <td><strong>${cl.name}</strong></td>
-      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.desc}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap${d.postado?';text-decoration:line-through':''}">${d.desc}</td>
       <td style="color:var(--muted);font-size:12px">${fmt ? fmt.name : '—'}</td>
-      <td><span class="badge" style="background:${st.color}22;color:${st.color}"><span class="dot" style="background:${st.color}"></span>${st.name}</span></td>
+      <td>
+        <span class="badge" style="background:${st.color}22;color:${st.color}"><span class="dot" style="background:${st.color}"></span>${st.name}</span>
+        ${d.postado ? `<span class="badge" style="background:#27AE6022;color:#27AE60;margin-left:4px"><span class="dot" style="background:#27AE60"></span>Postado</span>` : ''}
+      </td>
       <td style="color:var(--muted);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.obs||'—'}</td>
       <td onclick="event.stopPropagation()"><div class="row-actions">
+        <button class="btn btn-sm" style="padding:4px 10px;border-radius:100px;border:1px solid ${d.postado?'#27AE60':'var(--border)'};background:${d.postado?'#27AE6015':'var(--surface)'};color:${d.postado?'#27AE60':'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap"
+          onclick="togglePostado('${d.id}', ${!d.postado})">
+          ${d.postado ? '✓ Postado' : 'Marcar postado'}
+        </button>
         ${editDemands ? `<button class="btn btn-danger btn-sm" onclick="deleteDemand('${d.id}')">Excluir</button>` : ''}
       </div></td>
     </tr>`;
   }).join('');
+}
+
+function renderDemandsCards(filtered) {
+  const wrap = document.getElementById('demandsCardsWrap');
+  if (!filtered.length) {
+    wrap.innerHTML = `<div style="text-align:center;padding:60px 0;color:var(--muted);font-size:14px">Nenhuma demanda encontrada com esses filtros.</div>`;
+    return;
+  }
+
+  // group by client
+  const byClient = {};
+  filtered.forEach(d => {
+    if (!byClient[d.clientId]) byClient[d.clientId] = [];
+    byClient[d.clientId].push(d);
+  });
+
+  // sort clients: most pending first
+  const clientGroups = Object.entries(byClient).sort((a, b) => {
+    const pendA = a[1].filter(d => !d.postado).length;
+    const pendB = b[1].filter(d => !d.postado).length;
+    return pendB - pendA;
+  });
+
+  wrap.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;padding-bottom:32px">
+    ${clientGroups.map(([clientId, items]) => {
+      const cl = getClient(clientId);
+      const total = items.length;
+      const done  = items.filter(d => d.postado).length;
+      const pct   = Math.round((done / total) * 100);
+      const allDone = done === total;
+
+      const demandItems = items.map(d => {
+        const st  = getStatus(d.statusId);
+        const fmt = getFormat(d.formatoId);
+        return `<div style="padding:10px 12px;border-radius:10px;border:1.5px solid ${d.postado ? '#27AE6044' : 'var(--border)'};background:${d.postado ? '#f6fef9' : 'var(--bg)'};margin-bottom:8px;transition:all 0.2s">
+          <div style="display:flex;align-items:flex-start;gap:8px">
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:600;color:${d.postado?'var(--muted)':'var(--text)'};${d.postado?'text-decoration:line-through':''};line-height:1.4">${d.desc}</div>
+              <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">
+                <span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:100px;background:${st.color}18;color:${st.color}">${st.name}</span>
+                ${fmt ? `<span style="font-size:10px;font-weight:600;padding:1px 7px;border-radius:100px;background:var(--surface2);color:var(--muted)">${fmt.name}</span>` : ''}
+                <span style="font-size:10px;color:var(--muted)">${fmtDateFull(d.date)}</span>
+              </div>
+              ${d.obs ? `<div style="font-size:11px;color:var(--muted);margin-top:4px">${d.obs}</div>` : ''}
+            </div>
+            <button onclick="togglePostado('${d.id}', ${!d.postado})" style="flex-shrink:0;width:28px;height:28px;border-radius:50%;border:2px solid ${d.postado?'#27AE60':'var(--border)'};background:${d.postado?'#27AE60':'transparent'};cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s" title="${d.postado?'Desmarcar postado':'Marcar como postado'}">
+              ${d.postado ? `<svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>` : ''}
+            </button>
+          </div>
+        </div>`;
+      }).join('');
+
+      return `<div style="background:var(--card);border:1.5px solid ${allDone?'#27AE60':'var(--border)'};border-radius:14px;padding:18px;transition:border-color 0.3s">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)">${cl.name}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:1px">${done} de ${total} postada${total!==1?'s':''}</div>
+          </div>
+          ${allDone ? `<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#27AE60" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>` :
+            `<span style="font-size:12px;font-weight:700;color:var(--primary)">${pct}%</span>`}
+        </div>
+        <div style="height:4px;background:var(--border);border-radius:100px;margin-bottom:12px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${allDone?'#27AE60':'var(--primary)'};border-radius:100px;transition:width 0.4s"></div>
+        </div>
+        ${demandItems}
+      </div>`;
+    }).join('')}
+  </div>`;
 }
 
 function resetDemandsFilter() {
@@ -1672,10 +1752,12 @@ function resetDemandsFilter() {
   const elTo   = document.getElementById('fDateTo');
   if (elFrom) elFrom.value = from;
   if (elTo)   elTo.value   = to;
-  document.getElementById('fClientFilter').value = 'all';
-  document.getElementById('fStatusFilter').value = 'all';
-  const fFormatoFilter = document.getElementById('fFormatoFilter');
-  if (fFormatoFilter) fFormatoFilter.value = 'all';
+  document.getElementById('fClientFilter').value  = 'all';
+  document.getElementById('fStatusFilter').value  = 'all';
+  const fFmt = document.getElementById('fFormatoFilter');
+  if (fFmt) fFmt.value = 'all';
+  const fPost = document.getElementById('fPostadoFilter');
+  if (fPost) fPost.value = 'all';
   applyDemandsFilter();
 }
 
@@ -2076,7 +2158,6 @@ function openPermissoes(userId) {
   const perms = u.permissoes || {};
   const pages = [
     { key: 'dashboard', label: 'Dashboard' },
-    { key: 'checklist', label: 'Painel do Dia' },
     { key: 'demands',   label: 'Demandas' },
     { key: 'clients',   label: 'Clientes' },
     { key: 'statuses',  label: 'Status' },
@@ -2107,8 +2188,8 @@ function openPermissoes(userId) {
           ${pages.map(p => `
             <tr style="border-bottom:1px solid var(--border)">
               <td style="padding:11px 14px;font-weight:600">${p.label}</td>
-              <td style="padding:11px 14px;text-align:center"><input type="checkbox" id="perm_${p.key}_visualizar" ${chk(p.key,'visualizar')?'checked':''}></td>
-              <td style="padding:11px 14px;text-align:center"><input type="checkbox" id="perm_${p.key}_editar" ${chk(p.key,'editar')?'checked':''}></td>
+              <td style="padding:11px 14px;text-align:center"><input type="checkbox" id="perm_${p.key}_visualizar" ${chk(p.key,'visualizar')?'checked':''} onchange="onPermVisualizarChange('${p.key}', this)"></td>
+              <td style="padding:11px 14px;text-align:center"><input type="checkbox" id="perm_${p.key}_editar" ${chk(p.key,'editar')?'checked':''} onchange="onPermEditarChange('${p.key}', this)"></td>
             </tr>
           `).join('')}
         </tbody>
@@ -2122,8 +2203,22 @@ function openPermissoes(userId) {
   openModal('formModal');
 }
 
+function onPermVisualizarChange(page, el) {
+  if (!el.checked) {
+    const editEl = document.getElementById(`perm_${page}_editar`);
+    if (editEl) editEl.checked = false;
+  }
+}
+
+function onPermEditarChange(page, el) {
+  if (el.checked) {
+    const vizEl = document.getElementById(`perm_${page}_visualizar`);
+    if (vizEl) vizEl.checked = true;
+  }
+}
+
 async function savePermissoes(userId) {
-  const pages = ['dashboard','checklist','demands','clients','statuses','formats','users','history'];
+  const pages = ['dashboard','demands','clients','statuses','formats','users','history'];
   const permissoes = {};
   pages.forEach(page => {
     const visualizar = document.getElementById(`perm_${page}_visualizar`)?.checked ?? true;
@@ -2156,7 +2251,7 @@ function canEdit(page) {
 function applyPermissions() {
   const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
   if (!u || u.papel === 'admin') return;
-  const pages = ['dashboard','checklist','demands','clients','statuses','formats','users','history'];
+  const pages = ['dashboard','demands','clients','statuses','formats','users','history'];
   pages.forEach(page => {
     const navEl = document.querySelector(`.nav-item[data-page="${page}"]`);
     if (navEl) navEl.style.display = canView(page) ? '' : 'none';
@@ -2280,7 +2375,7 @@ async function togglePostado(id, valor) {
   const i = demands.findIndex(d => d.id === id);
   if (i >= 0) demands[i].postado = valor;
   save();
-  renderChecklistCards();
+  if (currentPage === 'demands') applyDemandsFilter();
 }
 
 // ═══════════════════════════════════════
