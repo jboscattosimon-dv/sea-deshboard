@@ -1361,20 +1361,28 @@ function renderDashboard() {
     return;
   }
 
+  const today = new Date().toISOString().slice(0, 10);
+  const canPostToday = canEdit('demands');
+
   document.getElementById('dashGrid').innerHTML = activeClients.map(c => {
     const cDemands = filtered.filter(d => d.clientId === c.id && (dashFilter === 'all' || d.statusId === dashFilter));
     const allDots  = filtered.filter(d => d.clientId === c.id).map(d => {
       const st = getStatus(d.statusId);
-      return `<div class="card-dot" style="background:${st.color}" title="${fmtDate(d.date)}: ${d.desc}"></div>`;
+      return `<div class="card-dot" style="background:${d.postado?'#27AE60':st.color}" title="${fmtDate(d.date)}: ${d.desc}${d.postado?' ✓ Postado':''}"></div>`;
     }).join('');
     const rows = cDemands.map(d => {
       const st = getStatus(d.statusId);
-      return `<div class="demand-row" onclick="openDetail('${d.id}')">
-        <div class="demand-dot" style="background:${st.color}"></div>
-        <div class="demand-info">
+      const isToday = d.date === today;
+      return `<div class="demand-row" style="${d.postado?'opacity:0.55':''}" onclick="openDetail('${d.id}')">
+        <div class="demand-dot" style="background:${d.postado?'#27AE60':st.color}"></div>
+        <div class="demand-info" style="flex:1">
           <div class="demand-date">${fmtDate(d.date)}</div>
-          <div class="demand-desc">${d.desc}</div>
+          <div class="demand-desc" style="${d.postado?'text-decoration:line-through':''}">${d.desc}</div>
         </div>
+        ${isToday && canPostToday ? `<button onclick="event.stopPropagation();togglePostado('${d.id}',${!d.postado})"
+          style="flex-shrink:0;width:22px;height:22px;border-radius:50%;border:2px solid ${d.postado?'#27AE60':'#ccc'};background:${d.postado?'#27AE60':'transparent'};cursor:pointer;display:flex;align-items:center;justify-content:center;margin-left:6px;transition:all 0.2s">
+          ${d.postado?`<svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>`:''}
+        </button>` : ''}
       </div>`;
     }).join('');
     return `<div class="client-card">
@@ -1407,10 +1415,13 @@ function openDetail(id) {
   const formatOpts = formats.map(f =>
     `<option value="${f.id}" ${d.formatoId===f.id?'selected':''}>${f.name}</option>`).join('');
 
+  const editMode = canEdit('demands');
+  const ro = editMode ? '' : 'readonly disabled style="pointer-events:none;opacity:0.7"';
+  const roSel = editMode ? '' : 'disabled style="pointer-events:none;opacity:0.7"';
   document.getElementById('detailBody').innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
       <div style="flex:1;min-width:0">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:2px">Editando demanda</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:2px">${editMode ? 'Editando demanda' : 'Visualizando demanda'}</div>
         <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${cl.name} · ${fmtDateFull(d.date)}</div>
       </div>
       <span id="detailBadge" class="badge" style="background:${st.color}22;color:${st.color}"><span class="dot" style="background:${st.color}"></span>${st.name}</span>
@@ -1418,30 +1429,30 @@ function openDetail(id) {
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Data do post</label>
-        <input class="form-input" type="date" id="dDate" value="${d.date}">
+        <input class="form-input" type="date" id="dDate" value="${d.date}" ${ro}>
       </div>
       <div class="form-group">
         <label class="form-label">Cliente</label>
-        <select class="form-select" id="dClient">${clientOpts}</select>
+        <select class="form-select" id="dClient" ${roSel}>${clientOpts}</select>
       </div>
     </div>
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Status</label>
-        <select class="form-select" id="dStatus" onchange="previewStatus(this)">${statusOpts}</select>
+        <select class="form-select" id="dStatus" ${editMode ? 'onchange="previewStatus(this)"' : ''} ${roSel}>${statusOpts}</select>
       </div>
       <div class="form-group">
         <label class="form-label">Formato</label>
-        <select class="form-select" id="dFormato"><option value="">Nenhum</option>${formatOpts}</select>
+        <select class="form-select" id="dFormato" ${roSel}><option value="">Nenhum</option>${formatOpts}</select>
       </div>
     </div>
     <div class="form-group">
       <label class="form-label">Descrição</label>
-      <input class="form-input" type="text" id="dDesc" value="${d.desc}">
+      <input class="form-input" type="text" id="dDesc" value="${d.desc}" ${ro}>
     </div>
     <div class="form-group">
       <label class="form-label">Observação</label>
-      <textarea class="form-textarea" id="dObs">${d.obs||''}</textarea>
+      <textarea class="form-textarea" id="dObs" ${ro}>${d.obs||''}</textarea>
     </div>
     <div class="form-actions">
       ${canEdit('demands') ? `<button class="btn btn-danger btn-sm" onclick="deleteDemandFromDetail('${d.id}')">Excluir</button>` : ''}
@@ -1652,12 +1663,13 @@ function renderDemandsTable(filtered) {
     return;
   }
   const editDemands = canEdit('demands');
+  const today = new Date().toISOString().slice(0, 10);
   document.getElementById('demandsTable').innerHTML = filtered.map(d => {
     const st = getStatus(d.statusId);
     const cl = getClient(d.clientId);
     const fmt = getFormat(d.formatoId);
-    const postedStyle = d.postado ? 'opacity:0.55;' : '';
-    return `<tr style="cursor:pointer;${postedStyle}" onclick="openDetail('${d.id}')">
+    const isToday = d.date === today;
+    return `<tr style="cursor:pointer${d.postado?';opacity:0.6':''}" onclick="openDetail('${d.id}')">
       <td>${fmtDateFull(d.date)}</td>
       <td><strong>${cl.name}</strong></td>
       <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap${d.postado?';text-decoration:line-through':''}">${d.desc}</td>
@@ -1668,10 +1680,10 @@ function renderDemandsTable(filtered) {
       </td>
       <td style="color:var(--muted);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.obs||'—'}</td>
       <td onclick="event.stopPropagation()"><div class="row-actions">
-        <button class="btn btn-sm" style="padding:4px 10px;border-radius:100px;border:1px solid ${d.postado?'#27AE60':'var(--border)'};background:${d.postado?'#27AE6015':'var(--surface)'};color:${d.postado?'#27AE60':'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap"
+        ${isToday ? `<button class="btn btn-sm" style="padding:4px 10px;border-radius:100px;border:1px solid ${d.postado?'#27AE60':'var(--border)'};background:${d.postado?'#27AE6015':'var(--surface)'};color:${d.postado?'#27AE60':'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap"
           onclick="togglePostado('${d.id}', ${!d.postado})">
           ${d.postado ? '✓ Postado' : 'Marcar postado'}
-        </button>
+        </button>` : ''}
         ${editDemands ? `<button class="btn btn-danger btn-sm" onclick="deleteDemand('${d.id}')">Excluir</button>` : ''}
       </div></td>
     </tr>`;
@@ -1684,6 +1696,8 @@ function renderDemandsCards(filtered) {
     wrap.innerHTML = `<div style="text-align:center;padding:60px 0;color:var(--muted);font-size:14px">Nenhuma demanda encontrada com esses filtros.</div>`;
     return;
   }
+
+  const today = new Date().toISOString().slice(0, 10);
 
   // group by client
   const byClient = {};
@@ -1708,8 +1722,9 @@ function renderDemandsCards(filtered) {
       const allDone = done === total;
 
       const demandItems = items.map(d => {
-        const st  = getStatus(d.statusId);
-        const fmt = getFormat(d.formatoId);
+        const st    = getStatus(d.statusId);
+        const fmt   = getFormat(d.formatoId);
+        const isToday = d.date === today;
         return `<div style="padding:10px 12px;border-radius:10px;border:1.5px solid ${d.postado ? '#27AE6044' : 'var(--border)'};background:${d.postado ? '#f6fef9' : 'var(--bg)'};margin-bottom:8px;transition:all 0.2s">
           <div style="display:flex;align-items:flex-start;gap:8px">
             <div style="flex:1">
@@ -1721,9 +1736,9 @@ function renderDemandsCards(filtered) {
               </div>
               ${d.obs ? `<div style="font-size:11px;color:var(--muted);margin-top:4px">${d.obs}</div>` : ''}
             </div>
-            <button onclick="togglePostado('${d.id}', ${!d.postado})" style="flex-shrink:0;width:28px;height:28px;border-radius:50%;border:2px solid ${d.postado?'#27AE60':'var(--border)'};background:${d.postado?'#27AE60':'transparent'};cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s" title="${d.postado?'Desmarcar postado':'Marcar como postado'}">
+            ${isToday ? `<button onclick="togglePostado('${d.id}', ${!d.postado})" style="flex-shrink:0;width:28px;height:28px;border-radius:50%;border:2px solid ${d.postado?'#27AE60':'var(--border)'};background:${d.postado?'#27AE60':'transparent'};cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s" title="${d.postado?'Desmarcar':'Marcar como postado'}">
               ${d.postado ? `<svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>` : ''}
-            </button>
+            </button>` : ''}
           </div>
         </div>`;
       }).join('');
@@ -2370,12 +2385,14 @@ function renderChecklistCards() {
 }
 
 async function togglePostado(id, valor) {
+  if (!canEdit('demands')) { toast('Sem permissão para editar demandas.'); return; }
   const res = await API.put('/demandas/' + id, { postado: valor });
   if (res.erro) { toast('Erro: ' + res.erro); return; }
   const i = demands.findIndex(d => d.id === id);
   if (i >= 0) demands[i].postado = valor;
   save();
   if (currentPage === 'demands') applyDemandsFilter();
+  if (currentPage === 'dashboard') renderDashboard();
 }
 
 // ═══════════════════════════════════════
