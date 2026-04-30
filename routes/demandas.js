@@ -26,10 +26,18 @@ router.post('/', async (req, res) => {
 });
 
 router.put('/:id', async (req, res) => {
-  const { data: date, cliente_id, status_id, formato_id, descricao, observacao } = req.body;
+  const { data: date, cliente_id, status_id, formato_id, descricao, observacao, postado } = req.body;
+  const updates = {};
+  if (date !== undefined)       updates.data        = date;
+  if (cliente_id !== undefined) updates.cliente_id  = cliente_id;
+  if (status_id !== undefined)  updates.status_id   = status_id;
+  if (formato_id !== undefined) updates.formato_id  = formato_id || null;
+  if (descricao !== undefined)  updates.descricao   = descricao;
+  if (observacao !== undefined) updates.observacao  = observacao;
+  if (postado !== undefined)    updates.postado     = postado;
   const { data, error } = await supabase
     .from('demandas')
-    .update({ data: date, cliente_id, status_id, formato_id: formato_id || null, descricao, observacao })
+    .update(updates)
     .eq('id', req.params.id)
     .select()
     .single();

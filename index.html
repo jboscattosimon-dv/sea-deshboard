@@ -582,6 +582,97 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
   .form-row { grid-template-columns: 1fr; }
   .stats-row { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ── PAINEL DO DIA ── */
+.ctab {
+  padding: 6px 16px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'Instrument Sans', sans-serif;
+}
+.ctab:hover { border-color: var(--primary); color: var(--primary); }
+.ctab-active { background: var(--primary) !important; color: #fff !important; border-color: var(--primary) !important; }
+
+.checklist-card {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: box-shadow 0.2s, border-color 0.2s, opacity 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.checklist-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
+.checklist-card.postado {
+  border-color: #27AE60;
+  background: #f6fef9;
+  opacity: 0.85;
+}
+.checklist-card.postado .cc-desc { text-decoration: line-through; color: var(--muted); }
+.cc-stripe {
+  position: absolute;
+  top: 0; left: 0;
+  width: 4px;
+  height: 100%;
+  border-radius: 14px 0 0 14px;
+}
+.cc-client {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+}
+.cc-desc {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.4;
+}
+.cc-meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.cc-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 100px;
+  background: var(--bg);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.cc-btn {
+  margin-top: 4px;
+  width: 100%;
+  padding: 9px;
+  border-radius: 9px;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s;
+  font-family: 'Instrument Sans', sans-serif;
+}
+.cc-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+.cc-btn.posted { background: #27AE60; color: #fff; border-color: #27AE60; }
+.cc-btn.posted:hover { background: #e74c3c; border-color: #e74c3c; }
 </style>
 </head>
 <body>
@@ -633,6 +724,10 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     <div class="nav-item active" data-page="dashboard" onclick="goTo('dashboard')">
       <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       Dashboard
+    </div>
+    <div class="nav-item" data-page="checklist" onclick="goTo('checklist')" id="navChecklist">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      Painel do Dia
     </div>
     <div class="sidebar-section">Cadastros</div>
     <div class="nav-item" data-page="demands" onclick="goTo('demands')">
@@ -881,6 +976,42 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     </div>
   </div>
 
+  <!-- ── PAINEL DO DIA ── -->
+  <div class="page" id="page-checklist">
+    <div class="page-header" style="flex-wrap:wrap;gap:12px">
+      <div>
+        <div class="page-title">Painel do Dia</div>
+        <div class="page-sub" id="checklistSub">Acompanhe as postagens do dia</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button onclick="checklistPrevDay()" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">‹</button>
+        <input type="date" id="checklistDate" class="form-input" style="width:148px;font-size:13px;padding:7px 10px" onchange="renderChecklist()">
+        <button onclick="checklistNextDay()" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">›</button>
+        <button onclick="checklistGoToday()" style="height:32px;padding:0 14px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:12px;font-weight:600;cursor:pointer">Hoje</button>
+      </div>
+    </div>
+
+    <!-- progress bar -->
+    <div id="checklistProgress" style="margin-bottom:20px;display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span id="checklistProgressLabel" style="font-size:13px;font-weight:600;color:var(--text)"></span>
+        <span id="checklistProgressPct" style="font-size:12px;color:var(--muted)"></span>
+      </div>
+      <div style="height:6px;background:var(--border);border-radius:100px;overflow:hidden">
+        <div id="checklistProgressBar" style="height:100%;background:linear-gradient(90deg,#27AE60,#2ecc71);border-radius:100px;transition:width 0.4s ease"></div>
+      </div>
+    </div>
+
+    <!-- filter tabs -->
+    <div style="display:flex;gap:6px;margin-bottom:20px" id="checklistTabs">
+      <button onclick="setChecklistTab('all')"      id="ctab-all"      class="ctab ctab-active">Todos</button>
+      <button onclick="setChecklistTab('pendente')" id="ctab-pendente" class="ctab">Pendentes</button>
+      <button onclick="setChecklistTab('postado')"  id="ctab-postado"  class="ctab">Postados</button>
+    </div>
+
+    <div id="checklistGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px"></div>
+  </div>
+
 </main>
 
 <!-- TOAST -->
@@ -1074,7 +1205,8 @@ async function loadFromAPI() {
     statusId: d.status_id,
     formatoId: d.formato_id || null,
     desc: d.descricao,
-    obs: d.observacao
+    obs: d.observacao,
+    postado: d.postado || false
   }));
   STORE.set('statuses', statuses);
   STORE.set('clients', clients);
@@ -1113,12 +1245,13 @@ function goTo(page) {
   document.querySelectorAll('.nav-item').forEach(n => {
     n.classList.toggle('active', n.dataset.page === page);
   });
-  const titles = { dashboard:'Dashboard', demands:'Demandas', clients:'Clientes', statuses:'Status', formats:'Formatos', users:'Usuários', history:'Histórico' };
+  const titles = { dashboard:'Dashboard', checklist:'Painel do Dia', demands:'Demandas', clients:'Clientes', statuses:'Status', formats:'Formatos', users:'Usuários', history:'Histórico' };
   document.getElementById('headerTitle').textContent = titles[page] || page;
   buildHeaderActions(page);
   closeSidebar();
 
   if (page === 'dashboard') renderDashboard();
+  if (page === 'checklist') renderChecklist();
   if (page === 'demands')   renderDemands();
   if (page === 'clients')   renderClients();
   if (page === 'statuses')  renderStatuses();
@@ -2005,6 +2138,126 @@ function applyPermissions() {
     const navEl = document.querySelector(`.nav-item[data-page="${page}"]`);
     if (navEl && pagePerm.exibir_menu === false) navEl.style.display = 'none';
   });
+}
+
+// ═══════════════════════════════════════
+//  PAINEL DO DIA
+// ═══════════════════════════════════════
+let checklistTab = 'all';
+
+function checklistToday() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function checklistPrevDay() {
+  const d = new Date(document.getElementById('checklistDate').value || checklistToday());
+  d.setDate(d.getDate() - 1);
+  document.getElementById('checklistDate').value = d.toISOString().slice(0, 10);
+  renderChecklist();
+}
+
+function checklistNextDay() {
+  const d = new Date(document.getElementById('checklistDate').value || checklistToday());
+  d.setDate(d.getDate() + 1);
+  document.getElementById('checklistDate').value = d.toISOString().slice(0, 10);
+  renderChecklist();
+}
+
+function checklistGoToday() {
+  document.getElementById('checklistDate').value = checklistToday();
+  renderChecklist();
+}
+
+function setChecklistTab(tab) {
+  checklistTab = tab;
+  document.querySelectorAll('.ctab').forEach(b => b.classList.remove('ctab-active'));
+  document.getElementById('ctab-' + tab).classList.add('ctab-active');
+  renderChecklistCards();
+}
+
+function renderChecklist() {
+  const dateEl = document.getElementById('checklistDate');
+  if (!dateEl.value) dateEl.value = checklistToday();
+  renderChecklistCards();
+}
+
+function renderChecklistCards() {
+  const date = document.getElementById('checklistDate')?.value || checklistToday();
+  const [y, m, d] = date.split('-');
+  const dateLabel = `${d}/${m}/${y}`;
+
+  let items = demands.filter(dem => dem.date === date);
+  const total = items.length;
+  const done  = items.filter(dem => dem.postado).length;
+
+  // progress
+  const prog = document.getElementById('checklistProgress');
+  if (total > 0) {
+    prog.style.display = '';
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+    document.getElementById('checklistProgressLabel').textContent =
+      done === total ? `Tudo postado em ${dateLabel}` : `${done} de ${total} postados em ${dateLabel}`;
+    document.getElementById('checklistProgressPct').textContent = pct + '%';
+    document.getElementById('checklistProgressBar').style.width = pct + '%';
+  } else {
+    prog.style.display = 'none';
+  }
+  document.getElementById('checklistSub').textContent =
+    total === 0 ? `Nenhuma demanda em ${dateLabel}` : `${total} demanda${total !== 1 ? 's' : ''} · ${done} postada${done !== 1 ? 's' : ''}`;
+
+  // filter
+  if (checklistTab === 'pendente') items = items.filter(dem => !dem.postado);
+  if (checklistTab === 'postado')  items = items.filter(dem => dem.postado);
+
+  const grid = document.getElementById('checklistGrid');
+  if (!items.length) {
+    const msg = checklistTab === 'all'
+      ? `Nenhuma demanda para ${dateLabel}.`
+      : checklistTab === 'pendente'
+        ? 'Nenhuma demanda pendente.'
+        : 'Nenhuma demanda postada ainda.';
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 0;color:var(--muted);font-size:14px">${msg}</div>`;
+    return;
+  }
+
+  grid.innerHTML = items.map(dem => {
+    const client = getClient(dem.clientId);
+    const status = getStatus(dem.statusId);
+    const fmt    = getFormat(dem.formatoId);
+    const posted = dem.postado;
+    return `
+    <div class="checklist-card ${posted ? 'postado' : ''}" id="ccard-${dem.id}">
+      <div class="cc-stripe" style="background:${status.color}"></div>
+      <div style="padding-left:8px">
+        <div class="cc-client">${client.name}</div>
+        <div class="cc-desc">${dem.desc}</div>
+        <div class="cc-meta">
+          <span class="cc-badge" style="background:${status.color}22;color:${status.color};border-color:${status.color}44">${status.name}</span>
+          ${fmt ? `<span class="cc-badge">${fmt.name}</span>` : ''}
+          ${dem.obs ? `<span class="cc-badge" title="${dem.obs}">Obs</span>` : ''}
+        </div>
+        ${posted
+          ? `<button class="cc-btn posted" onclick="togglePostado('${dem.id}', false)">
+               <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+               Postado — clique para desfazer
+             </button>`
+          : `<button class="cc-btn" onclick="togglePostado('${dem.id}', true)">
+               <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+               Marcar como postado
+             </button>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function togglePostado(id, valor) {
+  const res = await API.put('/demandas/' + id, { postado: valor });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  const i = demands.findIndex(d => d.id === id);
+  if (i >= 0) demands[i].postado = valor;
+  save();
+  renderChecklistCards();
 }
 
 // ═══════════════════════════════════════
