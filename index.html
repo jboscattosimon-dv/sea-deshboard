@@ -870,7 +870,8 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
         </select>
       </div>
       <button class="btn btn-primary btn-sm" onclick="applyHistoryFilter()">Filtrar</button>
-      <button class="btn btn-ghost btn-sm" onclick="resetHistoryFilter()">Limpar</button>
+      <button class="btn btn-ghost btn-sm" onclick="resetHistoryFilter()">Limpar filtros</button>
+      <button class="btn btn-ghost btn-sm" id="btnLimparHistorico" onclick="clearHistorico()" style="display:none;color:#E74C3C;border-color:#E74C3C">Limpar histórico</button>
     </div>
     <div class="table-wrap">
       <table>
@@ -2019,10 +2020,23 @@ function logHistorico(tipo, entidade, entidade_id, descricao) {
 }
 
 async function renderHistory() {
+  const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
+  const btn = document.getElementById('btnLimparHistorico');
+  if (btn) btn.style.display = u.papel === 'admin' ? '' : 'none';
+
   document.getElementById('historyTable').innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted)">Carregando...</td></tr>`;
   const res = await API.get('/historico');
   if (res.erro || !Array.isArray(res)) { toast('Erro ao carregar histórico.'); return; }
   historicoData = res;
+  applyHistoryFilter();
+}
+
+async function clearHistorico() {
+  if (!confirm('Tem certeza que deseja apagar TODO o histórico? Esta ação não pode ser desfeita.')) return;
+  const res = await API.del('/historico');
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast('Histórico limpo.');
+  historicoData = [];
   applyHistoryFilter();
 }
 
