@@ -803,6 +803,10 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
         <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted)">&nbsp;</span>
         <button class="btn btn-ghost btn-sm" onclick="resetDashDates()" style="align-self:flex-end">Semana atual</button>
       </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted)">&nbsp;</span>
+        <button id="dashTodayBtn" class="btn btn-ghost btn-sm" onclick="setDashFilter(dashFilter==='today'?'all':'today')" style="align-self:flex-end;border-color:var(--primary);color:var(--primary)">Hoje</button>
+      </div>
       <div style="margin-left:auto;align-self:flex-end">
         <div class="search-wrap">
           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -1343,18 +1347,23 @@ function renderDashboard() {
 
   // filter pills
   let pillsHtml = `<div class="pill ${dashFilter==='all'?'active':''}" onclick="setDashFilter('all')">Todos <span class="cnt">${filtered.length}</span></div>`;
+  pillsHtml += `<div class="pill ${dashFilter==='postado'?'active':''}" onclick="setDashFilter('postado')" style="border-color:#27AE60">
+    <span class="dot" style="background:#27AE60"></span>Postados <span class="cnt">${postadoCount}</span>
+  </div>`;
   statuses.forEach(s => {
     pillsHtml += `<div class="pill ${dashFilter===s.id?'active':''}" onclick="setDashFilter('${s.id}')">
       <span class="dot" style="background:${s.color}"></span>${s.name} <span class="cnt">${cnt[s.id]||0}</span>
     </div>`;
   });
-  pillsHtml += `<div class="pill ${dashFilter==='today'?'active':''}" onclick="setDashFilter('today')" style="border-color:var(--primary)">
-    <span class="dot" style="background:var(--primary)"></span>Hoje <span class="cnt">${todayCount}</span>
-  </div>`;
-  pillsHtml += `<div class="pill ${dashFilter==='postado'?'active':''}" onclick="setDashFilter('postado')" style="border-color:#27AE60">
-    <span class="dot" style="background:#27AE60"></span>Postados <span class="cnt">${postadoCount}</span>
-  </div>`;
   document.getElementById('dashFilters').innerHTML = pillsHtml;
+
+  // update Hoje button active state
+  const todayBtn = document.getElementById('dashTodayBtn');
+  if (todayBtn) {
+    todayBtn.style.background = dashFilter === 'today' ? 'var(--primary)' : '';
+    todayBtn.style.color = dashFilter === 'today' ? '#fff' : 'var(--primary)';
+    todayBtn.textContent = `Hoje ${todayCount}`;
+  }
 
   // grid
   const search = document.getElementById('dashSearch')?.value.toLowerCase() || '';
