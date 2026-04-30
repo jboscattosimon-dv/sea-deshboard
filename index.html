@@ -1337,6 +1337,10 @@ function renderDashboard() {
   });
   document.getElementById('dashStats').innerHTML = statsHtml;
 
+  const today = new Date().toISOString().slice(0, 10);
+  const todayCount  = filtered.filter(d => d.date === today).length;
+  const postadoCount = filtered.filter(d => d.postado).length;
+
   // filter pills
   let pillsHtml = `<div class="pill ${dashFilter==='all'?'active':''}" onclick="setDashFilter('all')">Todos <span class="cnt">${filtered.length}</span></div>`;
   statuses.forEach(s => {
@@ -1344,6 +1348,12 @@ function renderDashboard() {
       <span class="dot" style="background:${s.color}"></span>${s.name} <span class="cnt">${cnt[s.id]||0}</span>
     </div>`;
   });
+  pillsHtml += `<div class="pill ${dashFilter==='today'?'active':''}" onclick="setDashFilter('today')" style="border-color:var(--primary)">
+    <span class="dot" style="background:var(--primary)"></span>Hoje <span class="cnt">${todayCount}</span>
+  </div>`;
+  pillsHtml += `<div class="pill ${dashFilter==='postado'?'active':''}" onclick="setDashFilter('postado')" style="border-color:#27AE60">
+    <span class="dot" style="background:#27AE60"></span>Postados <span class="cnt">${postadoCount}</span>
+  </div>`;
   document.getElementById('dashFilters').innerHTML = pillsHtml;
 
   // grid
@@ -1352,7 +1362,9 @@ function renderDashboard() {
     if (!c.name.toLowerCase().includes(search)) return false;
     const cDemands = filtered.filter(d => d.clientId === c.id);
     if (!cDemands.length) return false;
-    if (dashFilter !== 'all' && !cDemands.some(d => d.statusId === dashFilter)) return false;
+    if (dashFilter === 'today')   return cDemands.some(d => d.date === today);
+    if (dashFilter === 'postado') return cDemands.some(d => d.postado);
+    if (dashFilter !== 'all')     return cDemands.some(d => d.statusId === dashFilter);
     return true;
   });
 
@@ -1361,11 +1373,16 @@ function renderDashboard() {
     return;
   }
 
-  const today = new Date().toISOString().slice(0, 10);
   const canPostToday = canEdit('demands');
 
   document.getElementById('dashGrid').innerHTML = activeClients.map(c => {
-    const cDemands = filtered.filter(d => d.clientId === c.id && (dashFilter === 'all' || d.statusId === dashFilter));
+    const cDemands = filtered.filter(d => {
+      if (d.clientId !== c.id) return false;
+      if (dashFilter === 'today')   return d.date === today;
+      if (dashFilter === 'postado') return d.postado;
+      if (dashFilter !== 'all')     return d.statusId === dashFilter;
+      return true;
+    });
     const allDots  = filtered.filter(d => d.clientId === c.id).map(d => {
       const st = getStatus(d.statusId);
       return `<div class="card-dot" style="background:${d.postado?'#27AE60':st.color}" title="${fmtDate(d.date)}: ${d.desc}${d.postado?' ✓ Postado':''}"></div>`;
@@ -1636,7 +1653,7 @@ function applyDemandsFilter() {
   const formatoId  = document.getElementById('fFormatoFilter')?.value || 'all';
   const postadoF   = document.getElementById('fPostadoFilter')?.value || 'all';
 
-  let filtered = [...demands].sort((a,b) => b.date.localeCompare(a.date));
+  let filtered = [...demands].sort((a,b) => a.date.localeCompare(b.date));
   if (dateFrom) filtered = filtered.filter(d => d.date >= dateFrom);
   if (dateTo)   filtered = filtered.filter(d => d.date <= dateTo);
   if (clientId !== 'all')  filtered = filtered.filter(d => d.clientId === clientId);
