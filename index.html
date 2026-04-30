@@ -14,7 +14,7 @@
   --surface: #FFFFFF;
   --surface2: #EAE6DF;
   --border: #E0DBD2;
-  --text: #18170F;
+  --text: #081542;
   --muted: #8C8878;
   --accent: #18170F;
   --sidebar-w: 240px;
@@ -140,6 +140,13 @@ header {
   background: var(--text);
   border-radius: 2px;
   transition: all 0.2s;
+}
+
+.header-logo {
+  height: 28px;
+  width: auto;
+  display: block;
+  flex-shrink: 0;
 }
 
 .header-title {
@@ -776,6 +783,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
   <button class="hamburger" id="hamburger" onclick="toggleSidebar()">
     <span></span><span></span><span></span>
   </button>
+  <img src="/logo.png" alt="SEA" class="header-logo">
   <div class="header-title" id="headerTitle">Dashboard</div>
   <div class="header-actions" id="headerActions"></div>
 </header>
@@ -2506,13 +2514,8 @@ td{padding:7px 10px;border-bottom:1px solid #e8e4dc;vertical-align:middle;color:
     <button class="print-btn no-print" onclick="window.print()">Imprimir / Salvar PDF</button>
   </div>
 
-  <h2>Resumo por status</h2>
-  <div class="grid">
-  ${statuses.map(s=>`<div class="sc" style="border-color:${s.color}"><div class="n">${cnt[s.id]||0}</div><div class="l">${s.name}</div></div>`).join('')}
-  </div>
-
-  <h2>Posts pendentes</h2>
-  ${pending.length===0?'<p style="color:#95875f;font-size:11px;font-weight:500">Nenhum post pendente neste período.</p>':`
+  <h2>Demandas pendentes</h2>
+  ${pending.length===0?'<p style="color:#95875f;font-size:11px;font-weight:500">Nenhuma demanda pendente neste período.</p>':`
   <table><thead><tr><th>Data</th>${showClient?'<th>Cliente</th>':''}<th>Descrição</th><th>Formato</th><th>Status</th><th>Observação</th></tr></thead>
   <tbody>${pending.map(d=>{const st=getStatus(d.statusId);const cl=getClient(d.clientId);const fmt=getFormat(d.formatoId);return`<tr>
   <td>${fmtDateFull(d.date)}</td>${showClient?`<td><strong>${cl.name}</strong></td>`:''}
@@ -2520,7 +2523,7 @@ td{padding:7px 10px;border-bottom:1px solid #e8e4dc;vertical-align:middle;color:
   <td><span class="badge" style="background:${st.color}22;color:${st.color}"><span class="dot" style="background:${st.color}"></span>${st.name}</span></td>
   <td style="color:#666">${d.obs||'—'}</td></tr>`}).join('')}</tbody></table>`}
 
-  <h2>Todas as demandas do período</h2>
+  <h2>Resumo de posts do período</h2>
   <table><thead><tr><th>Data</th>${showClient?'<th>Cliente</th>':''}<th>Descrição</th><th>Formato</th><th>Status</th></tr></thead>
   <tbody>${filtered.map(d=>{const st=getStatus(d.statusId);const cl=getClient(d.clientId);const fmt=getFormat(d.formatoId);return`<tr>
   <td>${fmtDateFull(d.date)}</td>${showClient?`<td><strong>${cl.name}</strong></td>`:''}
