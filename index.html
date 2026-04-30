@@ -1247,6 +1247,7 @@ function uid() { return '_' + Math.random().toString(36).slice(2); }
 let currentPage = 'dashboard';
 
 function goTo(page) {
+  if (page !== 'dashboard' && !canView(page)) { toast('Sem permissão para acessar esta página.'); return; }
   currentPage = page;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
@@ -1270,14 +1271,16 @@ function goTo(page) {
 
 function buildHeaderActions(page) {
   const el = document.getElementById('headerActions');
+  const btnNew = (label, fn, icon='M12 5v14M5 12h14') =>
+    `<button class="btn btn-primary btn-sm" onclick="${fn}()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="${icon}"/></svg> ${label}</button>`;
   const map = {
-    demands:  `<button class="btn btn-primary btn-sm" onclick="openDemandForm()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Nova demanda</button>`,
-    clients:  `<button class="btn btn-primary btn-sm" onclick="openClientForm()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Novo cliente</button>`,
-    statuses: `<button class="btn btn-primary btn-sm" onclick="openStatusForm()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Novo status</button>`,
-    formats:  `<button class="btn btn-primary btn-sm" onclick="openFormatForm()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Novo formato</button>`,
-    users:    `<button class="btn btn-primary btn-sm" onclick="openUserForm()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Novo usuário</button>`,
-    dashboard:`<button class="btn btn-ghost btn-sm" onclick="openExportModal()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M12 4v12m0 0l-4-4m4 4l4-4"/><path d="M4 20h16"/></svg> Exportar PDF</button>
-               <button class="btn btn-primary btn-sm" onclick="openDemandForm()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Nova demanda</button>`,
+    demands:  canEdit('demands')  ? btnNew('Nova demanda',  'openDemandForm')  : '',
+    clients:  canEdit('clients')  ? btnNew('Novo cliente',  'openClientForm')  : '',
+    statuses: canEdit('statuses') ? btnNew('Novo status',   'openStatusForm')  : '',
+    formats:  canEdit('formats')  ? btnNew('Novo formato',  'openFormatForm')  : '',
+    users:    canEdit('users')    ? btnNew('Novo usuário',  'openUserForm')    : '',
+    dashboard: `<button class="btn btn-ghost btn-sm" onclick="openExportModal()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M12 4v12m0 0l-4-4m4 4l4-4"/><path d="M4 20h16"/></svg> Exportar PDF</button>
+                ${canEdit('demands') ? btnNew('Nova demanda', 'openDemandForm') : ''}`,
   };
   el.innerHTML = map[page] || '';
 }
@@ -1462,10 +1465,10 @@ function openDetail(id) {
       <textarea class="form-textarea" id="dObs">${d.obs||''}</textarea>
     </div>
     <div class="form-actions">
-      <button class="btn btn-danger btn-sm" onclick="deleteDemandFromDetail('${d.id}')">Excluir</button>
+      ${canEdit('demands') ? `<button class="btn btn-danger btn-sm" onclick="deleteDemandFromDetail('${d.id}')">Excluir</button>` : ''}
       <div style="display:flex;gap:8px;margin-left:auto">
         <button class="btn btn-ghost" onclick="closeModal('detailModal')">Cancelar</button>
-        <button class="btn btn-primary" onclick="saveFromDetail('${d.id}')">Salvar alterações</button>
+        ${canEdit('demands') ? `<button class="btn btn-primary" onclick="saveFromDetail('${d.id}')">Salvar alterações</button>` : ''}
       </div>
     </div>
   `;
@@ -1644,6 +1647,7 @@ function applyDemandsFilter() {
     return;
   }
 
+  const editDemands = canEdit('demands');
   document.getElementById('demandsTable').innerHTML = filtered.map(d => {
     const st = getStatus(d.statusId);
     const cl = getClient(d.clientId);
@@ -1656,7 +1660,7 @@ function applyDemandsFilter() {
       <td><span class="badge" style="background:${st.color}22;color:${st.color}"><span class="dot" style="background:${st.color}"></span>${st.name}</span></td>
       <td style="color:var(--muted);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.obs||'—'}</td>
       <td onclick="event.stopPropagation()"><div class="row-actions">
-        <button class="btn btn-danger btn-sm" onclick="deleteDemand('${d.id}')">Excluir</button>
+        ${editDemands ? `<button class="btn btn-danger btn-sm" onclick="deleteDemand('${d.id}')">Excluir</button>` : ''}
       </div></td>
     </tr>`;
   }).join('');
@@ -1688,14 +1692,15 @@ function renderClients() {
     document.getElementById('clientsTable').innerHTML = `<tr><td colspan="3" style="text-align:center;padding:40px;color:var(--muted)">Nenhum cliente cadastrado.</td></tr>`;
     return;
   }
+  const editClients = canEdit('clients');
   document.getElementById('clientsTable').innerHTML = clients.map(c => {
     const total = demands.filter(d => d.clientId === c.id).length;
     return `<tr>
       <td><strong>${c.name}</strong></td>
       <td style="color:var(--muted)">${total} demanda${total!==1?'s':''}</td>
       <td><div class="row-actions">
-        <button class="btn btn-ghost btn-sm" onclick="openClientForm('${c.id}')">Editar</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteClient('${c.id}')">Excluir</button>
+        ${editClients ? `<button class="btn btn-ghost btn-sm" onclick="openClientForm('${c.id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteClient('${c.id}')">Excluir</button>` : ''}
       </div></td>
     </tr>`;
   }).join('');
@@ -1769,6 +1774,7 @@ function renderStatuses() {
     document.getElementById('statusesTable').innerHTML = `<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--muted)">Nenhum status cadastrado.</td></tr>`;
     return;
   }
+  const editStatuses = canEdit('statuses');
   document.getElementById('statusesTable').innerHTML = statuses.map(s => {
     const total = demands.filter(d => d.statusId === s.id).length;
     return `<tr>
@@ -1776,8 +1782,8 @@ function renderStatuses() {
       <td><span style="display:inline-block;width:18px;height:18px;border-radius:50%;background:${s.color};vertical-align:middle"></span></td>
       <td style="color:var(--muted)">${total} demanda${total!==1?'s':''}</td>
       <td><div class="row-actions">
-        <button class="btn btn-ghost btn-sm" onclick="openStatusForm('${s.id}')">Editar</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteStatus('${s.id}')">Excluir</button>
+        ${editStatuses ? `<button class="btn btn-ghost btn-sm" onclick="openStatusForm('${s.id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteStatus('${s.id}')">Excluir</button>` : ''}
       </div></td>
     </tr>`;
   }).join('');
@@ -1865,14 +1871,15 @@ function renderFormats() {
     document.getElementById('formatsTable').innerHTML = `<tr><td colspan="3" style="text-align:center;padding:40px;color:var(--muted)">Nenhum formato cadastrado.</td></tr>`;
     return;
   }
+  const editFormats = canEdit('formats');
   document.getElementById('formatsTable').innerHTML = formats.map(f => {
     const total = demands.filter(d => d.formatoId === f.id).length;
     return `<tr>
       <td><strong>${f.name}</strong></td>
       <td style="color:var(--muted)">${total} demanda${total!==1?'s':''}</td>
       <td><div class="row-actions">
-        <button class="btn btn-ghost btn-sm" onclick="openFormatForm('${f.id}')">Editar</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteFormat('${f.id}')">Excluir</button>
+        ${editFormats ? `<button class="btn btn-ghost btn-sm" onclick="openFormatForm('${f.id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteFormat('${f.id}')">Excluir</button>` : ''}
       </div></td>
     </tr>`;
   }).join('');
@@ -1939,16 +1946,16 @@ async function renderUsers() {
   const data = await API.get('/usuarios');
   if (data.erro) { toast('Erro ao carregar usuários'); return; }
   usuarios = data;
-  const me = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
+  const editUsers = canEdit('users');
   document.getElementById('usersTable').innerHTML = usuarios.map(u => `
     <tr>
       <td><strong>${u.nome}</strong></td>
       <td>${u.email}</td>
-      <td><span style="padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;background:${u.papel==='admin'?'#18170F':'#E8E4DC'};color:${u.papel==='admin'?'#fff':'#18170F'}">${u.papel}</span></td>
+      <td><span style="padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;background:${u.papel==='admin'?'#081542':'#E8E4DC'};color:${u.papel==='admin'?'#fff':'#081542'}">${u.papel}</span></td>
       <td><div class="row-actions">
-        <button class="btn btn-ghost btn-sm" onclick="openUserEditForm('${u.id}')">Editar</button>
+        ${editUsers ? `<button class="btn btn-ghost btn-sm" onclick="openUserEditForm('${u.id}')">Editar</button>
         ${u.papel !== 'admin' ? `<button class="btn btn-ghost btn-sm" onclick="openPermissoes('${u.id}')">Permissões</button>` : ''}
-        <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">Excluir</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">Excluir</button>` : ''}
       </div></td>
     </tr>
   `).join('');
@@ -2069,6 +2076,7 @@ function openPermissoes(userId) {
   const perms = u.permissoes || {};
   const pages = [
     { key: 'dashboard', label: 'Dashboard' },
+    { key: 'checklist', label: 'Painel do Dia' },
     { key: 'demands',   label: 'Demandas' },
     { key: 'clients',   label: 'Clientes' },
     { key: 'statuses',  label: 'Status' },
@@ -2082,25 +2090,25 @@ function openPermissoes(userId) {
     return val === undefined ? true : val;
   }
 
+  const thStyle = `padding:8px 14px;background:var(--surface2);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);text-align:center`;
   document.getElementById('formTitle').textContent = `Permissões — ${u.nome}`;
   document.getElementById('formBody').innerHTML = `
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Se nenhuma opção for marcada, o menu não aparecerá para o usuário.</p>
     <div style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead>
           <tr>
-            <th style="text-align:left;padding:8px 12px;background:var(--surface2);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted)">Página</th>
-            <th style="padding:8px 12px;background:var(--surface2);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);text-align:center">Visualizar</th>
-            <th style="padding:8px 12px;background:var(--surface2);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);text-align:center">Acessar</th>
-            <th style="padding:8px 12px;background:var(--surface2);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);text-align:center">Exibir Menu</th>
+            <th style="text-align:left;padding:8px 14px;background:var(--surface2);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted)">Página</th>
+            <th style="${thStyle}">Visualizar</th>
+            <th style="${thStyle}">Editar</th>
           </tr>
         </thead>
         <tbody>
           ${pages.map(p => `
             <tr style="border-bottom:1px solid var(--border)">
-              <td style="padding:10px 12px;font-weight:600">${p.label}</td>
-              <td style="padding:10px 12px;text-align:center"><input type="checkbox" id="perm_${p.key}_visualizar" ${chk(p.key,'visualizar')?'checked':''}></td>
-              <td style="padding:10px 12px;text-align:center"><input type="checkbox" id="perm_${p.key}_acessar" ${chk(p.key,'acessar')?'checked':''}></td>
-              <td style="padding:10px 12px;text-align:center"><input type="checkbox" id="perm_${p.key}_exibir_menu" ${chk(p.key,'exibir_menu')?'checked':''}></td>
+              <td style="padding:11px 14px;font-weight:600">${p.label}</td>
+              <td style="padding:11px 14px;text-align:center"><input type="checkbox" id="perm_${p.key}_visualizar" ${chk(p.key,'visualizar')?'checked':''}></td>
+              <td style="padding:11px 14px;text-align:center"><input type="checkbox" id="perm_${p.key}_editar" ${chk(p.key,'editar')?'checked':''}></td>
             </tr>
           `).join('')}
         </tbody>
@@ -2115,15 +2123,12 @@ function openPermissoes(userId) {
 }
 
 async function savePermissoes(userId) {
-  const pages = ['dashboard','demands','clients','statuses','formats','users','history'];
-  const perms = ['visualizar','acessar','exibir_menu'];
+  const pages = ['dashboard','checklist','demands','clients','statuses','formats','users','history'];
   const permissoes = {};
   pages.forEach(page => {
-    permissoes[page] = {};
-    perms.forEach(perm => {
-      const el = document.getElementById(`perm_${page}_${perm}`);
-      permissoes[page][perm] = el ? el.checked : true;
-    });
+    const visualizar = document.getElementById(`perm_${page}_visualizar`)?.checked ?? true;
+    const editar     = document.getElementById(`perm_${page}_editar`)?.checked ?? true;
+    permissoes[page] = { visualizar, editar };
   });
   const res = await API.put('/usuarios/' + userId, { permissoes });
   if (res.erro) { toast('Erro: ' + res.erro); return; }
@@ -2134,17 +2139,27 @@ async function savePermissoes(userId) {
   renderUsers();
 }
 
+function canView(page) {
+  const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
+  if (!u || u.papel === 'admin') return true;
+  const p = (u.permissoes || {})[page] || {};
+  return p.visualizar !== false || p.editar !== false;
+}
+
+function canEdit(page) {
+  const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
+  if (!u || u.papel === 'admin') return true;
+  const p = (u.permissoes || {})[page] || {};
+  return p.editar !== false;
+}
+
 function applyPermissions() {
   const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
   if (!u || u.papel === 'admin') return;
-  const perms = u.permissoes || {};
-  const pages = ['dashboard','demands','clients','statuses','formats','users','history'];
-  const navIds = { dashboard:'', demands:'', clients:'', statuses:'', formats:'navFormats', users:'navUsers', history:'navHistory' };
+  const pages = ['dashboard','checklist','demands','clients','statuses','formats','users','history'];
   pages.forEach(page => {
-    const pagePerm = perms[page];
-    if (!pagePerm) return;
     const navEl = document.querySelector(`.nav-item[data-page="${page}"]`);
-    if (navEl && pagePerm.exibir_menu === false) navEl.style.display = 'none';
+    if (navEl) navEl.style.display = canView(page) ? '' : 'none';
   });
 }
 
@@ -2506,7 +2521,7 @@ td{padding:7px 10px;border-bottom:1px solid #e8e4dc;vertical-align:middle;color:
   </div>
   <div class="report-info">
     <div class="report-title">Relatório semanal de demandas</div>
-    <div class="report-cliente">Nome do cliente: ${clientName || ''}</div>
+    <div class="report-cliente">Cliente: ${clientName || 'Todos'}</div>
   </div>
   <div class="divider-gold"></div>
 
