@@ -2663,9 +2663,11 @@ function exportPDF() {
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Poppins',sans-serif;color:#081542;background:#fff;min-height:100vh;display:flex;flex-direction:column;print-color-adjust:exact;-webkit-print-color-adjust:exact}
-.footer-bar,.top-stripe{print-color-adjust:exact;-webkit-print-color-adjust:exact}
-.page-wrap{flex:1;padding:48px 52px 32px}
+@page{margin:0}
+body{font-family:'Poppins',sans-serif;color:#081542;background:#fff;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+.top-stripe{position:fixed;top:0;left:0;right:0;height:28px;background:#081542;border-radius:0 0 14px 14px;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+.footer-bar{position:fixed;bottom:0;left:0;right:0;height:28px;background:#081542;border-radius:14px 14px 0 0;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+.page-wrap{padding:52px 52px 52px}
 .header-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}
 .logo-block{min-width:160px}
 .logo-separator{width:180px;height:1px;background:#95875f;margin-top:10px}
