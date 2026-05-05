@@ -2663,12 +2663,11 @@ function exportPDF() {
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-@page{margin:0}
-html,body{height:100%}
-body{font-family:'Poppins',sans-serif;color:#081542;background:#fff;print-color-adjust:exact;-webkit-print-color-adjust:exact;display:flex;flex-direction:column}
-.top-stripe{height:28px;background:#081542;border-radius:0 0 14px 14px;print-color-adjust:exact;-webkit-print-color-adjust:exact;flex-shrink:0}
-.footer-bar{height:28px;background:#081542;border-radius:14px 14px 0 0;print-color-adjust:exact;-webkit-print-color-adjust:exact;flex-shrink:0}
-.page-wrap{flex:1;padding:40px 52px}
+@page{size:A4;margin:0}
+body{font-family:'Poppins',sans-serif;color:#081542;background:#fff;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+.top-stripe{height:28px;background:#081542;border-radius:0 0 14px 14px;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+.footer-bar{height:28px;background:#081542;border-radius:14px 14px 0 0;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+.page-wrap{min-height:calc(297mm - 56px);padding:40px 52px;display:flex;flex-direction:column}
 .header-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}
 .logo-block{min-width:160px}
 .logo-separator{width:180px;height:1px;background:#95875f;margin-top:10px}
