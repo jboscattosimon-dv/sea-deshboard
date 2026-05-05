@@ -2815,16 +2815,21 @@ async function renderInternals() {
       ? `<a href="${d.anexo_b64}" download="${d.anexo_nome||'anexo'}" style="font-size:11px;color:var(--primary);font-weight:600" title="${d.anexo_nome||''}">📎 ${d.anexo_nome||'Anexo'}</a>`
       : '—';
     const canToggle = currentUser.papel === 'admin' || d.responsavel_id === currentUser.id || d.criado_por === currentUser.id;
-    const novoStatus = d.status === 'concluida' ? 'pendente' : 'concluida';
+    const statusCell = canToggle
+      ? `<select onclick="event.stopPropagation()" onchange="toggleInternalStatus('${d.id}',this.value)"
+           style="border:1px solid ${statusCl}55;background:${statusBg};color:${statusCl};border-radius:100px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;outline:none">
+           <option value="pendente" ${d.status==='pendente'?'selected':''}>Pendente</option>
+           <option value="concluida" ${d.status==='concluida'?'selected':''}>Concluída</option>
+         </select>`
+      : `<span class="badge" style="background:${statusBg};color:${statusCl}">${statusLb}</span>`;
     return `<tr style="${d.status==='concluida'?'opacity:0.6':''}">
       <td style="white-space:nowrap;${vencida&&d.status!=='concluida'?'color:#E74C3C;font-weight:600':''}">${fmtDateFull(d.prazo)}</td>
       <td><strong>${cl.name}</strong></td>
       <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${d.status==='concluida'?'text-decoration:line-through':''}">${d.descricao}</td>
       <td>${d.responsavel_nome||'—'}</td>
-      <td><span class="badge" style="background:${statusBg};color:${statusCl}">${statusLb}</span></td>
+      <td>${statusCell}</td>
       <td>${anexoHtml}</td>
       <td onclick="event.stopPropagation()"><div class="row-actions">
-        ${canToggle ? `<button class="btn btn-${d.status==='concluida'?'ghost':'primary'} btn-sm" onclick="toggleInternalStatus('${d.id}','${novoStatus}')">${d.status==='concluida'?'Reabrir':'Concluir'}</button>` : ''}
         ${editI ? `<button class="btn btn-ghost btn-sm" onclick="openInternalForm('${d.id}')">Editar</button>
         <button class="btn btn-danger btn-sm" onclick="deleteInternal('${d.id}')">Excluir</button>` : ''}
       </div></td>
