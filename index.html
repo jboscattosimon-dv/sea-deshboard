@@ -1240,7 +1240,8 @@ async function loadFromAPI() {
     formatoId: d.formato_id || null,
     desc: d.descricao,
     obs: d.observacao,
-    postado: d.postado || false
+    postado: d.postado || false,
+    criadoPor: d.criado_por || null
   }));
   STORE.set('statuses', statuses);
   STORE.set('clients', clients);
@@ -1593,7 +1594,7 @@ async function createDemand() {
   if (!date || !clientId || !statusId || !desc) { toast('Preencha todos os campos.'); return; }
   const res = await API.post('/demandas', { data: date, cliente_id: clientId, status_id: statusId, formato_id: formatoId, descricao: desc, observacao: obs });
   if (res.erro) { toast('Erro: ' + res.erro); return; }
-  demands.push({ id: res.id, date: res.data, clientId: res.cliente_id, statusId: res.status_id, formatoId: res.formato_id || null, desc: res.descricao, obs: res.observacao });
+  demands.push({ id: res.id, date: res.data, clientId: res.cliente_id, statusId: res.status_id, formatoId: res.formato_id || null, desc: res.descricao, obs: res.observacao, postado: false, criadoPor: res.criado_por || null });
   save();
   logHistorico('criado', 'demanda', res.id, `Demanda criada: ${desc}`);
   closeModal('formModal');
@@ -1614,7 +1615,7 @@ async function saveFromDetail(id) {
     const res = await API.put('/demandas/' + id, { data: date, cliente_id: clientId, status_id: statusId, formato_id: formatoId, descricao: desc, observacao: obs });
     if (res.erro) { toast('Erro ao salvar: ' + res.erro); return; }
     const i = demands.findIndex(d => d.id === id);
-    if (i >= 0) demands[i] = { id, date, clientId, statusId, formatoId, desc, obs };
+    if (i >= 0) demands[i] = { ...demands[i], id, date, clientId, statusId, formatoId, desc, obs };
     save();
     logHistorico('atualizado', 'demanda', id, `Demanda atualizada: ${desc}`);
     closeModal('detailModal');
@@ -1734,19 +1735,27 @@ function renderDemandsTable(filtered) {
     return;
   }
   const editDemands = canEdit('demands');
+  const curUser = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
   const today = new Date().toISOString().slice(0, 10);
   document.getElementById('demandsTable').innerHTML = filtered.map(d => {
     const st = getStatus(d.statusId);
     const cl = getClient(d.clientId);
     const fmt = getFormat(d.formatoId);
     const isToday = d.date === today;
+    const canChangeStatus = curUser.papel === 'admin' || d.criadoPor === curUser.id;
+    const statusCell = canChangeStatus
+      ? `<select onclick="event.stopPropagation()" onchange="changeStatus('${d.id}',this.value)"
+           style="border:1px solid ${st.color}55;background:${st.color}18;color:${st.color};border-radius:100px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;outline:none;max-width:140px">
+           ${statuses.map(s=>`<option value="${s.id}" ${d.statusId===s.id?'selected':''}>${s.name}</option>`).join('')}
+         </select>`
+      : `<span class="badge" style="background:${st.color}22;color:${st.color}"><span class="dot" style="background:${st.color}"></span>${st.name}</span>`;
     return `<tr style="cursor:pointer${d.postado?';opacity:0.6':''}" onclick="openDetail('${d.id}')">
       <td>${fmtDateFull(d.date)}</td>
       <td><strong>${cl.name}</strong></td>
       <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap${d.postado?';text-decoration:line-through':''}">${d.desc}</td>
       <td style="color:var(--muted);font-size:12px">${fmt ? fmt.name : '—'}</td>
       <td>
-        <span class="badge" style="background:${st.color}22;color:${st.color}"><span class="dot" style="background:${st.color}"></span>${st.name}</span>
+        ${statusCell}
         ${d.postado ? `<span class="badge" style="background:#27AE6022;color:#27AE60;margin-left:4px"><span class="dot" style="background:#27AE60"></span>Postado</span>` : ''}
       </td>
       <td style="color:var(--muted);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.obs||'—'}</td>
@@ -1759,6 +1768,16 @@ function renderDemandsTable(filtered) {
       </div></td>
     </tr>`;
   }).join('');
+}
+
+async function changeStatus(id, newStatusId) {
+  const res = await API.put('/demandas/' + id, { status_id: newStatusId });
+  if (res.erro) { toast('Erro ao alterar status: ' + res.erro); renderDemands(); return; }
+  const i = demands.findIndex(d => d.id === id);
+  if (i >= 0) demands[i].statusId = newStatusId;
+  save();
+  logHistorico('atualizado', 'demanda', id, `Status alterado para: ${getStatus(newStatusId).name}`);
+  if (currentPage === 'dashboard') renderDashboard();
 }
 
 function renderDemandsCards(filtered) {
@@ -2854,7 +2873,8 @@ async function openInternalForm(editId) {
     <div class="form-group">
       <label class="form-label">Anexo <span style="font-weight:400;color:var(--muted)">(imagem, PDF, doc — máx. 3MB)</span></label>
       ${editing?.anexo_b64 ? `<div style="margin-bottom:8px;font-size:12px">Atual: <a href="${editing.anexo_b64}" download="${editing.anexo_nome||'anexo'}" style="color:var(--primary);font-weight:600">${editing.anexo_nome||'Anexo'}</a></div>` : ''}
-      <input class="form-input" type="file" id="intFAnexo" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx">
+      <input class="form-input" type="file" id="intFAnexo" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx"
+        onchange="const f=this.files[0];if(f&&f.size>3*1024*1024){toast('Arquivo muito grande. Máximo 3MB.');this.value=''}">
     </div>
     <div class="form-actions">
       ${editing ? `<button class="btn btn-danger btn-sm" onclick="deleteInternal('${editing.id}',true)">Excluir</button>` : ''}
