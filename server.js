@@ -9,6 +9,7 @@ const clienteRoutes = require('./routes/clientes');
 const statusRoutes = require('./routes/status');
 const formatoRoutes = require('./routes/formatos');
 const historicoRoutes = require('./routes/historico');
+const demandasInternasRoutes = require('./routes/demandas-internas');
 
 const app = express();
 app.use(cors());
@@ -22,6 +23,7 @@ app.use('/api/clientes', clienteRoutes);
 app.use('/api/status', statusRoutes);
 app.use('/api/formatos', formatoRoutes);
 app.use('/api/historico', historicoRoutes);
+app.use('/api/demandas-internas', demandasInternasRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
