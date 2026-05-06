@@ -1122,7 +1122,6 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
       <div class="nav-group-header" onclick="toggleNavGroup('navGroupCRM')">
         <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
         CRM
-        <span class="nav-group-badge">NOVO</span>
         <svg class="chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
       <div class="nav-group-children">
@@ -2863,19 +2862,34 @@ function openPermissoes(userId) {
   const u = usuarios.find(x => x.id === userId);
   if (!u) return;
   const perms = u.permissoes || {};
-  const pages = [
-    { key: 'dashboard',       label: 'Dashboard' },
-    { key: 'demands',         label: 'Demandas' },
-    { key: 'internal',        label: 'Demandas Internas' },
-    { key: 'clients',         label: 'Clientes' },
-    { key: 'statuses',        label: 'Status' },
-    { key: 'formats',         label: 'Formatos' },
-    { key: 'users',           label: 'Usuários' },
-    { key: 'crm_leads',       label: 'CRM — Leads' },
-    { key: 'crm_funil',       label: 'CRM — Funil' },
-    { key: 'crm_atividades',  label: 'CRM — Atividades' },
-    { key: 'crm_relatorios',  label: 'CRM — Relatórios' },
-    { key: 'crm_etapas',      label: 'CRM — Etapas do Funil' },
+  const groups = [
+    {
+      label: 'Geral',
+      pages: [
+        { key: 'dashboard', label: 'Dashboard' },
+        { key: 'demands',   label: 'Demandas' },
+        { key: 'internal',  label: 'Demandas Internas' },
+      ]
+    },
+    {
+      label: 'Cadastro',
+      pages: [
+        { key: 'clients',  label: 'Clientes' },
+        { key: 'statuses', label: 'Status' },
+        { key: 'formats',  label: 'Formatos' },
+        { key: 'users',    label: 'Usuários' },
+      ]
+    },
+    {
+      label: 'CRM',
+      pages: [
+        { key: 'crm_leads',      label: 'Leads' },
+        { key: 'crm_funil',      label: 'Funil de Vendas' },
+        { key: 'crm_atividades', label: 'Atividades' },
+        { key: 'crm_relatorios', label: 'Relatórios' },
+        { key: 'crm_etapas',     label: 'Etapas do Funil' },
+      ]
+    },
   ];
 
   function chk(page, perm) {
@@ -2884,6 +2898,8 @@ function openPermissoes(userId) {
   }
 
   const thStyle = `padding:8px 14px;background:var(--surface2);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);text-align:center`;
+  const groupHeaderStyle = `padding:9px 14px;background:var(--surface2);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:var(--text);border-top:2px solid var(--border)`;
+
   document.getElementById('formTitle').textContent = `Permissões — ${u.nome}`;
   document.getElementById('formBody').innerHTML = `
     <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Se nenhuma opção for marcada, o menu não aparecerá para o usuário.</p>
@@ -2897,12 +2913,15 @@ function openPermissoes(userId) {
           </tr>
         </thead>
         <tbody>
-          ${pages.map(p => `
-            <tr style="border-bottom:1px solid var(--border)">
-              <td style="padding:11px 14px;font-weight:600">${p.label}</td>
-              <td style="padding:11px 14px;text-align:center"><input type="checkbox" id="perm_${p.key}_visualizar" ${chk(p.key,'visualizar')?'checked':''} onchange="onPermVisualizarChange('${p.key}', this)"></td>
-              <td style="padding:11px 14px;text-align:center"><input type="checkbox" id="perm_${p.key}_editar" ${chk(p.key,'editar')?'checked':''} onchange="onPermEditarChange('${p.key}', this)"></td>
-            </tr>
+          ${groups.map(g => `
+            <tr><td colspan="3" style="${groupHeaderStyle}">${g.label}</td></tr>
+            ${g.pages.map(p => `
+              <tr style="border-bottom:1px solid var(--border)">
+                <td style="padding:11px 14px 11px 22px;font-weight:500">${p.label}</td>
+                <td style="padding:11px 14px;text-align:center"><input type="checkbox" id="perm_${p.key}_visualizar" ${chk(p.key,'visualizar')?'checked':''} onchange="onPermVisualizarChange('${p.key}', this)"></td>
+                <td style="padding:11px 14px;text-align:center"><input type="checkbox" id="perm_${p.key}_editar" ${chk(p.key,'editar')?'checked':''} onchange="onPermEditarChange('${p.key}', this)"></td>
+              </tr>
+            `).join('')}
           `).join('')}
         </tbody>
       </table>
@@ -3661,16 +3680,12 @@ function openEtapaForm(id) {
   const et = id ? etapasData.find(e => e.id === id) : null;
   document.getElementById('formTitle').textContent = et ? 'Editar Etapa' : 'Nova Etapa';
   document.getElementById('formBody').innerHTML = `
-    ${!et ? `<div class="form-group">
-      <label class="form-label">Key <span style="color:#e74c3c">*</span> <span style="font-size:10px;color:var(--muted)">(slug único, ex: reuniao_fechada)</span></label>
-      <input class="form-input" id="etapaKey" placeholder="ex: reuniao_fechada" style="font-family:monospace">
-    </div>` : `<div class="form-group"><label class="form-label">Key</label><input class="form-input" value="${et.key}" readonly style="opacity:0.5;font-family:monospace"></div>`}
     <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Label <span style="color:#e74c3c">*</span></label>
+      <div class="form-group" style="flex:2">
+        <label class="form-label">Descrição <span style="color:#e74c3c">*</span></label>
         <input class="form-input" id="etapaLabel" value="${et?.label||''}" placeholder="Ex: Reunião Agendada">
       </div>
-      <div class="form-group">
+      <div class="form-group" style="flex:1">
         <label class="form-label">Ordem</label>
         <input class="form-input" id="etapaOrdem" type="number" min="1" value="${et?.ordem||etapasData.length+1}">
       </div>
@@ -3694,13 +3709,14 @@ async function saveEtapa(id) {
   const label = document.getElementById('etapaLabel')?.value.trim();
   const cor   = document.getElementById('etapaCor')?.value.trim() || '#999999';
   const ordem = parseInt(document.getElementById('etapaOrdem')?.value) || 0;
-  if (!label) { toast('Label é obrigatório.'); return; }
+  if (!label) { toast('Descrição é obrigatória.'); return; }
   let res;
   if (id) {
     res = await API.put('/crm/etapas/'+id, { label, cor, ordem });
   } else {
-    const key = document.getElementById('etapaKey')?.value.trim().toLowerCase().replace(/\s+/g,'_');
-    if (!key) { toast('Key é obrigatória.'); return; }
+    const key = label.toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g,'')
+      .replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
     res = await API.post('/crm/etapas', { key, label, cor, ordem });
   }
   if (res.erro) { toast('Erro: '+res.erro); return; }
