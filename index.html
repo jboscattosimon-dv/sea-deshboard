@@ -1544,6 +1544,10 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
         <div class="page-title">Relatórios CRM</div>
         <div class="page-sub">Métricas de leads, conversão e fechamentos</div>
       </div>
+      <button class="btn btn-primary" onclick="exportCrmPDF()">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M12 4v12m0 0l-4-4m4 4l4-4"/><path d="M4 20h16"/></svg>
+        Gerar PDF
+      </button>
     </div>
     <div id="crmRelContent">
       <div style="text-align:center;padding:60px;color:var(--muted);font-size:14px">Carregando métricas…</div>
@@ -4226,6 +4230,152 @@ async function renderCrmRelatorios() {
     },
     options: { ...chartDefaults, scales: { x: { ticks: { color:'#9CA3AF', font:{size:10} }, grid:{display:false} }, y: { ticks: { color:'#9CA3AF', font:{size:10}, stepSize:1 }, grid:{color:'rgba(8,21,66,0.06)'} } }, plugins: { legend:{ display:false } } }
   });
+}
+
+// ═══════════════════════════════════════
+//  PDF CRM
+// ═══════════════════════════════════════
+async function exportCrmPDF() {
+  if (crmEtapas.length <= 1) await loadCrmEtapas();
+  const res = await API.get('/crm/relatorios');
+  if (res.erro) { toast('Erro ao carregar dados: ' + res.erro); return; }
+  const { porEtapa, porOrigem, porMes, total, fechados, conversao, atividadesPendentes } = res;
+
+  const leadsRes = await API.get('/crm/leads');
+  const leads    = leadsRes.erro ? [] : leadsRes;
+
+  const origenLabels = { instagram:'Instagram', google:'Google', indicacao:'Indicação', linkedin:'LinkedIn', site:'Site', outro:'Outro' };
+  const origensRows  = Object.entries(porOrigem)
+    .filter(([,v]) => v > 0)
+    .sort((a,b) => b[1]-a[1])
+    .map(([k,v]) => `<tr><td>${origenLabels[k]||k}</td><td style="text-align:right;font-weight:700;color:#081542">${v}</td><td style="text-align:right;color:#95875f">${total>0?Math.round((v/total)*100):0}%</td></tr>`)
+    .join('');
+
+  const mesKeys   = Object.keys(porMes||{}).sort();
+  const mesRows   = mesKeys.map(k => {
+    const [y,m] = k.split('-');
+    return `<tr><td>${m}/${y}</td><td style="text-align:right;font-weight:700;color:#081542">${porMes[k]||0}</td></tr>`;
+  }).join('');
+
+  const etapasRows = crmEtapas.map(e => {
+    const cor   = e.cor || '#999';
+    const count = porEtapa[e.key] || 0;
+    const pct   = total > 0 ? Math.round((count/total)*100) : 0;
+    return `<tr>
+      <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${cor};margin-right:6px"></span>${e.label}</td>
+      <td style="text-align:right;font-weight:700;color:#081542">${count}</td>
+      <td style="text-align:right;color:#95875f">${pct}%</td>
+    </tr>`;
+  }).join('');
+
+  const leadsRows = leads.map(l => {
+    const etapa = crmEtapas.find(e => e.key === l.etapa);
+    const cor   = etapa?.cor || '#999';
+    return `<tr>
+      <td style="font-weight:600">${l.nome}</td>
+      <td>${l.telefone}</td>
+      <td style="color:#555">${l.email||'—'}</td>
+      <td>${origenLabels[l.origem]||l.origem||'—'}</td>
+      <td><span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:600;background:${cor}22;color:${cor}">${etapa?.label||l.etapa}</span></td>
+      <td style="color:#888;font-size:10px">${l.criado_em?new Date(l.criado_em).toLocaleDateString('pt-BR'):''}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+  <title>Relatório CRM — SEA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Poppins',sans-serif;background:#f5f3ef;color:#081542;font-size:12px;padding:0}
+    .page-wrap{max-width:900px;margin:0 auto;padding:28px 32px 48px}
+    .top-stripe{height:28px;background:#081542;border-radius:0 0 14px 14px}
+    .header-row{display:flex;justify-content:space-between;align-items:flex-end;margin:24px 0 0}
+    .logo-block{display:flex;flex-direction:column;gap:8px}
+    .logo-separator{width:100%;height:1px;background:#95875f;margin-top:8px}
+    .period-block{text-align:right}
+    .period-label{font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#95875f}
+    .period-dates{font-size:14px;font-weight:700;color:#081542;margin-top:2px}
+    .period-emitido{font-size:9px;color:#95875f;margin-top:2px}
+    .period-separator{width:100%;height:1px;background:#95875f;margin-top:8px}
+    .divider-gold{width:100%;height:1px;background:#95875f;margin:18px 0}
+    .report-title{font-size:13px;font-weight:600;color:#081542;margin-top:16px}
+    h2{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#95875f;margin:24px 0 10px}
+    .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:8px}
+    .kpi{border-radius:8px;padding:12px 14px;border-left:3px solid #081542;background:#fff}
+    .kpi .n{font-family:'Poppins',sans-serif;font-weight:700;font-size:22px;color:#081542}
+    .kpi .l{font-size:9px;margin-top:2px;font-weight:500;color:#95875f;text-transform:uppercase;letter-spacing:0.5px}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+    .card{background:#fff;border-radius:10px;padding:18px}
+    table{width:100%;border-collapse:collapse;font-size:11px}
+    th{text-align:left;padding:7px 10px;font-weight:600;font-size:9px;text-transform:uppercase;letter-spacing:0.6px;color:#95875f;border-bottom:1px solid #e0dbd2}
+    td{padding:7px 10px;border-bottom:1px solid #eae6df;vertical-align:middle;color:#081542}
+    .footer-bar{background:#081542;height:28px;border-radius:14px 14px 0 0;margin-top:40px}
+    .print-btn{padding:7px 18px;border-radius:100px;border:none;background:#081542;color:#fff;font-family:'Poppins',sans-serif;font-size:11px;font-weight:500;cursor:pointer;letter-spacing:0.5px}
+    @media print{.no-print{display:none}}
+  </style></head><body>
+  <div class="top-stripe"></div>
+  <div class="page-wrap">
+    <div class="header-row">
+      <div class="logo-block">
+        <img src="${LOGO_B64}" alt="SEA" style="width:130px;display:block">
+        <div class="logo-separator"></div>
+      </div>
+      <div class="period-block">
+        <div class="period-label">Relatório</div>
+        <div class="period-dates">CRM — Leads & Vendas</div>
+        <div class="period-emitido">Emitido em ${new Date().toLocaleDateString('pt-BR')}</div>
+        <div class="period-separator"></div>
+      </div>
+    </div>
+    <div class="report-title">Resumo de performance comercial</div>
+    <div class="divider-gold"></div>
+
+    <div style="display:flex;justify-content:flex-end;margin-bottom:20px">
+      <button class="print-btn no-print" onclick="window.print()">Imprimir / Salvar PDF</button>
+    </div>
+
+    <h2>Métricas gerais</h2>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="n">${total}</div><div class="l">Total de Leads</div></div>
+      <div class="kpi"><div class="n">${fechados}</div><div class="l">Fechamentos</div></div>
+      <div class="kpi"><div class="n">${conversao}%</div><div class="l">Taxa de Conversão</div></div>
+      <div class="kpi"><div class="n">${atividadesPendentes}</div><div class="l">Follow-ups Pendentes</div></div>
+    </div>
+
+    <div class="two-col" style="margin-top:20px">
+      <div class="card">
+        <h2 style="margin-top:0">Leads por etapa</h2>
+        <table><thead><tr><th>Etapa</th><th style="text-align:right">Qtd</th><th style="text-align:right">%</th></tr></thead>
+        <tbody>${etapasRows}</tbody></table>
+      </div>
+      <div class="card">
+        <h2 style="margin-top:0">Leads por origem</h2>
+        <table><thead><tr><th>Origem</th><th style="text-align:right">Qtd</th><th style="text-align:right">%</th></tr></thead>
+        <tbody>${origensRows||'<tr><td colspan="3" style="color:#aaa;text-align:center;padding:16px">Sem dados</td></tr>'}</tbody></table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <h2 style="margin-top:0">Novos leads por mês</h2>
+      <table><thead><tr><th>Mês</th><th style="text-align:right">Novos leads</th></tr></thead>
+      <tbody>${mesRows}</tbody></table>
+    </div>
+
+    <h2>Lista completa de leads</h2>
+    <div class="card">
+      <table>
+        <thead><tr><th>Nome</th><th>Telefone</th><th>E-mail</th><th>Origem</th><th>Etapa</th><th>Cadastrado em</th></tr></thead>
+        <tbody>${leadsRows||'<tr><td colspan="6" style="color:#aaa;text-align:center;padding:16px">Nenhum lead cadastrado</td></tr>'}</tbody>
+      </table>
+    </div>
+
+  </div>
+  <div class="footer-bar"></div>
+  </body></html>`;
+
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
 }
 
 // ═══════════════════════════════════════
