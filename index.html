@@ -842,7 +842,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
   border-radius: var(--r-sm);
   padding: 12px;
   margin-bottom: 8px;
-  cursor: pointer;
+  cursor: grab;
   transition: all 0.18s cubic-bezier(.22,1,.36,1);
   position: relative;
 }
@@ -850,6 +850,15 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0,0,0,0.10);
   border-color: #95875f;
+}
+.funil-card.dragging {
+  opacity: 0.35;
+  transform: rotate(1.5deg) scale(0.97);
+  cursor: grabbing;
+}
+.funil-col.drag-over {
+  box-shadow: 0 0 0 2px #95875f;
+  background: var(--surface2);
 }
 .funil-card-name {
   font-size: 13px;
@@ -4023,34 +4032,28 @@ async function renderFunil() {
   const board = document.getElementById('funilBoard');
   if (!board) return;
   const canEd = canEdit('crm_funil');
-  board.innerHTML = crmEtapas.map((etapa, currentIdx) => {
+  board.innerHTML = crmEtapas.map(etapa => {
     const leads = crmLeads.filter(l => l.etapa === etapa.key);
     const etapaColor = etapa.cor || etapa.color || '#999';
     const cards = leads.map(l => `
-      <div class="funil-card" onclick="openLeadDetail('${l.id}')">
+      <div class="funil-card"
+        draggable="${canEd}"
+        ondragstart="funilDragStart(event,'${l.id}')"
+        ondragend="funilDragEnd(event)"
+        onclick="openLeadDetail('${l.id}')">
         <div class="funil-card-name">${l.nome}</div>
         <div class="funil-card-phone">${l.telefone}</div>
-        <div class="funil-card-tags">
-          ${l.origem ? `<span class="funil-tag">${CRM_ORIGENS[l.origem]||l.origem}</span>` : ''}
-        </div>
-        ${canEd ? `<div style="display:flex;gap:5px;margin-top:10px;flex-wrap:wrap">
-          ${crmEtapas.filter(e => e.key !== etapa.key).map(e => {
-            const targetIdx = crmEtapas.findIndex(x => x.key === e.key);
-            const isBack    = targetIdx < currentIdx;
-            const arrow     = isBack ? '←' : '→';
-            const style     = isBack
-              ? 'font-size:10px;padding:3px 8px;color:#E74C3C;border-color:#FBCAC5'
-              : 'font-size:10px;padding:3px 8px';
-            return `<button class="btn btn-ghost btn-sm" style="${style}" onclick="event.stopPropagation();moveLeadEtapa('${l.id}','${e.key}')">${arrow} ${e.label}</button>`;
-          }).join('')}
-        </div>` : ''}
+        ${l.origem ? `<div class="funil-card-tags"><span class="funil-tag">${CRM_ORIGENS[l.origem]||l.origem}</span></div>` : ''}
       </div>`).join('');
     return `<div class="funil-col">
       <div class="funil-col-header">
         <span class="funil-col-title" style="color:${etapaColor}">${etapa.label}</span>
         <span class="funil-col-count">${leads.length}</span>
       </div>
-      <div id="funilCol_${etapa.key}">
+      <div id="funilCol_${etapa.key}" style="min-height:60px"
+        ondragover="funilDragOver(event)"
+        ondragleave="funilDragLeave(event)"
+        ondrop="funilDrop(event,'${etapa.key}')">
         ${cards || `<div style="text-align:center;padding:20px 0;color:var(--muted);font-size:12px">Nenhum lead</div>`}
       </div>
     </div>`;
@@ -4064,6 +4067,38 @@ async function moveLeadEtapa(id, etapa) {
   if (lead) lead.etapa = etapa;
   renderFunil();
   toast('Lead movido para ' + crmEtapa(etapa).label);
+}
+
+function funilDragStart(e, leadId) {
+  e.dataTransfer.setData('leadId', leadId);
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.classList.add('dragging');
+}
+
+function funilDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.funil-col.drag-over').forEach(el => el.classList.remove('drag-over'));
+}
+
+function funilDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.closest('.funil-col').classList.add('drag-over');
+}
+
+function funilDragLeave(e) {
+  if (e.currentTarget.contains(e.relatedTarget)) return;
+  e.currentTarget.closest('.funil-col').classList.remove('drag-over');
+}
+
+async function funilDrop(e, etapaKey) {
+  e.preventDefault();
+  e.currentTarget.closest('.funil-col').classList.remove('drag-over');
+  const leadId = e.dataTransfer.getData('leadId');
+  if (!leadId) return;
+  const lead = crmLeads.find(l => l.id === leadId);
+  if (!lead || lead.etapa === etapaKey) return;
+  await moveLeadEtapa(leadId, etapaKey);
 }
 
 // ── ATIVIDADES ───────────────────────────
