@@ -843,22 +843,24 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
   padding: 12px;
   margin-bottom: 8px;
   cursor: grab;
-  transition: all 0.18s cubic-bezier(.22,1,.36,1);
+  transition: box-shadow 0.18s, border-color 0.18s;
   position: relative;
+  user-select: none;
 }
 .funil-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.10);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.09);
   border-color: #95875f;
 }
-.funil-card.dragging {
-  opacity: 0.35;
-  transform: rotate(1.5deg) scale(0.97);
-  cursor: grabbing;
+.funil-card.fd-placeholder {
+  opacity: 0.22;
+  pointer-events: none;
+}
+.funil-col {
+  transition: background 0.2s, box-shadow 0.2s;
 }
 .funil-col.drag-over {
-  box-shadow: 0 0 0 2px #95875f;
-  background: var(--surface2);
+  box-shadow: 0 0 0 2px var(--text);
+  background: rgba(8,21,66,0.04);
 }
 .funil-card-name {
   font-size: 13px;
@@ -4037,10 +4039,8 @@ async function renderFunil() {
     const etapaColor = etapa.cor || etapa.color || '#999';
     const cards = leads.map(l => `
       <div class="funil-card"
-        draggable="${canEd}"
-        ondragstart="funilDragStart(event,'${l.id}')"
-        ondragend="funilDragEnd(event)"
-        onclick="openLeadDetail('${l.id}')">
+        ${canEd ? `onmousedown="funilPointerDown(event,'${l.id}')"` : ''}
+        onclick="funilCardClick('${l.id}')">
         <div class="funil-card-name">${l.nome}</div>
         <div class="funil-card-phone">${l.telefone}</div>
         ${l.origem ? `<div class="funil-card-tags"><span class="funil-tag">${CRM_ORIGENS[l.origem]||l.origem}</span></div>` : ''}
@@ -4050,10 +4050,7 @@ async function renderFunil() {
         <span class="funil-col-title">${etapa.label}</span>
         <span class="funil-col-count">${leads.length}</span>
       </div>
-      <div id="funilCol_${etapa.key}" style="min-height:60px"
-        ondragover="funilDragOver(event)"
-        ondragleave="funilDragLeave(event)"
-        ondrop="funilDrop(event,'${etapa.key}')">
+      <div id="funilCol_${etapa.key}" style="min-height:60px">
         ${cards || `<div style="text-align:center;padding:20px 0;color:var(--muted);font-size:12px">Nenhum lead</div>`}
       </div>
     </div>`;
@@ -4069,36 +4066,161 @@ async function moveLeadEtapa(id, etapa) {
   toast('Lead movido para ' + crmEtapa(etapa).label);
 }
 
-function funilDragStart(e, leadId) {
-  e.dataTransfer.setData('leadId', leadId);
-  e.dataTransfer.effectAllowed = 'move';
-  e.currentTarget.classList.add('dragging');
+// ── FUNIL DRAG — Apple spring physics ───────────────────────────
+const FD = {
+  active:false, leadId:null, ghost:null, originEl:null,
+  mouseX:0, mouseY:0, ghostX:0, ghostY:0,
+  velX:0, velY:0, rotation:0, rotVel:0, scale:1,
+  raf:null, activeCol:null, didDrag:false,
+  startX:0, startY:0, offsetX:0, offsetY:0,
+};
+let _funilClickBlock = false;
+
+function funilCardClick(leadId) {
+  if (_funilClickBlock) { _funilClickBlock = false; return; }
+  openLeadDetail(leadId);
 }
 
-function funilDragEnd(e) {
-  e.currentTarget.classList.remove('dragging');
-  document.querySelectorAll('.funil-col.drag-over').forEach(el => el.classList.remove('drag-over'));
-}
-
-function funilDragOver(e) {
+function funilPointerDown(e, leadId) {
+  if (e.button !== 0) return;
   e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-  e.currentTarget.closest('.funil-col').classList.add('drag-over');
+  const card = e.currentTarget;
+  const rect = card.getBoundingClientRect();
+
+  // Ghost: clone visual do card
+  const ghost = card.cloneNode(true);
+  ghost.removeAttribute('onmousedown');
+  ghost.removeAttribute('onclick');
+  ghost.style.cssText = `
+    position:fixed;width:${rect.width}px;left:${rect.left}px;top:${rect.top}px;
+    z-index:9999;pointer-events:none;will-change:transform;transform-origin:center;
+    background:#fff;border:1px solid var(--border);border-radius:9px;padding:12px;
+    box-shadow:0 24px 64px rgba(0,0,0,0.18);opacity:0;
+  `;
+  document.body.appendChild(ghost);
+  card.classList.add('fd-placeholder');
+
+  Object.assign(FD, {
+    active:true, leadId, ghost, originEl:card, didDrag:false,
+    mouseX:rect.left, mouseY:rect.top, ghostX:rect.left, ghostY:rect.top,
+    velX:0, velY:0, rotation:0, rotVel:0, scale:1, activeCol:null,
+    startX:e.clientX, startY:e.clientY,
+    offsetX:e.clientX - rect.left, offsetY:e.clientY - rect.top,
+  });
+
+  document.addEventListener('mousemove', funilPointerMove);
+  document.addEventListener('mouseup',   funilPointerUp);
+  document.body.style.userSelect = 'none';
+  funilAnimateGhost();
 }
 
-function funilDragLeave(e) {
-  if (e.currentTarget.contains(e.relatedTarget)) return;
-  e.currentTarget.closest('.funil-col').classList.remove('drag-over');
+function funilPointerMove(e) {
+  if (!FD.active) return;
+  FD.mouseX = e.clientX - FD.offsetX;
+  FD.mouseY = e.clientY - FD.offsetY;
+  if (Math.hypot(e.clientX - FD.startX, e.clientY - FD.startY) > 6) FD.didDrag = true;
+
+  let found = null;
+  document.querySelectorAll('.funil-col').forEach(col => {
+    const r = col.getBoundingClientRect();
+    if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom)
+      found = col;
+  });
+  if (found !== FD.activeCol) {
+    FD.activeCol?.classList.remove('drag-over');
+    found?.classList.add('drag-over');
+    FD.activeCol = found;
+  }
 }
 
-async function funilDrop(e, etapaKey) {
-  e.preventDefault();
-  e.currentTarget.closest('.funil-col').classList.remove('drag-over');
-  const leadId = e.dataTransfer.getData('leadId');
-  if (!leadId) return;
-  const lead = crmLeads.find(l => l.id === leadId);
-  if (!lead || lead.etapa === etapaKey) return;
-  await moveLeadEtapa(leadId, etapaKey);
+function funilAnimateGhost() {
+  if (!FD.active) return;
+  // Spring: stiffness / damping
+  FD.velX = (FD.velX + (FD.mouseX - FD.ghostX) * 0.20) * 0.74;
+  FD.velY = (FD.velY + (FD.mouseY - FD.ghostY) * 0.20) * 0.74;
+  FD.ghostX += FD.velX;
+  FD.ghostY += FD.velY;
+
+  // Rotação suave baseada na velocidade horizontal
+  FD.rotVel  = (FD.rotVel + (FD.velX * 0.9 - FD.rotation) * 0.14) * 0.72;
+  FD.rotation += FD.rotVel;
+
+  // Escala: sobe levemente com velocidade
+  const speed = Math.hypot(FD.velX, FD.velY);
+  FD.scale   += (1 + Math.min(speed * 0.004, 0.07) - FD.scale) * 0.12;
+
+  // Motion blur proporcional à velocidade
+  const blur  = Math.min(speed * 0.15, 4);
+
+  FD.ghost.style.left      = `${FD.ghostX}px`;
+  FD.ghost.style.top       = `${FD.ghostY}px`;
+  FD.ghost.style.transform = `scale(${FD.scale}) rotate(${FD.rotation}deg)`;
+  FD.ghost.style.filter    = blur > 0.5 ? `blur(${blur.toFixed(1)}px)` : '';
+  FD.ghost.style.opacity   = '0.93';
+
+  FD.raf = requestAnimationFrame(funilAnimateGhost);
+}
+
+async function funilPointerUp(e) {
+  if (!FD.active) return;
+  document.removeEventListener('mousemove', funilPointerMove);
+  document.removeEventListener('mouseup',   funilPointerUp);
+  document.body.style.userSelect = '';
+  cancelAnimationFrame(FD.raf);
+  FD.active = false;
+
+  const { ghost, originEl, leadId, activeCol, didDrag } = FD;
+  activeCol?.classList.remove('drag-over');
+
+  if (!didDrag) {
+    // Sem arrastar: apenas limpa e deixa o onclick disparar
+    ghost.remove();
+    originEl.classList.remove('fd-placeholder');
+    return;
+  }
+
+  _funilClickBlock = true;
+
+  if (activeCol) {
+    // Snap suave com spring bounce para a coluna alvo
+    const colBody = activeCol.querySelector('[id^="funilCol_"]');
+    const colRect = colBody.getBoundingClientRect();
+    ghost.style.transition = [
+      'left .45s cubic-bezier(.34,1.56,.64,1)',
+      'top .45s cubic-bezier(.34,1.56,.64,1)',
+      'transform .4s cubic-bezier(.34,1.56,.64,1)',
+      'opacity .25s ease',
+      'filter .2s',
+    ].join(',');
+    ghost.style.left      = `${colRect.left + 10}px`;
+    ghost.style.top       = `${colRect.top  + 10}px`;
+    ghost.style.transform = 'scale(1) rotate(0deg)';
+    ghost.style.filter    = '';
+    ghost.style.opacity   = '0';
+
+    await new Promise(r => setTimeout(r, 420));
+    ghost.remove();
+    originEl.classList.remove('fd-placeholder');
+    const etapaKey = colBody?.id.replace('funilCol_', '');
+    const lead = crmLeads.find(l => l.id === leadId);
+    if (etapaKey && lead && lead.etapa !== etapaKey) {
+      await moveLeadEtapa(leadId, etapaKey);
+    } else {
+      renderFunil();
+    }
+  } else {
+    // Snap de volta ao original com spring
+    const origRect = originEl.getBoundingClientRect();
+    ghost.style.transition = 'all .4s cubic-bezier(.34,1.56,.64,1)';
+    ghost.style.left      = `${origRect.left}px`;
+    ghost.style.top       = `${origRect.top}px`;
+    ghost.style.transform = 'scale(1) rotate(0deg)';
+    ghost.style.filter    = '';
+    ghost.style.opacity   = '0';
+    await new Promise(r => setTimeout(r, 420));
+    ghost.remove();
+    originEl.classList.remove('fd-placeholder');
+  }
 }
 
 // ── ATIVIDADES ───────────────────────────
