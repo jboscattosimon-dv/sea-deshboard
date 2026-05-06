@@ -3428,6 +3428,9 @@ td{padding:7px 10px;border-bottom:1px solid #e8e4dc;vertical-align:middle;color:
 // ═══════════════════════════════════════
 //  DEMANDAS INTERNAS
 // ═══════════════════════════════════════
+const DEV_EMAILS = ['admin@dev.com', 'admin2@dev.com'];
+const isRespUser = u => !DEV_EMAILS.includes(u.email);
+
 let internals = [];
 let internalUsuarios = [];
 
@@ -3444,7 +3447,7 @@ async function renderInternals() {
   }
 
   const curR = respSel.value, curC = clientSel.value;
-  respSel.innerHTML   = '<option value="all">Todos</option>' + internalUsuarios.map(u => `<option value="${u.id}">${u.nome}</option>`).join('');
+  respSel.innerHTML   = '<option value="all">Todos</option>' + internalUsuarios.filter(isRespUser).map(u => `<option value="${u.id}">${u.nome}</option>`).join('');
   clientSel.innerHTML = '<option value="all">Todos</option>' + clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
   if (curR) respSel.value   = curR;
   if (curC) clientSel.value = curC;
@@ -3510,7 +3513,7 @@ async function openInternalForm(editId) {
   }
   const editing = editId ? internals.find(d => d.id === editId) : null;
   const clientOpts = clients.map(c => `<option value="${c.id}" ${editing?.cliente_id===c.id?'selected':''}>${c.name}</option>`).join('');
-  const respOpts   = internalUsuarios.map(u => `<option value="${u.id}" ${editing?.responsavel_id===u.id?'selected':''}>${u.nome}</option>`).join('');
+  const respOpts   = internalUsuarios.filter(isRespUser).map(u => `<option value="${u.id}" ${editing?.responsavel_id===u.id?'selected':''}>${u.nome}</option>`).join('');
   const today      = new Date().toISOString().slice(0,10);
   document.getElementById('formTitle').textContent = editing ? 'Editar Demanda Interna' : 'Nova Demanda Interna';
   document.getElementById('formBody').innerHTML = `
@@ -3972,7 +3975,7 @@ async function renderAtividades() {
   const respSel = document.getElementById('atividadeRespFilter');
   if (respSel) {
     const cur = respSel.value;
-    respSel.innerHTML = '<option value="all">Todos</option>' + crmUsuarios.map(u=>`<option value="${u.id}">${u.nome}</option>`).join('');
+    respSel.innerHTML = '<option value="all">Todos</option>' + crmUsuarios.filter(isRespUser).map(u=>`<option value="${u.id}">${u.nome}</option>`).join('');
     if (cur) respSel.value = cur;
   }
 
@@ -4045,7 +4048,7 @@ async function openAtividadeForm(leadIdPre, editId) {
   }
   const editing = editId ? crmAtividades.find(a => a.id === editId) : null;
   const leadsOpts = crmLeads.map(l=>`<option value="${l.id}" ${l.id===(editing?.lead_id||leadIdPre)?'selected':''}>${l.nome}</option>`).join('');
-  const respOpts  = crmUsuarios.map(u=>`<option value="${u.id}" ${u.id===(editing?.responsavel_id||'')?'selected':''}>${u.nome}</option>`).join('');
+  const respOpts  = crmUsuarios.filter(isRespUser).map(u=>`<option value="${u.id}" ${u.id===(editing?.responsavel_id||'')?'selected':''}>${u.nome}</option>`).join('');
   document.getElementById('formTitle').textContent = editing ? 'Editar Atividade' : 'Nova Atividade';
   document.getElementById('formBody').innerHTML = `
     <input type="hidden" id="atividadeEditId" value="${editId||''}">
