@@ -111,7 +111,7 @@ router.get('/atividades', async (req, res) => {
   const { lead_id, responsavel_id } = req.query;
   let query = supabase
     .from('crm_atividades')
-    .select('*, crm_leads(nome), responsavel:responsavel_id(id, nome)')
+    .select('*, crm_leads(nome)')
     .order('data', { ascending: true });
   if (lead_id)        query = query.eq('lead_id', lead_id);
   if (responsavel_id) query = query.eq('responsavel_id', responsavel_id);
@@ -126,7 +126,7 @@ router.post('/atividades', async (req, res) => {
   const { data, error } = await supabase
     .from('crm_atividades')
     .insert([{ lead_id, data: date, descricao, concluida: false, responsavel_id: responsavel_id || null, criado_por: req.usuario.id }])
-    .select('*, crm_leads(nome), responsavel:responsavel_id(id, nome)')
+    .select('*, crm_leads(nome)')
     .single();
   if (error) return res.status(400).json({ erro: error.message });
   res.status(201).json(data);
@@ -143,7 +143,7 @@ router.put('/atividades/:id', async (req, res) => {
     .from('crm_atividades')
     .update(updates)
     .eq('id', req.params.id)
-    .select('*, crm_leads(nome), responsavel:responsavel_id(id, nome)')
+    .select('*, crm_leads(nome)')
     .single();
   if (error) return res.status(400).json({ erro: error.message });
   res.json(data);
