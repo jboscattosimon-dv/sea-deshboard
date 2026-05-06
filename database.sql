@@ -74,9 +74,13 @@ CREATE TABLE IF NOT EXISTS crm_atividades (
   data DATE NOT NULL,
   descricao TEXT NOT NULL,
   concluida BOOLEAN DEFAULT false,
+  responsavel_id UUID REFERENCES usuarios(id),
   criado_por UUID REFERENCES usuarios(id),
   criado_em TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Adiciona responsavel_id se a tabela já existia sem ela
+ALTER TABLE crm_atividades ADD COLUMN IF NOT EXISTS responsavel_id UUID REFERENCES usuarios(id);
 
 -- ─────────────────────────────────────────────────────────────────────
 

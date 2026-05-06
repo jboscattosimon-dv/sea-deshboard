@@ -108,37 +108,42 @@ router.delete('/leads/:id', async (req, res) => {
 
 // ── ATIVIDADES ─────────────────────────────────────────
 router.get('/atividades', async (req, res) => {
-  const { lead_id } = req.query;
-  let query = supabase.from('crm_atividades').select('*, crm_leads(nome)').order('data', { ascending: true });
-  if (lead_id) query = query.eq('lead_id', lead_id);
+  const { lead_id, responsavel_id } = req.query;
+  let query = supabase
+    .from('crm_atividades')
+    .select('*, crm_leads(nome), responsavel:responsavel_id(id, nome)')
+    .order('data', { ascending: true });
+  if (lead_id)        query = query.eq('lead_id', lead_id);
+  if (responsavel_id) query = query.eq('responsavel_id', responsavel_id);
   const { data, error } = await query;
   if (error) return res.status(500).json({ erro: error.message });
   res.json(data);
 });
 
 router.post('/atividades', async (req, res) => {
-  const { lead_id, data: date, descricao } = req.body;
+  const { lead_id, data: date, descricao, responsavel_id } = req.body;
   if (!lead_id || !date || !descricao) return res.status(400).json({ erro: 'lead_id, data e descrição são obrigatórios' });
   const { data, error } = await supabase
     .from('crm_atividades')
-    .insert([{ lead_id, data: date, descricao, concluida: false, criado_por: req.usuario.id }])
-    .select()
+    .insert([{ lead_id, data: date, descricao, concluida: false, responsavel_id: responsavel_id || null, criado_por: req.usuario.id }])
+    .select('*, crm_leads(nome), responsavel:responsavel_id(id, nome)')
     .single();
   if (error) return res.status(400).json({ erro: error.message });
   res.status(201).json(data);
 });
 
 router.put('/atividades/:id', async (req, res) => {
-  const { data: date, descricao, concluida } = req.body;
+  const { data: date, descricao, concluida, responsavel_id } = req.body;
   const updates = {};
-  if (date      !== undefined) updates.data      = date;
-  if (descricao !== undefined) updates.descricao = descricao;
-  if (concluida !== undefined) updates.concluida = concluida;
+  if (date           !== undefined) updates.data           = date;
+  if (descricao      !== undefined) updates.descricao      = descricao;
+  if (concluida      !== undefined) updates.concluida      = concluida;
+  if (responsavel_id !== undefined) updates.responsavel_id = responsavel_id || null;
   const { data, error } = await supabase
     .from('crm_atividades')
     .update(updates)
     .eq('id', req.params.id)
-    .select()
+    .select('*, crm_leads(nome), responsavel:responsavel_id(id, nome)')
     .single();
   if (error) return res.status(400).json({ erro: error.message });
   res.json(data);

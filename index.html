@@ -266,6 +266,29 @@ main { padding: 28px 24px 60px; max-width: 1200px; margin: 0 auto; }
 }
 .stat-card .lbl { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 
+.collapsible-section { overflow: hidden; transition: max-height 0.3s ease, opacity 0.3s ease; }
+.collapsible-section.collapsed { max-height: 0 !important; opacity: 0; }
+.section-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 2px 4px;
+  margin-bottom: 6px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+.section-toggle-btn:hover { color: var(--text); background: var(--border); }
+.section-toggle-btn svg { transition: transform 0.25s ease; flex-shrink: 0; }
+.section-toggle-btn.collapsed svg { transform: rotate(-90deg); }
+
 .filter-bar {
   display: flex;
   gap: 6px;
@@ -1185,7 +1208,13 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
         </div>
       </div>
     </div>
-    <div class="stats-row" id="dashStats"></div>
+    <button class="section-toggle-btn" id="dashStatToggleBtn" onclick="toggleCardSection('dashStatSection')">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><path d="M1 3l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Cards de status
+    </button>
+    <div class="collapsible-section" id="dashStatSection" style="max-height:200px">
+      <div class="stats-row" id="dashStats"></div>
+    </div>
     <div class="filter-bar" id="dashFilters"></div>
     <div class="clients-grid" id="dashGrid"></div>
   </div>
@@ -1489,6 +1518,12 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
         <label class="filter-label">Lead</label>
         <select class="form-select" id="atividadeLeadFilter" onchange="renderAtividades()">
           <option value="all">Todos os leads</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Responsável</label>
+        <select class="form-select" id="atividadeRespFilter" onchange="renderAtividades()">
+          <option value="all">Todos</option>
         </select>
       </div>
       <div class="filter-group">
@@ -1890,6 +1925,37 @@ function resetDashDates() {
 }
 
 // ═══════════════════════════════════════
+//  COLLAPSIBLE SECTIONS
+// ═══════════════════════════════════════
+function toggleCardSection(sectionId) {
+  const sec = document.getElementById(sectionId);
+  if (!sec) return;
+  const btn = document.querySelector(`[onclick="toggleCardSection('${sectionId}')"]`);
+  const isCollapsed = sec.classList.contains('collapsed');
+  if (isCollapsed) {
+    sec.classList.remove('collapsed');
+    sec.style.maxHeight = sec.scrollHeight + 'px';
+    btn?.classList.remove('collapsed');
+  } else {
+    sec.style.maxHeight = sec.scrollHeight + 'px';
+    requestAnimationFrame(() => sec.classList.add('collapsed'));
+    btn?.classList.add('collapsed');
+  }
+  try { localStorage.setItem('collapse_'+sectionId, isCollapsed ? '0' : '1'); } catch(e) {}
+}
+
+function restoreCollapse(sectionId) {
+  try {
+    if (localStorage.getItem('collapse_'+sectionId) === '1') {
+      const sec = document.getElementById(sectionId);
+      const btn = document.querySelector(`[onclick="toggleCardSection('${sectionId}')"]`);
+      sec?.classList.add('collapsed');
+      btn?.classList.add('collapsed');
+    }
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════
 //  DASHBOARD
 // ═══════════════════════════════════════
 function renderDashboard() {
@@ -1915,6 +1981,9 @@ function renderDashboard() {
     </div>`;
   });
   document.getElementById('dashStats').innerHTML = statsHtml;
+  const statSec = document.getElementById('dashStatSection');
+  if (statSec && !statSec.classList.contains('collapsed')) statSec.style.maxHeight = statSec.scrollHeight + 'px';
+  restoreCollapse('dashStatSection');
 
   const today = new Date().toISOString().slice(0, 10);
   const todayCount  = filtered.filter(d => d.date === today).length;
@@ -3842,23 +3911,42 @@ async function moveLeadEtapa(id, etapa) {
 }
 
 // ── ATIVIDADES ───────────────────────────
+let crmUsuarios = [];
+
 async function renderAtividades() {
-  // garante leads carregados para o select
+  // garante leads e usuários carregados para os selects
   if (!crmLeads.length) {
     const r = await API.get('/crm/leads');
-    if (!r.erro) {
-      crmLeads = r;
-      const sel = document.getElementById('atividadeLeadFilter');
-      if (sel) {
-        const cur = sel.value;
-        sel.innerHTML = '<option value="all">Todos os leads</option>' + crmLeads.map(l=>`<option value="${l.id}">${l.nome}</option>`).join('');
-        if (cur) sel.value = cur;
-      }
-    }
+    if (!r.erro) crmLeads = r;
   }
-  const leadId = document.getElementById('atividadeLeadFilter')?.value || 'all';
+  if (!crmUsuarios.length) {
+    const r = await API.get('/usuarios');
+    if (!r.erro && Array.isArray(r)) crmUsuarios = r;
+  }
+
+  const leadSel = document.getElementById('atividadeLeadFilter');
+  if (leadSel) {
+    const cur = leadSel.value;
+    leadSel.innerHTML = '<option value="all">Todos os leads</option>' + crmLeads.map(l=>`<option value="${l.id}">${l.nome}</option>`).join('');
+    if (cur) leadSel.value = cur;
+  }
+  const respSel = document.getElementById('atividadeRespFilter');
+  if (respSel) {
+    const cur = respSel.value;
+    respSel.innerHTML = '<option value="all">Todos</option>' + crmUsuarios.map(u=>`<option value="${u.id}">${u.nome}</option>`).join('');
+    if (cur) respSel.value = cur;
+  }
+
+  const leadId = leadSel?.value || 'all';
+  const respId = respSel?.value || 'all';
   const stF    = document.getElementById('atividadeStatusFilter')?.value || 'all';
-  const url    = leadId !== 'all' ? `/crm/atividades?lead_id=${leadId}` : '/crm/atividades';
+
+  let url = '/crm/atividades';
+  const params = [];
+  if (leadId !== 'all') params.push(`lead_id=${leadId}`);
+  if (respId !== 'all') params.push(`responsavel_id=${respId}`);
+  if (params.length) url += '?' + params.join('&');
+
   const res    = await API.get(url);
   if (res.erro) {
     toast('Erro ao carregar atividades: ' + res.erro);
@@ -3886,36 +3974,52 @@ async function renderAtividades() {
     const [y,m,d] = (a.data||'').split('-');
     const dateStr = a.data ? `${d}/${m}/${y}` : '—';
     const leadNome = a.crm_leads?.nome || crmLeads.find(l=>l.id===a.lead_id)?.nome || '—';
+    const respNome = a.responsavel?.nome || crmUsuarios.find(u=>u.id===a.responsavel_id)?.nome || null;
     return `<div class="ativ-row" style="${a.concluida?'opacity:0.6':''}">
       ${canEd ? `<div class="ativ-check ${a.concluida?'done':''}" onclick="toggleAtividade('${a.id}',${!a.concluida})">
         ${a.concluida?'<svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}
       </div>` : `<div class="ativ-check ${a.concluida?'done':''}"></div>`}
       <div class="ativ-info">
         <div class="ativ-desc ${a.concluida?'done':''}">${a.descricao}</div>
-        <div class="ativ-meta">Lead: <strong>${leadNome}</strong></div>
+        <div class="ativ-meta">
+          Lead: <strong>${leadNome}</strong>
+          ${respNome ? ` · <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="vertical-align:middle;opacity:0.6"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> <strong>${respNome}</strong>` : ''}
+        </div>
       </div>
       <span class="ativ-date-badge" style="background:${dateColor}22;color:${dateColor}">${dateStr}</span>
+      ${canEd ? `<button class="btn btn-ghost btn-sm" onclick="openAtividadeForm(null,'${a.id}')" style="padding:5px 8px"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>` : ''}
       ${canEd ? `<button class="btn btn-danger btn-sm" onclick="deleteAtividade('${a.id}')"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>` : ''}
     </div>`;
   }).join('');
 }
 
-function openAtividadeForm(leadIdPre) {
+async function openAtividadeForm(leadIdPre, editId) {
   if (!crmLeads.length) { toast('Carregue os leads primeiro.'); return; }
-  const leadsOpts = crmLeads.map(l=>`<option value="${l.id}" ${l.id===leadIdPre?'selected':''}>${l.nome}</option>`).join('');
-  document.getElementById('formTitle').textContent = 'Nova Atividade';
+  if (!crmUsuarios.length) {
+    const u = await API.get('/usuarios');
+    if (!u.erro) crmUsuarios = u;
+  }
+  const editing = editId ? crmAtividades.find(a => a.id === editId) : null;
+  const leadsOpts = crmLeads.map(l=>`<option value="${l.id}" ${l.id===(editing?.lead_id||leadIdPre)?'selected':''}>${l.nome}</option>`).join('');
+  const respOpts  = crmUsuarios.map(u=>`<option value="${u.id}" ${u.id===(editing?.responsavel_id||'')?'selected':''}>${u.nome}</option>`).join('');
+  document.getElementById('formTitle').textContent = editing ? 'Editar Atividade' : 'Nova Atividade';
   document.getElementById('formBody').innerHTML = `
+    <input type="hidden" id="atividadeEditId" value="${editId||''}">
     <div class="form-group">
       <label class="form-label">Lead <span style="color:#e74c3c">*</span></label>
       <select class="form-select" id="atividadeLead"><option value="">Selecione</option>${leadsOpts}</select>
     </div>
     <div class="form-group">
       <label class="form-label">Data <span style="color:#e74c3c">*</span></label>
-      <input class="form-input" id="atividadeData" type="date" value="${new Date().toISOString().slice(0,10)}">
+      <input class="form-input" id="atividadeData" type="date" value="${editing?.data || new Date().toISOString().slice(0,10)}">
     </div>
     <div class="form-group">
       <label class="form-label">Descrição <span style="color:#e74c3c">*</span></label>
-      <textarea class="form-input" id="atividadeDesc" rows="3" placeholder="Ex: Ligar para apresentar proposta..."></textarea>
+      <textarea class="form-input" id="atividadeDesc" rows="3" placeholder="Ex: Ligar para apresentar proposta...">${editing?.descricao||''}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Responsável</label>
+      <select class="form-select" id="atividadeResp"><option value="">Sem responsável</option>${respOpts}</select>
     </div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
@@ -3926,16 +4030,29 @@ function openAtividadeForm(leadIdPre) {
 }
 
 async function saveAtividade() {
-  const lead_id   = document.getElementById('atividadeLead')?.value;
-  const data      = document.getElementById('atividadeData')?.value;
-  const descricao = document.getElementById('atividadeDesc')?.value.trim();
+  const editId     = document.getElementById('atividadeEditId')?.value;
+  const lead_id    = document.getElementById('atividadeLead')?.value;
+  const data       = document.getElementById('atividadeData')?.value;
+  const descricao  = document.getElementById('atividadeDesc')?.value.trim();
+  const resp       = document.getElementById('atividadeResp')?.value;
+  const responsavel_id = resp || null;
   if (!lead_id || !data || !descricao) { toast('Preencha todos os campos obrigatórios.'); return; }
-  const res = await API.post('/crm/atividades', { lead_id, data, descricao });
-  if (res.erro) { toast('Erro: '+res.erro); return; }
-  closeModal('formModal');
-  toast('Atividade criada!');
-  const leadNome = crmLeads.find(l => l.id === lead_id)?.nome || lead_id;
-  logHistorico('criado', 'atividade', res.id, `Atividade criada para ${leadNome}: ${descricao}`);
+  let res;
+  if (editId) {
+    res = await API.put('/crm/atividades/'+editId, { lead_id, data, descricao, responsavel_id });
+    if (res.erro) { toast('Erro: '+res.erro); return; }
+    closeModal('formModal');
+    toast('Atividade atualizada!');
+    const leadNome = crmLeads.find(l => l.id === lead_id)?.nome || lead_id;
+    logHistorico('editado', 'atividade', editId, `Atividade editada para ${leadNome}: ${descricao}`);
+  } else {
+    res = await API.post('/crm/atividades', { lead_id, data, descricao, responsavel_id });
+    if (res.erro) { toast('Erro: '+res.erro); return; }
+    closeModal('formModal');
+    toast('Atividade criada!');
+    const leadNome = crmLeads.find(l => l.id === lead_id)?.nome || lead_id;
+    logHistorico('criado', 'atividade', res.id, `Atividade criada para ${leadNome}: ${descricao}`);
+  }
   renderAtividades();
 }
 
@@ -3973,22 +4090,28 @@ async function renderCrmRelatorios() {
 
   el.innerHTML = `
     <!-- KPIs -->
-    <div class="crm-stat-grid">
-      <div class="crm-stat-card">
-        <div class="crm-stat-num">${total}</div>
-        <div class="crm-stat-lbl">Total de Leads</div>
-      </div>
-      <div class="crm-stat-card">
-        <div class="crm-stat-num">${fechados}</div>
-        <div class="crm-stat-lbl">Fechamentos</div>
-      </div>
-      <div class="crm-stat-card">
-        <div class="crm-stat-num">${conversao}%</div>
-        <div class="crm-stat-lbl">Taxa de Conversão</div>
-      </div>
-      <div class="crm-stat-card">
-        <div class="crm-stat-num">${atividadesPendentes}</div>
-        <div class="crm-stat-lbl">Follow-ups Pendentes</div>
+    <button class="section-toggle-btn" id="crmStatToggleBtn" onclick="toggleCardSection('crmStatSection')">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><path d="M1 3l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Métricas
+    </button>
+    <div class="collapsible-section" id="crmStatSection" style="max-height:200px">
+      <div class="crm-stat-grid">
+        <div class="crm-stat-card">
+          <div class="crm-stat-num">${total}</div>
+          <div class="crm-stat-lbl">Total de Leads</div>
+        </div>
+        <div class="crm-stat-card">
+          <div class="crm-stat-num">${fechados}</div>
+          <div class="crm-stat-lbl">Fechamentos</div>
+        </div>
+        <div class="crm-stat-card">
+          <div class="crm-stat-num">${conversao}%</div>
+          <div class="crm-stat-lbl">Taxa de Conversão</div>
+        </div>
+        <div class="crm-stat-card">
+          <div class="crm-stat-num">${atividadesPendentes}</div>
+          <div class="crm-stat-lbl">Follow-ups Pendentes</div>
+        </div>
       </div>
     </div>
 
@@ -4034,6 +4157,8 @@ async function renderCrmRelatorios() {
       }).join('')}
     </div>
   `;
+
+  restoreCollapse('crmStatSection');
 
   // Destrói charts anteriores se existirem
   _destroyChart('etapa'); _destroyChart('origem'); _destroyChart('mes');
