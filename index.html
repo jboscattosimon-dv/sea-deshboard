@@ -997,6 +997,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-sm);
+  cursor: pointer;
   padding: 12px 16px;
   display: flex;
   align-items: flex-start;
@@ -4288,8 +4289,8 @@ async function renderAtividades() {
     const dateStr = a.data ? `${d}/${m}/${y}` : '—';
     const leadNome = a.crm_leads?.nome || crmLeads.find(l=>l.id===a.lead_id)?.nome || '—';
     const respNome = a.responsavel?.nome || crmUsuarios.find(u=>u.id===a.responsavel_id)?.nome || null;
-    return `<div class="ativ-row" style="${a.concluida?'opacity:0.6':''}">
-      ${canEd ? `<div class="ativ-check ${a.concluida?'done':''}" onclick="toggleAtividade('${a.id}',${!a.concluida})">
+    return `<div class="ativ-row" style="${a.concluida?'opacity:0.6':''}" onclick="openAtividadeDetail('${a.id}')">
+      ${canEd ? `<div class="ativ-check ${a.concluida?'done':''}" onclick="event.stopPropagation();toggleAtividade('${a.id}',${!a.concluida})">
         ${a.concluida?'<svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}
       </div>` : `<div class="ativ-check ${a.concluida?'done':''}"></div>`}
       <div class="ativ-info">
@@ -4305,8 +4306,8 @@ async function renderAtividades() {
         ` : `<span style="font-size:11px;color:var(--muted)">—</span>`}
       </div>
       <span class="ativ-date-badge" style="background:${dateColor}22;color:${dateColor}">${dateStr}</span>
-      ${canEd ? `<button class="btn btn-ghost btn-sm" onclick="openAtividadeForm(null,'${a.id}')" style="padding:5px 8px"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>` : ''}
-      ${canEd ? `<button class="btn btn-danger btn-sm" onclick="deleteAtividade('${a.id}')"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>` : ''}
+      ${canEd ? `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openAtividadeForm(null,'${a.id}')" style="padding:5px 8px"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>` : ''}
+      ${canEd ? `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteAtividade('${a.id}')"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>` : ''}
     </div>`;
   }).join('');
 }
@@ -4386,6 +4387,99 @@ async function deleteAtividade(id) {
   const res = await API.del('/crm/atividades/'+id);
   if (res.erro) { toast('Erro: '+res.erro); return; }
   logHistorico('excluido', 'atividade', id, `Atividade excluída: ${atv?.descricao?.slice(0,50) || id}`);
+  toast('Atividade removida.');
+  renderAtividades();
+}
+
+async function openAtividadeDetail(id) {
+  const a = crmAtividades.find(x => x.id === id);
+  if (!a) return;
+  if (!crmUsuarios.length) {
+    const u = await API.get('/usuarios');
+    if (!u.erro) crmUsuarios = u;
+  }
+  const today    = new Date().toISOString().slice(0,10);
+  const overdue  = !a.concluida && a.data < today;
+  const dateColor = a.concluida ? '#27AE60' : overdue ? '#E74C3C' : a.data === today ? '#F39C12' : 'var(--muted)';
+  const statusLb  = a.concluida ? 'Concluída' : overdue ? 'Vencida' : 'Pendente';
+  const statusBg  = a.concluida ? '#27AE6022' : overdue ? '#E74C3C22' : '#E6B80022';
+  const statusCl  = a.concluida ? '#27AE60'   : overdue ? '#E74C3C'   : '#B8860B';
+  const leadNome  = a.crm_leads?.nome || crmLeads.find(l => l.id === a.lead_id)?.nome || '—';
+  const [y,m,d]   = (a.data||'').split('-');
+  const dateStr   = a.data ? `${d}/${m}/${y}` : '—';
+  const editMode  = canEdit('crm_atividades');
+  const ro    = editMode ? '' : 'readonly disabled style="pointer-events:none;opacity:0.7"';
+  const roSel = editMode ? '' : 'disabled style="pointer-events:none;opacity:0.7"';
+
+  const leadsOpts = crmLeads.map(l => `<option value="${l.id}" ${l.id===a.lead_id?'selected':''}>${l.nome}</option>`).join('');
+  const respOpts  = crmUsuarios.filter(isRespUser).map(u => `<option value="${u.id}" ${u.id===a.responsavel_id?'selected':''}>${u.nome}</option>`).join('');
+
+  document.getElementById('detailBody').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:2px">${editMode?'Editando atividade':'Visualizando atividade'}</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${leadNome} · ${dateStr}</div>
+      </div>
+      <span class="badge" style="background:${statusBg};color:${statusCl}">${statusLb}</span>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Lead</label>
+        <select class="form-select" id="adLead" ${roSel}><option value="">—</option>${leadsOpts}</select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data</label>
+        <input class="form-input" type="date" id="adData" value="${a.data||''}" ${ro}>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Responsável</label>
+      <select class="form-select" id="adResp" ${roSel}><option value="">Sem responsável</option>${respOpts}</select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descrição</label>
+      <textarea class="form-textarea" id="adDesc" ${ro}>${a.descricao||''}</textarea>
+    </div>
+    ${editMode ? `
+    <div class="form-group">
+      <label class="form-label">Status</label>
+      <select class="form-select" id="adConcluida">
+        <option value="false" ${!a.concluida?'selected':''}>Pendente</option>
+        <option value="true"  ${a.concluida ?'selected':''}>Concluída</option>
+      </select>
+    </div>` : ''}
+    <div class="form-actions">
+      ${editMode ? `<button class="btn btn-danger btn-sm" onclick="deleteAtividadeFromDetail('${a.id}')">Excluir</button>` : ''}
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn btn-ghost" onclick="closeModal('detailModal')">Fechar</button>
+        ${editMode ? `<button class="btn btn-primary" onclick="saveAtividadeDetail('${a.id}')">Salvar alterações</button>` : ''}
+      </div>
+    </div>
+  `;
+  openModal('detailModal');
+}
+
+async function saveAtividadeDetail(id) {
+  const lead_id    = document.getElementById('adLead').value;
+  const data       = document.getElementById('adData').value;
+  const descricao  = document.getElementById('adDesc').value.trim();
+  const resp       = document.getElementById('adResp').value;
+  const concluida  = document.getElementById('adConcluida').value === 'true';
+  if (!lead_id || !data || !descricao) { toast('Preencha todos os campos obrigatórios.'); return; }
+  const res = await API.put('/crm/atividades/'+id, { lead_id, data, descricao, responsavel_id: resp||null, concluida });
+  if (res.erro) { toast('Erro: '+res.erro); return; }
+  logHistorico('atualizado', 'atividade', id, `Atividade atualizada: ${descricao.slice(0,50)}`);
+  closeModal('detailModal');
+  toast('Atividade atualizada!');
+  renderAtividades();
+}
+
+async function deleteAtividadeFromDetail(id) {
+  if (!confirm('Remover esta atividade?')) return;
+  const res = await API.del('/crm/atividades/'+id);
+  if (res.erro) { toast('Erro: '+res.erro); return; }
+  logHistorico('excluido', 'atividade', id, `Atividade excluída`);
+  closeModal('detailModal');
   toast('Atividade removida.');
   renderAtividades();
 }
