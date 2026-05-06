@@ -2746,7 +2746,7 @@ async function renderUsers() {
       <td><span style="padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;background:${u.papel==='admin'?'#081542':'#E8E4DC'};color:${u.papel==='admin'?'#fff':'#081542'}">${u.papel}</span></td>
       <td><div class="row-actions">
         ${editUsers ? `<button class="btn btn-ghost btn-sm" onclick="openUserEditForm('${u.id}')">Editar</button>
-        ${u.papel !== 'admin' ? `<button class="btn btn-ghost btn-sm" onclick="openPermissoes('${u.id}')">Permissões</button>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="openPermissoes('${u.id}')">Permissões</button>
         <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">Excluir</button>` : ''}
       </div></td>
     </tr>
