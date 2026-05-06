@@ -945,7 +945,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
   position: absolute;
   top: 0; left: 0;
   width: 4px; height: 100%;
-  background: linear-gradient(180deg, #95875f, #d4c07a);
+  background: linear-gradient(180deg, #081542, #2a4a9e);
   border-radius: 4px 0 0 4px;
 }
 .crm-stat-num {
@@ -1452,7 +1452,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Ordem</th><th>Etapa</th><th>Cor</th><th>Key</th><th></th></tr></thead>
+        <thead><tr><th>Ordem</th><th>Etapa</th><th>Cor</th><th></th></tr></thead>
         <tbody id="etapasTable"></tbody>
       </table>
     </div>
@@ -3649,7 +3649,7 @@ async function renderEtapas() {
   const tbody = document.getElementById('etapasTable');
   if (!tbody) return;
   if (!etapasData.length) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted)">Nenhuma etapa cadastrada.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--muted)">Nenhuma etapa cadastrada.</td></tr>`;
     return;
   }
   tbody.innerHTML = etapasData.map(e => {
@@ -3665,7 +3665,6 @@ async function renderEtapas() {
       <td>
         <span style="display:inline-block;padding:2px 10px;border-radius:100px;font-size:11px;font-weight:700;background:${cor}22;color:${cor}">${cor}</span>
       </td>
-      <td style="color:var(--muted);font-size:12px;font-family:monospace">${e.key}</td>
       <td style="text-align:right">
         ${canEd ? `<div style="display:flex;gap:6px;justify-content:flex-end">
           <button class="btn btn-ghost btn-sm" onclick="openEtapaForm('${e.id}')">Editar</button>
@@ -3791,6 +3790,16 @@ function filterLeads() {
   }).join('');
 }
 
+function maskTelefone(el) {
+  let v = el.value.replace(/\D/g, '').slice(0, 11);
+  if (v.length <= 10) {
+    v = v.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+  } else {
+    v = v.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+  }
+  el.value = v;
+}
+
 function openLeadForm(id) {
   const lead = id ? crmLeads.find(l => l.id === id) : null;
   document.getElementById('formTitle').textContent = lead ? 'Editar Lead' : 'Novo Lead';
@@ -3803,7 +3812,7 @@ function openLeadForm(id) {
     </div>
     <div class="form-group">
       <label class="form-label">Telefone <span style="color:#e74c3c">*</span></label>
-      <input class="form-input" id="leadTelefone" value="${lead?.telefone||''}" placeholder="(00) 00000-0000">
+      <input class="form-input" id="leadTelefone" value="${lead?.telefone||''}" placeholder="(00) 00000-0000" oninput="maskTelefone(this)" maxlength="16">
     </div>
     <div class="form-group">
       <label class="form-label">E-mail</label>
@@ -4201,9 +4210,9 @@ async function renderCrmRelatorios() {
     type: 'bar',
     data: {
       labels: origenKeys.map(k => origenLabels[k]),
-      datasets: [{ data: origenKeys.map(k => porOrigem[k]||0), backgroundColor: '#95875f', borderRadius: 5 }]
+      datasets: [{ data: origenKeys.map(k => porOrigem[k]||0), backgroundColor: origenKeys.map((_,i) => `rgba(8,21,66,${1 - i*0.12})`), borderRadius: 5 }]
     },
-    options: { ...chartDefaults, indexAxis: 'y', scales: { x: { ticks: { color:'#9CA3AF', font:{size:10} }, grid:{color:'#f0ede5'} }, y: { ticks: { color:'#6B7280', font:{size:11} }, grid:{display:false} } }, plugins: { legend:{ display:false } } }
+    options: { ...chartDefaults, indexAxis: 'y', scales: { x: { ticks: { color:'#9CA3AF', font:{size:10} }, grid:{color:'rgba(8,21,66,0.06)'} }, y: { ticks: { color:'#6B7280', font:{size:11} }, grid:{display:false} } }, plugins: { legend:{ display:false } } }
   });
 
   // Linha: evolução mensal
@@ -4213,9 +4222,9 @@ async function renderCrmRelatorios() {
     type: 'line',
     data: {
       labels: mesLabels,
-      datasets: [{ label: 'Novos leads', data: mesKeys.map(k => porMes[k]||0), borderColor: '#95875f', backgroundColor: 'rgba(149,135,95,0.12)', tension: 0.4, fill: true, pointBackgroundColor: '#95875f', pointRadius: 4 }]
+      datasets: [{ label: 'Novos leads', data: mesKeys.map(k => porMes[k]||0), borderColor: '#081542', backgroundColor: 'rgba(8,21,66,0.08)', tension: 0.4, fill: true, pointBackgroundColor: '#081542', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5 }]
     },
-    options: { ...chartDefaults, scales: { x: { ticks: { color:'#9CA3AF', font:{size:10} }, grid:{display:false} }, y: { ticks: { color:'#9CA3AF', font:{size:10}, stepSize:1 }, grid:{color:'#f5f3ef'} } }, plugins: { legend:{ display:false } } }
+    options: { ...chartDefaults, scales: { x: { ticks: { color:'#9CA3AF', font:{size:10} }, grid:{display:false} }, y: { ticks: { color:'#9CA3AF', font:{size:10}, stepSize:1 }, grid:{color:'rgba(8,21,66,0.06)'} } }, plugins: { legend:{ display:false } } }
   });
 }
 
