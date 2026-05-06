@@ -72,6 +72,10 @@ ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS instagram VARCHAR(100);
 ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS area_atuacao VARCHAR(100);
 ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS cidade VARCHAR(100);
 ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS informacoes TEXT;
+ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS motivo_etapa TEXT;
+
+-- Campo pedir_motivo nas etapas
+ALTER TABLE crm_etapas ADD COLUMN IF NOT EXISTS pedir_motivo BOOLEAN DEFAULT false;
 
 -- Tabela de atividades (follow-up)
 CREATE TABLE IF NOT EXISTS crm_atividades (

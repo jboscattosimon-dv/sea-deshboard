@@ -1465,7 +1465,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Ordem</th><th>Etapa</th><th>Cor</th><th></th></tr></thead>
+        <thead><tr><th>Ordem</th><th>Etapa</th><th>Cor</th><th style="text-align:center">Pedir Motivo</th><th></th></tr></thead>
         <tbody id="etapasTable"></tbody>
       </table>
     </div>
@@ -3829,6 +3829,9 @@ async function renderEtapas() {
       <td>
         <span style="display:inline-block;padding:2px 10px;border-radius:100px;font-size:11px;font-weight:700;background:${cor}22;color:${cor}">${cor}</span>
       </td>
+      <td style="text-align:center">
+        ${e.pedir_motivo ? `<span title="Pede motivo ao mover lead" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#27AE60"><svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Sim</span>` : `<span style="font-size:11px;color:var(--muted)">—</span>`}
+      </td>
       <td style="text-align:right">
         ${canEd ? `<div style="display:flex;gap:6px;justify-content:flex-end">
           <button class="btn btn-ghost btn-sm" onclick="openEtapaForm('${e.id}')">Editar</button>
@@ -3860,6 +3863,13 @@ function openEtapaForm(id) {
         <input type="color" id="etapaCorPicker" value="${et?.cor||'#3498DB'}" style="width:38px;height:38px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;padding:2px" oninput="document.getElementById('etapaCor').value=this.value">
       </div>
     </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">
+        <input type="checkbox" id="etapaPedirMotivo" ${et?.pedir_motivo ? 'checked' : ''} style="width:16px;height:16px;accent-color:var(--text);cursor:pointer">
+        Pedir motivo ao mover lead para esta etapa
+      </label>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;margin-left:26px">Quando ativado, ao arrastar um lead para esta etapa será solicitado um motivo.</div>
+    </div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveEtapa('${id||''}')">Salvar</button>
@@ -3869,18 +3879,19 @@ function openEtapaForm(id) {
 }
 
 async function saveEtapa(id) {
-  const label = document.getElementById('etapaLabel')?.value.trim();
-  const cor   = document.getElementById('etapaCor')?.value.trim() || '#999999';
-  const ordem = parseInt(document.getElementById('etapaOrdem')?.value) || 0;
+  const label       = document.getElementById('etapaLabel')?.value.trim();
+  const cor         = document.getElementById('etapaCor')?.value.trim() || '#999999';
+  const ordem       = parseInt(document.getElementById('etapaOrdem')?.value) || 0;
+  const pedir_motivo = document.getElementById('etapaPedirMotivo')?.checked || false;
   if (!label) { toast('Descrição é obrigatória.'); return; }
   let res;
   if (id) {
-    res = await API.put('/crm/etapas/'+id, { label, cor, ordem });
+    res = await API.put('/crm/etapas/'+id, { label, cor, ordem, pedir_motivo });
   } else {
     const key = label.toLowerCase()
       .normalize('NFD').replace(/[̀-ͯ]/g,'')
       .replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
-    res = await API.post('/crm/etapas', { key, label, cor, ordem });
+    res = await API.post('/crm/etapas', { key, label, cor, ordem, pedir_motivo });
   }
   if (res.erro) { toast('Erro: '+res.erro); return; }
   closeModal('formModal');
@@ -4071,7 +4082,7 @@ function openLeadDetail(id) {
 
 // ── FUNIL KANBAN ─────────────────────────
 async function renderFunil() {
-  if (crmEtapas.length <= 1) await loadCrmEtapas();
+  await loadCrmEtapas();
   if (!crmLeads.length) {
     const res = await API.get('/crm/leads');
     if (!res.erro) crmLeads = res;
@@ -4102,13 +4113,38 @@ async function renderFunil() {
   }).join('');
 }
 
-async function moveLeadEtapa(id, etapa) {
-  const res = await API.put('/crm/leads/'+id, { etapa });
+async function moveLeadEtapa(id, etapa, motivo) {
+  const body = { etapa };
+  if (motivo) body.motivo_etapa = motivo;
+  const res = await API.put('/crm/leads/'+id, body);
   if (res.erro) { toast('Erro: '+res.erro); return; }
   const lead = crmLeads.find(l => l.id === id);
-  if (lead) lead.etapa = etapa;
+  if (lead) { lead.etapa = etapa; if (motivo) lead.motivo_etapa = motivo; }
   renderFunil();
   toast('Lead movido para ' + crmEtapa(etapa).label);
+}
+
+function openMotivoModal(etapaLabel, callback) {
+  document.getElementById('formTitle').textContent = 'Motivo da Movimentação';
+  document.getElementById('formBody').innerHTML = `
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px">
+      Por que este lead está indo para <strong>${etapaLabel}</strong>?
+    </div>
+    <div class="form-group">
+      <textarea class="form-textarea" id="motivoInput" rows="3" placeholder="Descreva o motivo..."></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="_confirmMotivo()">Confirmar</button>
+    </div>
+  `;
+  window._confirmMotivo = function() {
+    const motivo = document.getElementById('motivoInput')?.value.trim();
+    if (!motivo) { toast('Informe o motivo.'); return; }
+    closeModal('formModal');
+    callback(motivo);
+  };
+  openModal('formModal');
 }
 
 // ── FUNIL DRAG — Apple spring physics ───────────────────────────
@@ -4123,7 +4159,31 @@ let _funilClickBlock = false;
 
 function funilCardClick(leadId) {
   if (_funilClickBlock) { _funilClickBlock = false; return; }
-  openLeadDetail(leadId);
+  openLeadInfo(leadId);
+}
+
+function openLeadInfo(id) {
+  const lead = crmLeads.find(l => l.id === id);
+  if (!lead) return;
+  const etapaObj = crmEtapa(lead.etapa);
+  document.getElementById('formTitle').textContent = lead.nome;
+  document.getElementById('formBody').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+      <div><strong>Telefone:</strong> ${lead.telefone}</div>
+      ${lead.instagram ? `<div><strong>Instagram:</strong> @${(lead.instagram||'').replace(/^@/,'')}</div>` : ''}
+      ${lead.area_atuacao ? `<div><strong>Área de Atuação:</strong> ${lead.area_atuacao}</div>` : ''}
+      ${lead.cidade ? `<div><strong>Cidade:</strong> ${lead.cidade}</div>` : ''}
+      ${lead.origem ? `<div><strong>Origem:</strong> ${CRM_ORIGENS[lead.origem]||lead.origem}</div>` : ''}
+      <div><strong>Etapa:</strong> <span style="color:${etapaObj.color}">${etapaObj.label}</span></div>
+      ${lead.motivo_etapa ? `<div><strong>Motivo:</strong> ${lead.motivo_etapa}</div>` : ''}
+      ${lead.informacoes ? `<div style="margin-top:4px"><strong>Informações:</strong><br><span style="white-space:pre-wrap">${lead.informacoes}</span></div>` : ''}
+    </div>
+    <div class="form-actions">
+      ${canEdit('crm_leads') ? `<button class="btn btn-primary" onclick="closeModal('formModal');openLeadForm('${id}')">Editar</button>` : ''}
+      <button class="btn btn-ghost" onclick="closeModal('formModal')">Fechar</button>
+    </div>
+  `;
+  openModal('formModal');
 }
 
 function funilPointerDown(e, leadId) {
@@ -4249,7 +4309,12 @@ async function funilPointerUp(e) {
     const etapaKey = colBody?.id.replace('funilCol_', '');
     const lead = crmLeads.find(l => l.id === leadId);
     if (etapaKey && lead && lead.etapa !== etapaKey) {
-      await moveLeadEtapa(leadId, etapaKey);
+      const etapaObj = crmEtapas.find(e => e.key === etapaKey);
+      if (etapaObj?.pedir_motivo) {
+        openMotivoModal(etapaObj.label, (motivo) => moveLeadEtapa(leadId, etapaKey, motivo));
+      } else {
+        await moveLeadEtapa(leadId, etapaKey);
+      }
     } else {
       renderFunil();
     }
