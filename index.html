@@ -1306,6 +1306,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
           <option value="all">Todos</option>
           <option value="pendente">Pendente</option>
           <option value="concluida">Concluída</option>
+          <option value="aceita">Demanda aceita</option>
         </select>
       </div>
       <div class="filter-group">
@@ -3472,9 +3473,9 @@ async function renderInternals() {
   document.getElementById('internalTable').innerHTML = filtered.length ? filtered.map(d => {
     const cl       = getClient(d.cliente_id);
     const vencida  = d.status === 'pendente' && d.prazo < today;
-    const statusBg = d.status === 'concluida' ? '#27AE6022' : vencida ? '#E74C3C22' : '#E6B80022';
-    const statusCl = d.status === 'concluida' ? '#27AE60'   : vencida ? '#E74C3C'   : '#B8860B';
-    const statusLb = d.status === 'concluida' ? 'Concluída' : vencida ? 'Vencida'   : 'Pendente';
+    const statusBg = d.status === 'concluida' ? '#27AE6022' : d.status === 'aceita' ? '#3498DB22' : vencida ? '#E74C3C22' : '#E6B80022';
+    const statusCl = d.status === 'concluida' ? '#27AE60'   : d.status === 'aceita' ? '#3498DB'   : vencida ? '#E74C3C'   : '#B8860B';
+    const statusLb = d.status === 'concluida' ? 'Concluída' : d.status === 'aceita' ? 'Demanda aceita' : vencida ? 'Vencida' : 'Pendente';
     const anexoHtml = d.anexo_b64
       ? `<a href="${d.anexo_b64}" download="${d.anexo_nome||'anexo'}" style="font-size:11px;color:var(--primary);font-weight:600" title="${d.anexo_nome||''}">📎 ${d.anexo_nome||'Anexo'}</a>`
       : '—';
@@ -3484,6 +3485,7 @@ async function renderInternals() {
            style="border:1px solid ${statusCl}55;background:${statusBg};color:${statusCl};border-radius:100px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;outline:none">
            <option value="pendente" ${d.status==='pendente'?'selected':''}>Pendente</option>
            <option value="concluida" ${d.status==='concluida'?'selected':''}>Concluída</option>
+           <option value="aceita" ${d.status==='aceita'?'selected':''}>Demanda aceita</option>
          </select>`
       : `<span class="badge" style="background:${statusBg};color:${statusCl}">${statusLb}</span>`;
     return `<tr style="${d.status==='concluida'?'opacity:0.6':''}">
@@ -3536,6 +3538,7 @@ async function openInternalForm(editId) {
         <select class="form-select" id="intFStatus">
           <option value="pendente" ${(!editing||editing.status==='pendente')?'selected':''}>Pendente</option>
           <option value="concluida" ${editing?.status==='concluida'?'selected':''}>Concluída</option>
+          <option value="aceita" ${editing?.status==='aceita'?'selected':''}>Demanda aceita</option>
         </select>
       </div>
     </div>
