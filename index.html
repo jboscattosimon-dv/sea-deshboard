@@ -3473,9 +3473,9 @@ async function renderInternals() {
   document.getElementById('internalTable').innerHTML = filtered.length ? filtered.map(d => {
     const cl       = getClient(d.cliente_id);
     const vencida  = d.status === 'pendente' && d.prazo < today;
-    const statusBg = d.status === 'concluida' ? '#27AE6022' : d.status === 'aceita' ? '#3498DB22' : vencida ? '#E74C3C22' : '#E6B80022';
-    const statusCl = d.status === 'concluida' ? '#27AE60'   : d.status === 'aceita' ? '#3498DB'   : vencida ? '#E74C3C'   : '#B8860B';
-    const statusLb = d.status === 'concluida' ? 'Concluída' : d.status === 'aceita' ? 'Demanda aceita' : vencida ? 'Vencida' : 'Pendente';
+    const statusBg = d.status === 'concluida' ? '#27AE6022' : d.status === 'aceita' ? '#3498DB22' : '#E6B80022';
+    const statusCl = d.status === 'concluida' ? '#27AE60'   : d.status === 'aceita' ? '#3498DB'   : '#B8860B';
+    const statusLb = d.status === 'concluida' ? 'Concluída' : d.status === 'aceita' ? 'Demanda aceita' : 'Pendente';
     const anexoHtml = d.anexo_b64
       ? `<a href="${d.anexo_b64}" download="${d.anexo_nome||'anexo'}" style="font-size:11px;color:var(--primary);font-weight:600" title="${d.anexo_nome||''}">📎 ${d.anexo_nome||'Anexo'}</a>`
       : '—';
