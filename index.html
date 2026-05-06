@@ -984,7 +984,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
 }
 .crm-funil-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #95875f, #d4c07a);
+  background: var(--text);
   border-radius: 99px;
   transition: width 0.6s cubic-bezier(.22,1,.36,1);
 }
@@ -4047,7 +4047,7 @@ async function renderFunil() {
       </div>`).join('');
     return `<div class="funil-col">
       <div class="funil-col-header">
-        <span class="funil-col-title" style="color:${etapaColor}">${etapa.label}</span>
+        <span class="funil-col-title">${etapa.label}</span>
         <span class="funil-col-count">${leads.length}</span>
       </div>
       <div id="funilCol_${etapa.key}" style="min-height:60px"
@@ -4345,8 +4345,8 @@ async function renderCrmRelatorios() {
         const count = porEtapa[e.key]||0;
         const pct   = total > 0 ? Math.round((count/total)*100) : 0;
         return `<div class="crm-funil-bar-row">
-          <div class="crm-funil-bar-label" style="color:${cor}">${e.label}</div>
-          <div class="crm-funil-bar-track"><div class="crm-funil-bar-fill" style="width:${Math.round((count/maxEtapa)*100)}%;background:${cor}"></div></div>
+          <div class="crm-funil-bar-label">${e.label}</div>
+          <div class="crm-funil-bar-track"><div class="crm-funil-bar-fill" style="width:${Math.round((count/maxEtapa)*100)}%"></div></div>
           <div class="crm-funil-bar-count">${count}</div>
           <div style="font-size:10px;color:var(--muted);width:36px;text-align:right">${pct}%</div>
         </div>`;
