@@ -706,16 +706,39 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
   transition: transform 0.22s cubic-bezier(.4,0,.2,1);
   flex-shrink: 0;
 }
-.nav-group.open .nav-group-header .chevron { transform: rotate(90deg); }
-.nav-group.open .nav-group-header { color: #fff; }
+.nav-group.open .nav-group-header { color: #fff; background: rgba(255,255,255,0.1); }
 .nav-group.open .nav-group-header svg { opacity: 1; }
+.nav-group.open .nav-group-header .chevron { opacity: 0.8; }
 
 .nav-group-children {
-  overflow: hidden;
-  max-height: 0;
-  transition: max-height 0.3s cubic-bezier(.4,0,.2,1);
+  position: fixed;
+  left: var(--sidebar-w);
+  min-width: 190px;
+  background: #18170F;
+  border-radius: 0 10px 10px 10px;
+  padding: 8px 6px;
+  box-shadow: 6px 10px 36px rgba(0,0,0,0.55);
+  border-left: 2px solid rgba(149,135,95,0.35);
+  z-index: 500;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-10px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
 }
-.nav-group.open .nav-group-children { max-height: 400px; }
+.nav-group.open .nav-group-children {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateX(0);
+}
+/* label no topo do flyout */
+.nav-group-fly-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.3);
+  padding: 4px 12px 8px;
+}
 
 .nav-sub-item {
   display: flex;
@@ -974,6 +997,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
   white-space: nowrap;
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -1046,6 +1070,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
         <svg class="chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
       <div class="nav-group-children">
+        <div class="nav-group-fly-label">Cadastro</div>
         <div class="nav-sub-item" data-page="clients" onclick="goTo('clients')">
           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
           Clientes
@@ -1074,6 +1099,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
         <svg class="chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
       <div class="nav-group-children">
+        <div class="nav-group-fly-label">CRM</div>
         <div class="nav-sub-item" data-page="crm_leads" onclick="goTo('crm_leads')" id="navCrmLeads">
           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
           Leads
@@ -1368,6 +1394,8 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
           <option value="cliente">Cliente</option>
           <option value="status">Status</option>
           <option value="usuario">Usuário</option>
+          <option value="lead" id="hEntLead" style="display:none">Lead (CRM)</option>
+          <option value="atividade" id="hEntAtiv" style="display:none">Atividade (CRM)</option>
         </select>
       </div>
       <button class="btn btn-primary btn-sm" onclick="applyHistoryFilter()">Filtrar</button>
@@ -1709,10 +1737,30 @@ function uid() { return '_' + Math.random().toString(36).slice(2); }
 // ═══════════════════════════════════════
 let currentPage = 'dashboard';
 
-function toggleNavGroup(id) {
-  const g = document.getElementById(id);
-  if (g) g.classList.toggle('open');
+function closeAllNavGroups() {
+  document.querySelectorAll('.nav-group.open').forEach(g => g.classList.remove('open'));
 }
+
+function toggleNavGroup(id) {
+  const isOpen = document.getElementById(id)?.classList.contains('open');
+  closeAllNavGroups();
+  if (isOpen) return;
+  const g = document.getElementById(id);
+  if (!g) return;
+  g.classList.add('open');
+  // posiciona o flyout verticalmente alinhado ao header do grupo
+  const header = g.querySelector('.nav-group-header');
+  const panel  = g.querySelector('.nav-group-children');
+  if (header && panel) {
+    const rect = header.getBoundingClientRect();
+    panel.style.top = rect.top + 'px';
+  }
+}
+
+// fecha flyout ao clicar fora
+document.addEventListener('click', e => {
+  if (!e.target.closest('.nav-group')) closeAllNavGroups();
+});
 
 function goTo(page) {
   if (page !== 'dashboard' && !canView(page)) { toast('Sem permissão para acessar esta página.'); return; }
@@ -1785,6 +1833,7 @@ function toggleSidebar() {
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebarOverlay').classList.remove('show');
+  closeAllNavGroups();
 }
 
 // ═══════════════════════════════════════
@@ -1905,13 +1954,17 @@ function renderDashboard() {
       return `<div class="card-dot" style="background:${d.postado?'#27AE60':st.color}" title="${fmtDate(d.date)}: ${d.desc}${d.postado?' ✓ Postado':''}"></div>`;
     }).join('');
     const rows = cDemands.map(d => {
-      const st = getStatus(d.statusId);
+      const st  = getStatus(d.statusId);
+      const fmt = getFormat(d.formatoId);
       const isToday = d.date === today;
       return `<div class="demand-row" style="${d.postado?'opacity:0.55':''}" onclick="openDetail('${d.id}')">
         <div class="demand-dot" style="background:${d.postado?'#27AE60':st.color}"></div>
         <div class="demand-info" style="flex:1">
           <div class="demand-date">${fmtDate(d.date)}</div>
-          <div class="demand-desc" style="${d.postado?'text-decoration:line-through':''}">${d.desc}</div>
+          <div class="demand-desc" style="${d.postado?'text-decoration:line-through;color:var(--muted)':''}">
+            ${fmt ? `<span style="font-weight:600;color:var(--text)">${fmt.name}</span><span style="color:var(--muted)"> · </span>` : ''}
+            <span style="color:${d.postado?'var(--muted)':st.color}">${st.name}</span>
+          </div>
         </div>
         ${isToday && canPostToday ? `<button onclick="event.stopPropagation();togglePostado('${d.id}',${!d.postado})"
           style="flex-shrink:0;width:22px;height:22px;border-radius:50%;border:2px solid ${d.postado?'#27AE60':'#ccc'};background:${d.postado?'#27AE60':'transparent'};cursor:pointer;display:flex;align-items:center;justify-content:center;margin-left:6px;transition:all 0.2s">
@@ -2986,6 +3039,12 @@ async function renderHistory() {
   const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
   const btn = document.getElementById('btnLimparHistorico');
   if (btn) btn.style.display = u.papel === 'admin' ? '' : 'none';
+  // exibe opções CRM no filtro apenas se tiver permissão
+  const hasCrm = u.papel === 'admin' || canView('crm_leads');
+  const lOpt = document.getElementById('hEntLead');
+  const aOpt = document.getElementById('hEntAtiv');
+  if (lOpt) lOpt.style.display = hasCrm ? '' : 'none';
+  if (aOpt) aOpt.style.display = hasCrm ? '' : 'none';
 
   document.getElementById('historyTable').innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted)">Carregando...</td></tr>`;
   const res = await API.get('/historico');
@@ -3009,7 +3068,12 @@ function applyHistoryFilter() {
   const tipoFilter = document.getElementById('hTipoFilter')?.value || 'all';
   const entFilter  = document.getElementById('hEntidadeFilter')?.value || 'all';
 
+  const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
+  const hasCrm = u.papel === 'admin' || canView('crm_leads');
+  const crmEntidades = ['lead', 'atividade'];
+
   let rows = historicoData;
+  if (!hasCrm) rows = rows.filter(r => !crmEntidades.includes(r.entidade));
   if (dateFrom) rows = rows.filter(r => r.criado_em && r.criado_em.slice(0,10) >= dateFrom);
   if (dateTo)   rows = rows.filter(r => r.criado_em && r.criado_em.slice(0,10) <= dateTo);
   if (tipoFilter !== 'all') rows = rows.filter(r => r.tipo === tipoFilter);
@@ -3547,6 +3611,7 @@ async function saveLead(id) {
   if (res.erro) { toast('Erro: '+res.erro); return; }
   closeModal('formModal');
   toast(id ? 'Lead atualizado!' : 'Lead criado!');
+  logHistorico(id ? 'atualizado' : 'criado', 'lead', res.id || id, `Lead ${id?'atualizado':'criado'}: ${nome}`);
   await renderLeads();
   if (currentPage === 'crm_funil') renderFunil();
 }
@@ -3555,6 +3620,8 @@ async function deleteLead(id) {
   if (!confirm('Remover este lead? As atividades vinculadas também serão excluídas.')) return;
   const res = await API.del('/crm/leads/'+id);
   if (res.erro) { toast('Erro: '+res.erro); return; }
+  const lead = crmLeads.find(l => l.id === id);
+  logHistorico('excluido', 'lead', id, `Lead excluído: ${lead?.nome || id}`);
   toast('Lead removido.');
   await renderLeads();
   if (currentPage === 'crm_funil') renderFunil();
@@ -3716,6 +3783,8 @@ async function saveAtividade() {
   if (res.erro) { toast('Erro: '+res.erro); return; }
   closeModal('formModal');
   toast('Atividade criada!');
+  const leadNome = crmLeads.find(l => l.id === lead_id)?.nome || lead_id;
+  logHistorico('criado', 'atividade', res.id, `Atividade criada para ${leadNome}: ${descricao}`);
   renderAtividades();
 }
 
@@ -3727,22 +3796,31 @@ async function toggleAtividade(id, concluida) {
 
 async function deleteAtividade(id) {
   if (!confirm('Remover esta atividade?')) return;
+  const atv = crmAtividades.find(a => a.id === id);
   const res = await API.del('/crm/atividades/'+id);
   if (res.erro) { toast('Erro: '+res.erro); return; }
+  logHistorico('excluido', 'atividade', id, `Atividade excluída: ${atv?.descricao?.slice(0,50) || id}`);
   toast('Atividade removida.');
   renderAtividades();
 }
 
 // ── RELATÓRIOS CRM ───────────────────────
+let _crmCharts = {};
+function _destroyChart(id) {
+  if (_crmCharts[id]) { _crmCharts[id].destroy(); delete _crmCharts[id]; }
+}
+
 async function renderCrmRelatorios() {
   const el = document.getElementById('crmRelContent');
   if (!el) return;
   el.innerHTML = `<div style="text-align:center;padding:60px;color:var(--muted);font-size:14px">Carregando métricas…</div>`;
   const res = await API.get('/crm/relatorios');
-  if (res.erro) { el.innerHTML = `<div style="text-align:center;padding:40px;color:#E74C3C">Erro ao carregar relatórios.</div>`; return; }
-  const { porEtapa, total, fechados, conversao, atividadesPendentes } = res;
+  if (res.erro) { el.innerHTML = `<div style="text-align:center;padding:40px;color:#E74C3C">Erro: ${res.erro}</div>`; return; }
+  const { porEtapa, porOrigem, porMes, total, fechados, conversao, atividadesPendentes } = res;
   const maxEtapa = Math.max(...CRM_ETAPAS.map(e => porEtapa[e.key]||0), 1);
+
   el.innerHTML = `
+    <!-- KPIs -->
     <div class="crm-stat-grid">
       <div class="crm-stat-card">
         <div class="crm-stat-num">${total}</div>
@@ -3761,8 +3839,36 @@ async function renderCrmRelatorios() {
         <div class="crm-stat-lbl">Follow-ups Pendentes</div>
       </div>
     </div>
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px;margin-bottom:20px">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);margin-bottom:18px">Leads por Etapa do Funil</div>
+
+    <!-- Gráficos linha 1 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <!-- Donut: leads por etapa -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);margin-bottom:16px">Leads por Etapa</div>
+        <div style="position:relative;height:220px;display:flex;align-items:center;justify-content:center">
+          <canvas id="chartEtapa"></canvas>
+        </div>
+      </div>
+      <!-- Barras: leads por origem -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);margin-bottom:16px">Leads por Origem</div>
+        <div style="position:relative;height:220px">
+          <canvas id="chartOrigem"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gráfico linha 2: evolução mensal -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);margin-bottom:16px">Novos Leads por Mês (últimos 6 meses)</div>
+      <div style="position:relative;height:180px">
+        <canvas id="chartMes"></canvas>
+      </div>
+    </div>
+
+    <!-- Barra de funil horizontal -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);margin-bottom:18px">Funil de Conversão</div>
       ${CRM_ETAPAS.map(e => {
         const count = porEtapa[e.key]||0;
         const pct = total > 0 ? Math.round((count/total)*100) : 0;
@@ -3775,6 +3881,48 @@ async function renderCrmRelatorios() {
       }).join('')}
     </div>
   `;
+
+  // Destrói charts anteriores se existirem
+  _destroyChart('etapa'); _destroyChart('origem'); _destroyChart('mes');
+
+  const chartDefaults = {
+    plugins: { legend: { labels: { font: { family: "'Instrument Sans', sans-serif", size: 11 }, color: '#6B7280', boxWidth: 12, padding: 12 } } },
+    animation: { duration: 600 }
+  };
+
+  // Donut: etapas
+  _crmCharts['etapa'] = new Chart(document.getElementById('chartEtapa'), {
+    type: 'doughnut',
+    data: {
+      labels: CRM_ETAPAS.map(e => e.label),
+      datasets: [{ data: CRM_ETAPAS.map(e => porEtapa[e.key]||0), backgroundColor: CRM_ETAPAS.map(e => e.color), borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: { ...chartDefaults, cutout: '65%', plugins: { ...chartDefaults.plugins } }
+  });
+
+  // Barras: origens
+  const origenLabels = { instagram:'Instagram', google:'Google', indicacao:'Indicação', linkedin:'LinkedIn', site:'Site', outro:'Outro' };
+  const origenKeys   = Object.keys(origenLabels).filter(k => (porOrigem[k]||0) > 0);
+  _crmCharts['origem'] = new Chart(document.getElementById('chartOrigem'), {
+    type: 'bar',
+    data: {
+      labels: origenKeys.map(k => origenLabels[k]),
+      datasets: [{ data: origenKeys.map(k => porOrigem[k]||0), backgroundColor: '#95875f', borderRadius: 5 }]
+    },
+    options: { ...chartDefaults, indexAxis: 'y', scales: { x: { ticks: { color:'#9CA3AF', font:{size:10} }, grid:{color:'#f0ede5'} }, y: { ticks: { color:'#6B7280', font:{size:11} }, grid:{display:false} } }, plugins: { legend:{ display:false } } }
+  });
+
+  // Linha: evolução mensal
+  const mesKeys    = Object.keys(porMes||{}).sort();
+  const mesLabels  = mesKeys.map(k => { const [y,m] = k.split('-'); return `${m}/${y.slice(2)}`; });
+  _crmCharts['mes'] = new Chart(document.getElementById('chartMes'), {
+    type: 'line',
+    data: {
+      labels: mesLabels,
+      datasets: [{ label: 'Novos leads', data: mesKeys.map(k => porMes[k]||0), borderColor: '#95875f', backgroundColor: 'rgba(149,135,95,0.12)', tension: 0.4, fill: true, pointBackgroundColor: '#95875f', pointRadius: 4 }]
+    },
+    options: { ...chartDefaults, scales: { x: { ticks: { color:'#9CA3AF', font:{size:10} }, grid:{display:false} }, y: { ticks: { color:'#9CA3AF', font:{size:10}, stepSize:1 }, grid:{color:'#f5f3ef'} } }, plugins: { legend:{ display:false } } }
+  });
 }
 
 // ═══════════════════════════════════════

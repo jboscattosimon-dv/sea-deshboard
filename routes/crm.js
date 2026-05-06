@@ -111,7 +111,7 @@ router.delete('/atividades/:id', async (req, res) => {
 // ── RELATÓRIOS ─────────────────────────────────────────
 router.get('/relatorios', async (req, res) => {
   const [leadsRes, atividadesRes] = await Promise.all([
-    supabase.from('crm_leads').select('etapa, criado_em'),
+    supabase.from('crm_leads').select('etapa, origem, criado_em'),
     supabase.from('crm_atividades').select('concluida, data')
   ]);
   if (leadsRes.error) return res.status(500).json({ erro: leadsRes.error.message });
@@ -119,15 +119,34 @@ router.get('/relatorios', async (req, res) => {
   const etapas = ['primeiro_contato', 'resposta_inicial', 'tem_interesse', 'reuniao_agendada', 'fechou'];
   const porEtapa = {};
   etapas.forEach(e => porEtapa[e] = 0);
-  (leadsRes.data || []).forEach(l => { if (porEtapa[l.etapa] !== undefined) porEtapa[l.etapa]++; });
+
+  const origens = ['instagram', 'google', 'indicacao', 'linkedin', 'site', 'outro'];
+  const porOrigem = {};
+  origens.forEach(o => porOrigem[o] = 0);
+
+  // leads por mês (últimos 6 meses)
+  const porMes = {};
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    porMes[key] = 0;
+  }
+
+  (leadsRes.data || []).forEach(l => {
+    if (porEtapa[l.etapa] !== undefined) porEtapa[l.etapa]++;
+    if (l.origem && porOrigem[l.origem] !== undefined) porOrigem[l.origem]++;
+    else if (l.origem) porOrigem['outro'] = (porOrigem['outro'] || 0) + 1;
+    const mes = (l.criado_em || '').slice(0, 7);
+    if (porMes[mes] !== undefined) porMes[mes]++;
+  });
 
   const total   = leadsRes.data?.length || 0;
   const fechados = porEtapa['fechou'] || 0;
   const conversao = total > 0 ? ((fechados / total) * 100).toFixed(1) : '0.0';
-
   const atividadesPendentes = (atividadesRes.data || []).filter(a => !a.concluida).length;
 
-  res.json({ porEtapa, total, fechados, conversao: parseFloat(conversao), atividadesPendentes });
+  res.json({ porEtapa, porOrigem, porMes, total, fechados, conversao: parseFloat(conversao), atividadesPendentes });
 });
 
 module.exports = router;
