@@ -3491,13 +3491,13 @@ async function renderInternals() {
            <option value="aceita" ${d.status==='aceita'?'selected':''}>Demanda aceita</option>
          </select>`
       : `<span class="badge" style="background:${statusBg};color:${statusCl}">${statusLb}</span>`;
-    return `<tr style="${d.status==='concluida'?'opacity:0.6':''}">
+    return `<tr style="cursor:pointer;${d.status==='concluida'?'opacity:0.6':''}" onclick="openInternalDetail('${d.id}')">
       <td style="white-space:nowrap;${vencida&&d.status!=='concluida'?'color:#E74C3C;font-weight:600':''}">${fmtDateFull(d.prazo)}</td>
       <td><strong>${cl.name}</strong></td>
       <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${d.status==='concluida'?'text-decoration:line-through':''}">${d.descricao}</td>
       <td>${d.responsavel_nome||'—'}</td>
-      <td>${statusCell}</td>
-      <td>${anexoHtml}</td>
+      <td onclick="event.stopPropagation()">${statusCell}</td>
+      <td onclick="event.stopPropagation()">${anexoHtml}</td>
       <td onclick="event.stopPropagation()"><div class="row-actions">
         ${editI ? `<button class="btn btn-ghost btn-sm" onclick="openInternalForm('${d.id}')">Editar</button>
         <button class="btn btn-danger btn-sm" onclick="deleteInternal('${d.id}')">Excluir</button>` : ''}
@@ -3608,6 +3608,120 @@ async function deleteInternal(id, fromForm) {
   if (res.erro) { toast('Erro: ' + res.erro); return; }
   logHistorico('excluido', 'demanda_interna', id, `Demanda interna excluída`);
   if (fromForm) closeModal('formModal');
+  toast('Demanda excluída.');
+  renderInternals();
+}
+
+async function openInternalDetail(id) {
+  const d = internals.find(x => x.id === id);
+  if (!d) return;
+  if (!internalUsuarios.length) {
+    const u = await API.get('/usuarios');
+    if (!u.erro) internalUsuarios = u;
+  }
+  const cl = getClient(d.cliente_id);
+  const editMode = canEdit('internal');
+  const ro    = editMode ? '' : 'readonly disabled style="pointer-events:none;opacity:0.7"';
+  const roSel = editMode ? '' : 'disabled style="pointer-events:none;opacity:0.7"';
+
+  const statusBg = d.status === 'concluida' ? '#27AE6022' : d.status === 'aceita' ? '#3498DB22' : '#E6B80022';
+  const statusCl = d.status === 'concluida' ? '#27AE60'   : d.status === 'aceita' ? '#3498DB'   : '#B8860B';
+  const statusLb = d.status === 'concluida' ? 'Concluída' : d.status === 'aceita' ? 'Demanda aceita' : 'Pendente';
+
+  const clientOpts = clients.map(c => `<option value="${c.id}" ${d.cliente_id===c.id?'selected':''}>${c.name}</option>`).join('');
+  const respOpts   = internalUsuarios.filter(isRespUser).map(u => `<option value="${u.id}" ${d.responsavel_id===u.id?'selected':''}>${u.nome}</option>`).join('');
+  const statusOpts = `
+    <option value="pendente"  ${d.status==='pendente' ?'selected':''}>Pendente</option>
+    <option value="concluida" ${d.status==='concluida'?'selected':''}>Concluída</option>
+    <option value="aceita"    ${d.status==='aceita'   ?'selected':''}>Demanda aceita</option>`;
+
+  document.getElementById('detailBody').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:2px">${editMode?'Editando demanda interna':'Visualizando demanda interna'}</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${cl.name} · ${fmtDateFull(d.prazo)}</div>
+      </div>
+      <span class="badge" style="background:${statusBg};color:${statusCl}">${statusLb}</span>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Prazo</label>
+        <input class="form-input" type="date" id="idPrazo" value="${d.prazo}" ${ro}>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cliente</label>
+        <select class="form-select" id="idClient" ${roSel}>${clientOpts}</select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Responsável</label>
+        <select class="form-select" id="idResp" ${roSel}><option value="">Selecione...</option>${respOpts}</select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-select" id="idStatus" ${roSel}>${statusOpts}</select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descrição</label>
+      <input class="form-input" type="text" id="idDesc" value="${d.descricao.replace(/"/g,'&quot;')}" ${ro}>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Anexo</label>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        ${d.anexo_b64
+          ? `<a href="${d.anexo_b64}" download="${d.anexo_nome||'anexo'}" style="font-size:12px;color:var(--primary);font-weight:600">📎 ${d.anexo_nome||'Anexo'}</a>`
+          : '<span style="color:var(--muted);font-size:12px">Nenhum anexo</span>'}
+        ${editMode ? `<input type="file" id="idAnexo" style="font-size:12px" onchange="const f=this.files[0];if(f&&f.size>3*1024*1024){toast('Arquivo muito grande. Máximo 3MB.');this.value=''}">` : ''}
+      </div>
+    </div>
+    <div class="form-actions">
+      ${editMode ? `<button class="btn btn-danger btn-sm" onclick="deleteInternalFromDetail('${d.id}')">Excluir</button>` : ''}
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn btn-ghost" onclick="closeModal('detailModal')">Fechar</button>
+        ${editMode ? `<button class="btn btn-primary" onclick="saveInternalDetail('${d.id}')">Salvar alterações</button>` : ''}
+      </div>
+    </div>
+  `;
+  openModal('detailModal');
+}
+
+async function saveInternalDetail(id) {
+  const respId   = document.getElementById('idResp').value;
+  const clientId = document.getElementById('idClient').value;
+  const desc     = document.getElementById('idDesc').value.trim();
+  const prazo    = document.getElementById('idPrazo').value;
+  const status   = document.getElementById('idStatus').value;
+  const fileEl   = document.getElementById('idAnexo');
+  if (!respId || !clientId || !desc || !prazo) { toast('Preencha todos os campos obrigatórios.'); return; }
+
+  const resp = internalUsuarios.find(u => u.id === respId);
+  const body = { responsavel_id: respId, responsavel_nome: resp?.nome||'', cliente_id: clientId, descricao: desc, prazo, status };
+
+  const file = fileEl?.files?.[0];
+  if (file) {
+    if (file.size > 3 * 1024 * 1024) { toast('Arquivo muito grande. Máximo 3MB.'); return; }
+    body.anexo_b64  = await new Promise(resolve => {
+      const r = new FileReader(); r.onload = e => resolve(e.target.result); r.readAsDataURL(file);
+    });
+    body.anexo_nome = file.name;
+  }
+
+  const res = await API.put('/demandas-internas/' + id, body);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  logHistorico('atualizado', 'demanda_interna', id, `Demanda interna atualizada: ${desc}`);
+  closeModal('detailModal');
+  toast('Demanda atualizada!');
+  renderInternals();
+}
+
+async function deleteInternalFromDetail(id) {
+  if (!confirm('Excluir esta demanda interna?')) return;
+  const res = await API.del('/demandas-internas/' + id);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  logHistorico('excluido', 'demanda_interna', id, `Demanda interna excluída`);
+  closeModal('detailModal');
   toast('Demanda excluída.');
   renderInternals();
 }
