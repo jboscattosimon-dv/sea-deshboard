@@ -21,7 +21,7 @@ function checkCrmPerm(req, res, type) {
 router.get('/leads', async (req, res) => {
   const { data, error } = await supabase
     .from('crm_leads')
-    .select('*, crm_atividades(count)')
+    .select('*')
     .order('criado_em', { ascending: false });
   if (error) return res.status(500).json({ erro: error.message });
   res.json(data);
