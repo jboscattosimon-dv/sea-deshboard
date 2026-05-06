@@ -67,6 +67,12 @@ CREATE TABLE IF NOT EXISTS crm_leads (
 -- Remove CHECK constraint se existir (para permitir etapas customizadas)
 ALTER TABLE crm_leads DROP CONSTRAINT IF EXISTS crm_leads_etapa_check;
 
+-- Novos campos de lead (migração)
+ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS instagram VARCHAR(100);
+ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS area_atuacao VARCHAR(100);
+ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS cidade VARCHAR(100);
+ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS informacoes TEXT;
+
 -- Tabela de atividades (follow-up)
 CREATE TABLE IF NOT EXISTS crm_atividades (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,

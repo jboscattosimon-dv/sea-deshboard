@@ -3756,6 +3756,27 @@ const CRM_ORIGENS = {
   linkedin: 'LinkedIn', site: 'Site', outro: 'Outro',
 };
 
+const CIDADES_BR = [
+  'Acre - AC','Afonso Cláudio - ES','Alagoinhas - BA','Altamira - PA','Alvorada - RS','Americana - SP','Amargosa - BA','Ananindeua - PA','Anápolis - GO','Aparecida de Goiânia - GO','Aracaju - SE','Arapiraca - AL','Araçatuba - SP','Araguaína - TO','Araraquara - SP','Araras - SP','Araxá - MG','Ariquemes - RO','Assis - SP','Atibaia - SP',
+  'Bagé - RS','Baixada Santista - SP','Barbacena - MG','Barreiras - BA','Barretos - SP','Barueri - SP','Belo Horizonte - MG','Belém - PA','Betim - MG','Boa Vista - RR','Botucatu - SP','Bragança - PA','Bragança Paulista - SP','Brasília - DF','Brumadinho - MG','Caçador - SC','Camaçari - BA','Campina Grande - PB','Campinas - SP','Campo Grande - MS','Campo Largo - PR','Campo Mourão - PR','Canoas - RS','Carapicuíba - SP','Caruaru - PE','Cascavel - PR','Caxias do Sul - RS','Chapecó - SC','Cidade Tiradentes - SP','Colombo - PR','Contagem - MG','Corumbá - MS','Cotia - SP','Criciúma - SC','Cruz das Almas - BA','Cruzeiro - SP','Cuiabá - MT','Curitiba - PR',
+  'Diadema - SP','Divinópolis - MG','Dourados - MS','Duque de Caxias - RJ',
+  'Embu das Artes - SP','Erechim - RS','Espírito Santo do Pinhal - SP',
+  'Feira de Santana - BA','Florianópolis - SC','Fortaleza - CE','Foz do Iguaçu - PR','Franca - SP','Franco da Rocha - SP',
+  'Garanhuns - PE','Governador Valadares - MG','Gravataí - RS','Guarujá - SP','Guarulhos - SP',
+  'Ilhéus - BA','Imperatriz - MA','Indaiatuba - SP','Ipatinga - MG','Itabira - MG','Itaboraí - RJ','Itajaí - SC','Itapetininga - SP','Itapevi - SP','Itaquaquecetuba - SP','Itatiba - SP',
+  'Jaboatão dos Guararapes - PE','Jacareí - SP','Jequié - BA','Ji-Paraná - RO','João Monlevade - MG','João Pessoa - PB','Joinville - SC','Juiz de Fora - MG','Juazeiro do Norte - CE',
+  'Lages - SC','Lauro de Freitas - BA','Limeira - SP','Linhares - ES','Londrina - PR','Luziânia - GO',
+  'Macaé - RJ','Macapá - AP','Maceió - AL','Manaus - AM','Marabá - PA','Maringá - PR','Mauá - SP','Mesquita - RJ','Mineiros - GO','Montes Claros - MG','Mossoró - RN',
+  'Natal - RN','Niterói - RJ','Nova Friburgo - RJ','Nova Hamburgo - RS','Nova Iguaçu - RJ','Novo Hamburgo - RS',
+  'Olinda - PE','Osasco - SP',
+  'Palhoça - SC','Palmas - TO','Paranaguá - PR','Parauapebas - PA','Parnaíba - PI','Parnamirim - RN','Passo Fundo - RS','Paulista - PE','Pelotas - RS','Petrolina - PE','Petrópolis - RJ','Piracicaba - SP','Porto Alegre - RS','Porto Velho - RO','Presidente Prudente - SP',
+  'Recife - PE','Ribeirão das Neves - MG','Ribeirão Preto - SP','Rio Branco - AC','Rio de Janeiro - RJ','Rio Grande - RS','Rondonópolis - MT',
+  'Salvador - BA','Santa Luzia - MG','Santa Maria - RS','Santarém - PA','Santo André - SP','Santos - SP','São Bernardo do Campo - SP','São Caetano do Sul - SP','São Carlos - SP','São Gonçalo - RJ','São João de Meriti - RJ','São José - SC','São José do Rio Preto - SP','São José dos Campos - SP','São José dos Pinhais - PR','São Luís - MA','São Paulo - SP','São Vicente - SP','Sapucaia do Sul - RS','Serra - ES','Sinop - MT','Sorocaba - SP','Suzano - SP',
+  'Taubaté - SP','Teresina - PI','Teresópolis - RJ','Timóteo - MG','Toledo - PR','Três Lagoas - MS',
+  'Uberaba - MG','Uberlândia - MG','Umuarama - PR',
+  'Várzea Grande - MT','Viamão - RS','Vila Velha - ES','Vitória - ES','Vitória da Conquista - BA',
+];
+
 let crmLeads = [];
 let crmAtividades = [];
 
@@ -3924,7 +3945,7 @@ function filterLeads() {
       <div class="lead-avatar">${leadInitials(l.nome)}</div>
       <div class="lead-info">
         <div class="lead-name">${l.nome}</div>
-        <div class="lead-contact">${l.telefone}${l.email ? ' · ' + l.email : ''}${l.origem ? ' · ' + (CRM_ORIGENS[l.origem]||l.origem) : ''}</div>
+        <div class="lead-contact">${l.telefone}${l.instagram ? ' · @' + l.instagram.replace(/^@/,'') : ''}${l.area_atuacao ? ' · ' + l.area_atuacao : ''}${l.cidade ? ' · ' + l.cidade : ''}${l.origem ? ' · ' + (CRM_ORIGENS[l.origem]||l.origem) : ''}</div>
       </div>
       <span class="lead-etapa-badge" style="background:${etapaObj.color}22;color:${etapaObj.color}">${etapaObj.label}</span>
       ${canEd ? `<button class="btn btn-ghost btn-sm" style="margin-left:8px" onclick="event.stopPropagation();openLeadForm('${l.id}')">Editar</button>` : ''}
@@ -3948,7 +3969,9 @@ function openLeadForm(id) {
   document.getElementById('formTitle').textContent = lead ? 'Editar Lead' : 'Novo Lead';
   const etapasOpts = crmEtapas.map(e => `<option value="${e.key}" ${lead?.etapa===e.key?'selected':''}>${e.label}</option>`).join('');
   const origensOpts = Object.entries(CRM_ORIGENS).map(([k,v]) => `<option value="${k}" ${lead?.origem===k?'selected':''}>${v}</option>`).join('');
+  const cidadesOpts = CIDADES_BR.map(c => `<option value="${c}">`).join('');
   document.getElementById('formBody').innerHTML = `
+    <datalist id="cidadesList">${cidadesOpts}</datalist>
     <div class="form-group">
       <label class="form-label">Nome <span style="color:#e74c3c">*</span></label>
       <input class="form-input" id="leadNome" value="${lead?.nome||''}" placeholder="Nome completo">
@@ -3958,8 +3981,16 @@ function openLeadForm(id) {
       <input class="form-input" id="leadTelefone" value="${lead?.telefone||''}" placeholder="(00) 00000-0000" oninput="maskTelefone(this)" maxlength="16">
     </div>
     <div class="form-group">
-      <label class="form-label">E-mail</label>
-      <input class="form-input" id="leadEmail" type="email" value="${lead?.email||''}" placeholder="email@exemplo.com">
+      <label class="form-label">Instagram <span style="color:#e74c3c">*</span></label>
+      <input class="form-input" id="leadInstagram" value="${lead?.instagram||''}" placeholder="@usuario">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Área de Atuação <span style="color:#e74c3c">*</span></label>
+      <input class="form-input" id="leadAreaAtuacao" value="${lead?.area_atuacao||''}" placeholder="Ex: Marketing, Saúde, Tecnologia...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Cidade / Estado</label>
+      <input class="form-input" id="leadCidade" list="cidadesList" value="${lead?.cidade||''}" placeholder="Buscar cidade..." autocomplete="off">
     </div>
     <div class="form-row">
       <div class="form-group">
@@ -3971,6 +4002,10 @@ function openLeadForm(id) {
         <select class="form-select" id="leadEtapa">${etapasOpts}</select>
       </div>
     </div>
+    <div class="form-group">
+      <label class="form-label">Informações</label>
+      <textarea class="form-textarea" id="leadInformacoes" rows="3" placeholder="Observações adicionais sobre o lead...">${lead?.informacoes||''}</textarea>
+    </div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveLead('${id||''}')">Salvar</button>
@@ -3980,13 +4015,19 @@ function openLeadForm(id) {
 }
 
 async function saveLead(id) {
-  const nome     = document.getElementById('leadNome')?.value.trim();
-  const telefone = document.getElementById('leadTelefone')?.value.trim();
-  const email    = document.getElementById('leadEmail')?.value.trim();
-  const origem   = document.getElementById('leadOrigem')?.value;
-  const etapa    = document.getElementById('leadEtapa')?.value;
-  if (!nome || !telefone) { toast('Nome e telefone são obrigatórios.'); return; }
-  const body = { nome, telefone, email: email||null, origem: origem||null, etapa };
+  const nome         = document.getElementById('leadNome')?.value.trim();
+  const telefone     = document.getElementById('leadTelefone')?.value.trim();
+  const instagram    = document.getElementById('leadInstagram')?.value.trim();
+  const area_atuacao = document.getElementById('leadAreaAtuacao')?.value.trim();
+  const cidade       = document.getElementById('leadCidade')?.value.trim();
+  const origem       = document.getElementById('leadOrigem')?.value;
+  const etapa        = document.getElementById('leadEtapa')?.value;
+  const informacoes  = document.getElementById('leadInformacoes')?.value.trim();
+  if (!nome)         { toast('Nome é obrigatório.'); return; }
+  if (!telefone)     { toast('Telefone é obrigatório.'); return; }
+  if (!instagram)    { toast('Instagram é obrigatório.'); return; }
+  if (!area_atuacao) { toast('Área de Atuação é obrigatória.'); return; }
+  const body = { nome, telefone, instagram: instagram||null, area_atuacao: area_atuacao||null, cidade: cidade||null, origem: origem||null, etapa, informacoes: informacoes||null };
   const res  = id ? await API.put('/crm/leads/'+id, body) : await API.post('/crm/leads', body);
   if (res.erro) { toast('Erro: '+res.erro); return; }
   closeModal('formModal');
@@ -4016,9 +4057,12 @@ function openLeadDetail(id) {
   document.getElementById('formBody').innerHTML = `
     <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
       <div><strong>Telefone:</strong> ${lead.telefone}</div>
-      ${lead.email ? `<div><strong>E-mail:</strong> ${lead.email}</div>` : ''}
+      ${lead.instagram ? `<div><strong>Instagram:</strong> @${lead.instagram.replace(/^@/,'')}</div>` : ''}
+      ${lead.area_atuacao ? `<div><strong>Área de Atuação:</strong> ${lead.area_atuacao}</div>` : ''}
+      ${lead.cidade ? `<div><strong>Cidade:</strong> ${lead.cidade}</div>` : ''}
       ${lead.origem ? `<div><strong>Origem:</strong> ${CRM_ORIGENS[lead.origem]||lead.origem}</div>` : ''}
       <div><strong>Etapa:</strong> <span style="color:${etapaObj.color}">${etapaObj.label}</span></div>
+      ${lead.informacoes ? `<div style="margin-top:4px"><strong>Informações:</strong><br><span style="white-space:pre-wrap">${lead.informacoes}</span></div>` : ''}
     </div>
     <div class="form-actions"><button class="btn btn-ghost" onclick="closeModal('formModal')">Fechar</button></div>
   `;
