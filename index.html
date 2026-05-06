@@ -4095,8 +4095,7 @@ async function renderFunil() {
     const etapaColor = etapa.cor || etapa.color || '#999';
     const cards = leads.map(l => `
       <div class="funil-card"
-        ${canEd ? `onmousedown="funilPointerDown(event,'${l.id}')"` : ''}
-        onclick="funilCardClick('${l.id}')">
+        ${canEd ? `onmousedown="funilPointerDown(event,'${l.id}')"` : `onclick="openLeadInfo('${l.id}')"`}>
         <div class="funil-card-name">${l.nome}</div>
         <div class="funil-card-phone">${l.telefone}</div>
         ${l.origem ? `<div class="funil-card-tags"><span class="funil-tag">${CRM_ORIGENS[l.origem]||l.origem}</span></div>` : ''}
@@ -4278,9 +4277,10 @@ async function funilPointerUp(e) {
   activeCol?.classList.remove('drag-over');
 
   if (!didDrag) {
-    // Sem arrastar: apenas limpa e deixa o onclick disparar
+    // e.preventDefault() no mousedown cancela o onclick nativo — chamamos direto
     ghost.remove();
     originEl.classList.remove('fd-placeholder');
+    openLeadInfo(leadId);
     return;
   }
 
