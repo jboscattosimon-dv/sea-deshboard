@@ -680,6 +680,299 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
 .cc-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
 .cc-btn.posted { background: #27AE60; color: #fff; border-color: #27AE60; }
 .cc-btn.posted:hover { background: #e74c3c; border-color: #e74c3c; }
+
+/* ─── NAV GRUPOS COLAPSÁVEIS ─── */
+.nav-group-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.65);
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 2px;
+  user-select: none;
+}
+.nav-group-header svg { flex-shrink: 0; opacity: 0.7; }
+.nav-group-header:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.nav-group-header:hover svg { opacity: 1; }
+.nav-group-header .chevron {
+  margin-left: auto;
+  width: 14px; height: 14px;
+  opacity: 0.45;
+  transition: transform 0.22s cubic-bezier(.4,0,.2,1);
+  flex-shrink: 0;
+}
+.nav-group.open .nav-group-header .chevron { transform: rotate(90deg); }
+.nav-group.open .nav-group-header { color: #fff; }
+.nav-group.open .nav-group-header svg { opacity: 1; }
+
+.nav-group-children {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.3s cubic-bezier(.4,0,.2,1);
+}
+.nav-group.open .nav-group-children { max-height: 400px; }
+
+.nav-sub-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px 8px 28px;
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.55);
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 2px;
+}
+.nav-sub-item svg { flex-shrink: 0; opacity: 0.6; }
+.nav-sub-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
+.nav-sub-item:hover svg { opacity: 1; }
+.nav-sub-item.active { background: rgba(255,255,255,0.11); color: #fff; }
+.nav-sub-item.active svg { opacity: 1; }
+
+/* CRM badge no header do grupo */
+.nav-group-badge {
+  margin-left: auto;
+  margin-right: 4px;
+  background: rgba(149,135,95,0.3);
+  color: #d4c07a;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 100px;
+  letter-spacing: 0.5px;
+}
+
+/* ─── CRM — FUNIL KANBAN ─── */
+.funil-board {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  align-items: flex-start;
+}
+.funil-board::-webkit-scrollbar { height: 5px; }
+.funil-board::-webkit-scrollbar-track { background: var(--surface2); border-radius: 99px; }
+.funil-board::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+.funil-col {
+  flex: 0 0 220px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px;
+  transition: box-shadow 0.2s;
+}
+.funil-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.funil-col-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+.funil-col-count {
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--surface2);
+  color: var(--muted);
+  padding: 2px 8px;
+  border-radius: 100px;
+}
+
+.funil-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(.22,1,.36,1);
+  position: relative;
+}
+.funil-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.10);
+  border-color: #95875f;
+}
+.funil-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.funil-card-phone {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.funil-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.funil-tag {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 100px;
+  background: #f0ede5;
+  color: #95875f;
+}
+.funil-card-acts {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+/* ─── CRM — LEADS LISTA ─── */
+.leads-list { display: flex; flex-direction: column; gap: 8px; }
+.lead-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+.lead-row:hover { border-color: #95875f; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+.lead-avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2a2920 0%, #95875f 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+  font-family: 'Syne', sans-serif;
+}
+.lead-info { flex: 1; min-width: 0; }
+.lead-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.lead-contact { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.lead-etapa-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 100px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ─── CRM — RELATÓRIOS ─── */
+.crm-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.crm-stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.crm-stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+.crm-stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 4px; height: 100%;
+  background: linear-gradient(180deg, #95875f, #d4c07a);
+  border-radius: 4px 0 0 4px;
+}
+.crm-stat-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.crm-stat-lbl { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+.crm-funil-bar { margin-top: 28px; }
+.crm-funil-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.crm-funil-bar-label { font-size: 12px; font-weight: 500; color: var(--text); width: 140px; flex-shrink: 0; }
+.crm-funil-bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--surface2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.crm-funil-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #95875f, #d4c07a);
+  border-radius: 99px;
+  transition: width 0.6s cubic-bezier(.22,1,.36,1);
+}
+.crm-funil-bar-count { font-size: 12px; font-weight: 700; color: var(--text); width: 28px; text-align: right; flex-shrink: 0; }
+
+/* ─── CRM — ATIVIDADES ─── */
+.ativ-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 12px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+  transition: all 0.15s;
+}
+.ativ-check {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-top: 1px;
+}
+.ativ-check:hover { border-color: #95875f; background: #f9f7f2; }
+.ativ-check.done { background: #27AE60; border-color: #27AE60; }
+.ativ-info { flex: 1; }
+.ativ-desc { font-size: 13px; color: var(--text); font-weight: 500; }
+.ativ-desc.done { text-decoration: line-through; color: var(--muted); }
+.ativ-meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.ativ-date-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 100px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
 </style>
 </head>
 <body>
@@ -727,12 +1020,15 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     <img src="/logo.png" alt="SEA Agência de Marketing" style="width:148px;filter:brightness(0) invert(1);display:block">
   </div>
   <div class="sidebar-nav">
+    <!-- Visão Geral -->
     <div class="sidebar-section">Visão Geral</div>
     <div class="nav-item active" data-page="dashboard" onclick="goTo('dashboard')">
       <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       Dashboard
     </div>
-    <div class="sidebar-section">Cadastros</div>
+
+    <!-- Operações -->
+    <div class="sidebar-section">Operações</div>
     <div class="nav-item" data-page="demands" onclick="goTo('demands')">
       <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
       Demandas
@@ -741,22 +1037,63 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
       <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/><path d="M19 8v6M22 11h-6"/></svg>
       Demandas Internas
     </div>
-    <div class="nav-item" data-page="clients" onclick="goTo('clients')">
-      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-      Clientes
+
+    <!-- Cadastro (colapsável) -->
+    <div class="nav-group" id="navGroupCadastro">
+      <div class="nav-group-header" onclick="toggleNavGroup('navGroupCadastro')">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9.5L12 4l9 5.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+        Cadastro
+        <svg class="chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="nav-group-children">
+        <div class="nav-sub-item" data-page="clients" onclick="goTo('clients')">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          Clientes
+        </div>
+        <div class="nav-sub-item" data-page="statuses" onclick="goTo('statuses')">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          Status
+        </div>
+        <div class="nav-sub-item" data-page="formats" onclick="goTo('formats')" id="navFormats">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          Formatos
+        </div>
+        <div class="nav-sub-item" data-page="users" onclick="goTo('users')" id="navUsers">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Usuários
+        </div>
+      </div>
     </div>
-    <div class="nav-item" data-page="statuses" onclick="goTo('statuses')">
-      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-      Status
+
+    <!-- CRM (colapsável) -->
+    <div class="nav-group" id="navGroupCRM">
+      <div class="nav-group-header" onclick="toggleNavGroup('navGroupCRM')">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        CRM
+        <span class="nav-group-badge">NOVO</span>
+        <svg class="chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="nav-group-children">
+        <div class="nav-sub-item" data-page="crm_leads" onclick="goTo('crm_leads')" id="navCrmLeads">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+          Leads
+        </div>
+        <div class="nav-sub-item" data-page="crm_funil" onclick="goTo('crm_funil')" id="navCrmFunil">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+          Funil de Vendas
+        </div>
+        <div class="nav-sub-item" data-page="crm_atividades" onclick="goTo('crm_atividades')" id="navCrmAtiv">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          Atividades
+        </div>
+        <div class="nav-sub-item" data-page="crm_relatorios" onclick="goTo('crm_relatorios')" id="navCrmRel">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Relatórios
+        </div>
+      </div>
     </div>
-    <div class="nav-item" data-page="formats" onclick="goTo('formats')" id="navFormats">
-      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-      Formatos
-    </div>
-    <div class="nav-item" data-page="users" onclick="goTo('users')" id="navUsers">
-      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      Usuários
-    </div>
+
+    <!-- Auditoria -->
     <div class="sidebar-section">Auditoria</div>
     <div class="nav-item" data-page="history" onclick="goTo('history')" id="navHistory">
       <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -1045,6 +1382,97 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     </div>
   </div>
 
+  <!-- ── CRM: LEADS ── -->
+  <div class="page" id="page-crm_leads">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Leads</div>
+        <div class="page-sub">Gerencie seus contatos e oportunidades</div>
+      </div>
+    </div>
+    <div class="filter-bar" style="margin-bottom:16px">
+      <div class="search-wrap">
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input class="search-input" id="leadsSearch" type="text" placeholder="Buscar lead…" oninput="filterLeads()">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Etapa</label>
+        <select class="form-select" id="leadsEtapaFilter" onchange="filterLeads()">
+          <option value="all">Todas</option>
+          <option value="primeiro_contato">Primeiro Contato</option>
+          <option value="resposta_inicial">Resposta Inicial</option>
+          <option value="tem_interesse">Tem Interesse</option>
+          <option value="reuniao_agendada">Reunião Agendada</option>
+          <option value="fechou">Fechou</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Origem</label>
+        <select class="form-select" id="leadsOrigemFilter" onchange="filterLeads()">
+          <option value="all">Todas</option>
+          <option value="instagram">Instagram</option>
+          <option value="google">Google</option>
+          <option value="indicacao">Indicação</option>
+          <option value="linkedin">LinkedIn</option>
+          <option value="site">Site</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+    </div>
+    <div id="leadsList" class="leads-list"></div>
+  </div>
+
+  <!-- ── CRM: FUNIL ── -->
+  <div class="page" id="page-crm_funil">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Funil de Vendas</div>
+        <div class="page-sub">Visualize e mova leads pelas etapas do funil</div>
+      </div>
+    </div>
+    <div id="funilBoard" class="funil-board"></div>
+  </div>
+
+  <!-- ── CRM: ATIVIDADES ── -->
+  <div class="page" id="page-crm_atividades">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Atividades</div>
+        <div class="page-sub">Follow-ups e tarefas vinculadas aos leads</div>
+      </div>
+    </div>
+    <div class="filter-bar" style="margin-bottom:16px">
+      <div class="filter-group">
+        <label class="filter-label">Lead</label>
+        <select class="form-select" id="atividadeLeadFilter" onchange="renderAtividades()">
+          <option value="all">Todos os leads</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Status</label>
+        <select class="form-select" id="atividadeStatusFilter" onchange="renderAtividades()">
+          <option value="all">Todos</option>
+          <option value="pendente">Pendente</option>
+          <option value="concluida">Concluída</option>
+        </select>
+      </div>
+    </div>
+    <div id="atividadesList"></div>
+  </div>
+
+  <!-- ── CRM: RELATÓRIOS ── -->
+  <div class="page" id="page-crm_relatorios">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Relatórios CRM</div>
+        <div class="page-sub">Métricas de leads, conversão e fechamentos</div>
+      </div>
+    </div>
+    <div id="crmRelContent">
+      <div style="text-align:center;padding:60px;color:var(--muted);font-size:14px">Carregando métricas…</div>
+    </div>
+  </div>
+
 
 </main>
 
@@ -1273,27 +1701,51 @@ function uid() { return '_' + Math.random().toString(36).slice(2); }
 // ═══════════════════════════════════════
 let currentPage = 'dashboard';
 
+function toggleNavGroup(id) {
+  const g = document.getElementById(id);
+  if (g) g.classList.toggle('open');
+}
+
 function goTo(page) {
   if (page !== 'dashboard' && !canView(page)) { toast('Sem permissão para acessar esta página.'); return; }
   currentPage = page;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n => {
+  document.querySelectorAll('.nav-item, .nav-sub-item').forEach(n => {
     n.classList.toggle('active', n.dataset.page === page);
   });
-  const titles = { dashboard:'Dashboard', demands:'Demandas', internal:'Demandas Internas', clients:'Clientes', statuses:'Status', formats:'Formatos', users:'Usuários', history:'Histórico' };
+  // Abrir grupo pai se for sub-item
+  const crmPages = ['crm_leads','crm_funil','crm_atividades','crm_relatorios'];
+  const cadastroPages = ['clients','statuses','formats','users'];
+  if (crmPages.includes(page)) {
+    const g = document.getElementById('navGroupCRM');
+    if (g) g.classList.add('open');
+  }
+  if (cadastroPages.includes(page)) {
+    const g = document.getElementById('navGroupCadastro');
+    if (g) g.classList.add('open');
+  }
+  const titles = {
+    dashboard:'Dashboard', demands:'Demandas', internal:'Demandas Internas',
+    clients:'Clientes', statuses:'Status', formats:'Formatos', users:'Usuários', history:'Histórico',
+    crm_leads:'Leads', crm_funil:'Funil de Vendas', crm_atividades:'Atividades', crm_relatorios:'Relatórios CRM'
+  };
   document.getElementById('headerTitle').textContent = titles[page] || page;
   buildHeaderActions(page);
   closeSidebar();
 
-  if (page === 'dashboard') renderDashboard();
-  if (page === 'demands')   renderDemands();
-  if (page === 'internal')  renderInternals();
-  if (page === 'clients')   renderClients();
-  if (page === 'statuses')  renderStatuses();
-  if (page === 'formats')   renderFormats();
-  if (page === 'users')     renderUsers();
-  if (page === 'history')   renderHistory();
+  if (page === 'dashboard')      renderDashboard();
+  if (page === 'demands')        renderDemands();
+  if (page === 'internal')       renderInternals();
+  if (page === 'clients')        renderClients();
+  if (page === 'statuses')       renderStatuses();
+  if (page === 'formats')        renderFormats();
+  if (page === 'users')          renderUsers();
+  if (page === 'history')        renderHistory();
+  if (page === 'crm_leads')      renderLeads();
+  if (page === 'crm_funil')      renderFunil();
+  if (page === 'crm_atividades') renderAtividades();
+  if (page === 'crm_relatorios') renderCrmRelatorios();
 }
 
 function buildHeaderActions(page) {
@@ -1301,12 +1753,14 @@ function buildHeaderActions(page) {
   const btnNew = (label, fn, icon='M12 5v14M5 12h14') =>
     `<button class="btn btn-primary btn-sm" onclick="${fn}()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="${icon}"/></svg> ${label}</button>`;
   const map = {
-    demands:  canEdit('demands')  ? btnNew('Nova demanda',  'openDemandForm')  : '',
-    internal: canEdit('internal') ? btnNew('Nova demanda interna', 'openInternalForm') : '',
-    clients:  canEdit('clients')  ? btnNew('Novo cliente',  'openClientForm')  : '',
-    statuses: canEdit('statuses') ? btnNew('Novo status',   'openStatusForm')  : '',
-    formats:  canEdit('formats')  ? btnNew('Novo formato',  'openFormatForm')  : '',
-    users:    canEdit('users')    ? btnNew('Novo usuário',  'openUserForm')    : '',
+    demands:        canEdit('demands')         ? btnNew('Nova demanda',     'openDemandForm')    : '',
+    internal:       canEdit('internal')        ? btnNew('Nova dem. interna','openInternalForm')  : '',
+    clients:        canEdit('clients')         ? btnNew('Novo cliente',     'openClientForm')    : '',
+    statuses:       canEdit('statuses')        ? btnNew('Novo status',      'openStatusForm')    : '',
+    formats:        canEdit('formats')         ? btnNew('Novo formato',     'openFormatForm')    : '',
+    users:          canEdit('users')           ? btnNew('Novo usuário',     'openUserForm')      : '',
+    crm_leads:      canEdit('crm_leads')       ? btnNew('Novo lead',        'openLeadForm')      : '',
+    crm_atividades: canEdit('crm_atividades')  ? btnNew('Nova atividade',   'openAtividadeForm') : '',
     dashboard: `<button class="btn btn-ghost btn-sm" onclick="openExportModal()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M12 4v12m0 0l-4-4m4 4l4-4"/><path d="M4 20h16"/></svg> Exportar PDF</button>
                 ${canEdit('demands') ? btnNew('Nova demanda', 'openDemandForm') : ''}`,
   };
@@ -2262,13 +2716,17 @@ function openPermissoes(userId) {
   if (!u) return;
   const perms = u.permissoes || {};
   const pages = [
-    { key: 'dashboard', label: 'Dashboard' },
-    { key: 'demands',   label: 'Demandas' },
-    { key: 'internal',  label: 'Demandas Internas' },
-    { key: 'clients',   label: 'Clientes' },
-    { key: 'statuses',  label: 'Status' },
-    { key: 'formats',   label: 'Formatos' },
-    { key: 'users',     label: 'Usuários' },
+    { key: 'dashboard',       label: 'Dashboard' },
+    { key: 'demands',         label: 'Demandas' },
+    { key: 'internal',        label: 'Demandas Internas' },
+    { key: 'clients',         label: 'Clientes' },
+    { key: 'statuses',        label: 'Status' },
+    { key: 'formats',         label: 'Formatos' },
+    { key: 'users',           label: 'Usuários' },
+    { key: 'crm_leads',       label: 'CRM — Leads' },
+    { key: 'crm_funil',       label: 'CRM — Funil' },
+    { key: 'crm_atividades',  label: 'CRM — Atividades' },
+    { key: 'crm_relatorios',  label: 'CRM — Relatórios' },
   ];
 
   function chk(page, perm) {
@@ -2323,7 +2781,7 @@ function onPermEditarChange(page, el) {
 }
 
 async function savePermissoes(userId) {
-  const pages = ['dashboard','demands','internal','clients','statuses','formats','users'];
+  const pages = ['dashboard','demands','internal','clients','statuses','formats','users','crm_leads','crm_funil','crm_atividades','crm_relatorios'];
   const permissoes = {};
   pages.forEach(page => {
     const visualizar = document.getElementById(`perm_${page}_visualizar`)?.checked ?? true;
@@ -2363,7 +2821,23 @@ function applyPermissions() {
   pages.forEach(page => {
     const navEl = document.querySelector(`.nav-item[data-page="${page}"]`);
     if (navEl) navEl.style.display = canView(page) ? '' : 'none';
+    const subEl = document.querySelector(`.nav-sub-item[data-page="${page}"]`);
+    if (subEl) subEl.style.display = canView(page) ? '' : 'none';
   });
+  // CRM pages
+  const crmPages = ['crm_leads','crm_funil','crm_atividades','crm_relatorios'];
+  const hasCrm = crmPages.some(p => canView(p));
+  const crmGroup = document.getElementById('navGroupCRM');
+  if (crmGroup) crmGroup.style.display = hasCrm ? '' : 'none';
+  crmPages.forEach(page => {
+    const el = document.querySelector(`.nav-sub-item[data-page="${page}"]`);
+    if (el) el.style.display = canView(page) ? '' : 'none';
+  });
+  // Cadastro sub-items
+  const cadastroPages = ['clients','statuses','formats','users'];
+  const hasCadastro = cadastroPages.some(p => canView(p));
+  const cadastroGroup = document.getElementById('navGroupCadastro');
+  if (cadastroGroup) cadastroGroup.style.display = hasCadastro ? '' : 'none';
 }
 
 // ═══════════════════════════════════════
@@ -2940,6 +3414,349 @@ async function deleteInternal(id, fromForm) {
   if (fromForm) closeModal('formModal');
   toast('Demanda excluída.');
   renderInternals();
+}
+
+// ═══════════════════════════════════════
+//  CRM
+// ═══════════════════════════════════════
+
+// ── Constantes do funil ──────────────────
+const CRM_ETAPAS = [
+  { key: 'primeiro_contato',  label: 'Primeiro Contato',  color: '#3498DB' },
+  { key: 'resposta_inicial',  label: 'Resposta Inicial',  color: '#9B59B6' },
+  { key: 'tem_interesse',     label: 'Tem Interesse',     color: '#F39C12' },
+  { key: 'reuniao_agendada',  label: 'Reunião Agendada',  color: '#1ABC9C' },
+  { key: 'fechou',            label: 'Fechou',            color: '#27AE60' },
+];
+const CRM_ORIGENS = {
+  instagram: 'Instagram', google: 'Google', indicacao: 'Indicação',
+  linkedin: 'LinkedIn', site: 'Site', outro: 'Outro',
+};
+
+let crmLeads = [];
+let crmAtividades = [];
+
+// ── helpers ──────────────────────────────
+function crmEtapa(key) { return CRM_ETAPAS.find(e => e.key === key) || { label: key, color: '#999' }; }
+function leadInitials(nome) { return nome.split(' ').slice(0,2).map(w => w[0]?.toUpperCase()).join(''); }
+
+// ── LEADS ────────────────────────────────
+async function renderLeads() {
+  const res = await API.get('/crm/leads');
+  if (res.erro) { toast('Erro ao carregar leads'); return; }
+  crmLeads = res;
+  filterLeads();
+  // populate atividade lead filter
+  const sel = document.getElementById('atividadeLeadFilter');
+  if (sel) {
+    const cur = sel.value;
+    sel.innerHTML = '<option value="all">Todos os leads</option>' +
+      crmLeads.map(l => `<option value="${l.id}">${l.nome}</option>`).join('');
+    if (cur) sel.value = cur;
+  }
+}
+
+function filterLeads() {
+  const q      = (document.getElementById('leadsSearch')?.value || '').toLowerCase();
+  const etapa  = document.getElementById('leadsEtapaFilter')?.value || 'all';
+  const origem = document.getElementById('leadsOrigemFilter')?.value || 'all';
+  let list = crmLeads;
+  if (q)          list = list.filter(l => l.nome.toLowerCase().includes(q) || (l.telefone||'').includes(q) || (l.email||'').toLowerCase().includes(q));
+  if (etapa  !== 'all') list = list.filter(l => l.etapa === etapa);
+  if (origem !== 'all') list = list.filter(l => l.origem === origem);
+  const el = document.getElementById('leadsList');
+  if (!el) return;
+  if (!list.length) {
+    el.innerHTML = `<div style="text-align:center;padding:60px;color:var(--muted);font-size:14px">Nenhum lead encontrado.</div>`;
+    return;
+  }
+  const canEd = canEdit('crm_leads');
+  el.innerHTML = list.map(l => {
+    const etapaObj = crmEtapa(l.etapa);
+    return `<div class="lead-row" onclick="openLeadDetail('${l.id}')">
+      <div class="lead-avatar">${leadInitials(l.nome)}</div>
+      <div class="lead-info">
+        <div class="lead-name">${l.nome}</div>
+        <div class="lead-contact">${l.telefone}${l.email ? ' · ' + l.email : ''}${l.origem ? ' · ' + (CRM_ORIGENS[l.origem]||l.origem) : ''}</div>
+      </div>
+      <span class="lead-etapa-badge" style="background:${etapaObj.color}22;color:${etapaObj.color}">${etapaObj.label}</span>
+      ${canEd ? `<button class="btn btn-ghost btn-sm" style="margin-left:8px" onclick="event.stopPropagation();openLeadForm('${l.id}')">Editar</button>` : ''}
+      ${canEd ? `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteLead('${l.id}')"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function openLeadForm(id) {
+  const lead = id ? crmLeads.find(l => l.id === id) : null;
+  document.getElementById('formTitle').textContent = lead ? 'Editar Lead' : 'Novo Lead';
+  const etapasOpts = CRM_ETAPAS.map(e => `<option value="${e.key}" ${lead?.etapa===e.key?'selected':''}>${e.label}</option>`).join('');
+  const origensOpts = Object.entries(CRM_ORIGENS).map(([k,v]) => `<option value="${k}" ${lead?.origem===k?'selected':''}>${v}</option>`).join('');
+  document.getElementById('formBody').innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Nome <span style="color:#e74c3c">*</span></label>
+      <input class="form-input" id="leadNome" value="${lead?.nome||''}" placeholder="Nome completo">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Telefone <span style="color:#e74c3c">*</span></label>
+      <input class="form-input" id="leadTelefone" value="${lead?.telefone||''}" placeholder="(00) 00000-0000">
+    </div>
+    <div class="form-group">
+      <label class="form-label">E-mail</label>
+      <input class="form-input" id="leadEmail" type="email" value="${lead?.email||''}" placeholder="email@exemplo.com">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Origem</label>
+        <select class="form-select" id="leadOrigem"><option value="">Selecione</option>${origensOpts}</select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Etapa</label>
+        <select class="form-select" id="leadEtapa">${etapasOpts}</select>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveLead('${id||''}')">Salvar</button>
+    </div>
+  `;
+  openModal('formModal');
+}
+
+async function saveLead(id) {
+  const nome     = document.getElementById('leadNome')?.value.trim();
+  const telefone = document.getElementById('leadTelefone')?.value.trim();
+  const email    = document.getElementById('leadEmail')?.value.trim();
+  const origem   = document.getElementById('leadOrigem')?.value;
+  const etapa    = document.getElementById('leadEtapa')?.value;
+  if (!nome || !telefone) { toast('Nome e telefone são obrigatórios.'); return; }
+  const body = { nome, telefone, email: email||null, origem: origem||null, etapa };
+  const res  = id ? await API.put('/crm/leads/'+id, body) : await API.post('/crm/leads', body);
+  if (res.erro) { toast('Erro: '+res.erro); return; }
+  closeModal('formModal');
+  toast(id ? 'Lead atualizado!' : 'Lead criado!');
+  await renderLeads();
+  if (currentPage === 'crm_funil') renderFunil();
+}
+
+async function deleteLead(id) {
+  if (!confirm('Remover este lead? As atividades vinculadas também serão excluídas.')) return;
+  const res = await API.del('/crm/leads/'+id);
+  if (res.erro) { toast('Erro: '+res.erro); return; }
+  toast('Lead removido.');
+  await renderLeads();
+  if (currentPage === 'crm_funil') renderFunil();
+}
+
+function openLeadDetail(id) {
+  const lead = crmLeads.find(l => l.id === id);
+  if (!lead) return;
+  if (canEdit('crm_leads')) { openLeadForm(id); return; }
+  const etapaObj = crmEtapa(lead.etapa);
+  document.getElementById('formTitle').textContent = lead.nome;
+  document.getElementById('formBody').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+      <div><strong>Telefone:</strong> ${lead.telefone}</div>
+      ${lead.email ? `<div><strong>E-mail:</strong> ${lead.email}</div>` : ''}
+      ${lead.origem ? `<div><strong>Origem:</strong> ${CRM_ORIGENS[lead.origem]||lead.origem}</div>` : ''}
+      <div><strong>Etapa:</strong> <span style="color:${etapaObj.color}">${etapaObj.label}</span></div>
+    </div>
+    <div class="form-actions"><button class="btn btn-ghost" onclick="closeModal('formModal')">Fechar</button></div>
+  `;
+  openModal('formModal');
+}
+
+// ── FUNIL KANBAN ─────────────────────────
+async function renderFunil() {
+  if (!crmLeads.length) {
+    const res = await API.get('/crm/leads');
+    if (!res.erro) crmLeads = res;
+  }
+  const board = document.getElementById('funilBoard');
+  if (!board) return;
+  const canEd = canEdit('crm_funil');
+  board.innerHTML = CRM_ETAPAS.map(etapa => {
+    const leads = crmLeads.filter(l => l.etapa === etapa.key);
+    const cards = leads.map(l => `
+      <div class="funil-card" onclick="openLeadDetail('${l.id}')">
+        <div class="funil-card-name">${l.nome}</div>
+        <div class="funil-card-phone">${l.telefone}</div>
+        <div class="funil-card-tags">
+          ${l.origem ? `<span class="funil-tag">${CRM_ORIGENS[l.origem]||l.origem}</span>` : ''}
+        </div>
+        ${canEd ? `<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+          ${CRM_ETAPAS.filter(e=>e.key!==etapa.key).map(e =>
+            `<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px" onclick="event.stopPropagation();moveLeadEtapa('${l.id}','${e.key}')">→ ${e.label}</button>`
+          ).join('')}
+        </div>` : ''}
+      </div>`).join('');
+    return `<div class="funil-col">
+      <div class="funil-col-header">
+        <span class="funil-col-title" style="color:${etapa.color}">${etapa.label}</span>
+        <span class="funil-col-count">${leads.length}</span>
+      </div>
+      <div id="funilCol_${etapa.key}">
+        ${cards || `<div style="text-align:center;padding:20px 0;color:var(--muted);font-size:12px">Nenhum lead</div>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function moveLeadEtapa(id, etapa) {
+  const res = await API.put('/crm/leads/'+id, { etapa });
+  if (res.erro) { toast('Erro: '+res.erro); return; }
+  const lead = crmLeads.find(l => l.id === id);
+  if (lead) lead.etapa = etapa;
+  renderFunil();
+  toast('Lead movido para ' + crmEtapa(etapa).label);
+}
+
+// ── ATIVIDADES ───────────────────────────
+async function renderAtividades() {
+  // garante leads carregados para o select
+  if (!crmLeads.length) {
+    const r = await API.get('/crm/leads');
+    if (!r.erro) {
+      crmLeads = r;
+      const sel = document.getElementById('atividadeLeadFilter');
+      if (sel) {
+        const cur = sel.value;
+        sel.innerHTML = '<option value="all">Todos os leads</option>' + crmLeads.map(l=>`<option value="${l.id}">${l.nome}</option>`).join('');
+        if (cur) sel.value = cur;
+      }
+    }
+  }
+  const leadId = document.getElementById('atividadeLeadFilter')?.value || 'all';
+  const stF    = document.getElementById('atividadeStatusFilter')?.value || 'all';
+  const url    = leadId !== 'all' ? `/crm/atividades?lead_id=${leadId}` : '/crm/atividades';
+  const res    = await API.get(url);
+  if (res.erro) { toast('Erro ao carregar atividades'); return; }
+  crmAtividades = res;
+
+  let list = crmAtividades;
+  if (stF === 'pendente') list = list.filter(a => !a.concluida);
+  if (stF === 'concluida') list = list.filter(a => a.concluida);
+
+  const el = document.getElementById('atividadesList');
+  if (!el) return;
+  if (!list.length) {
+    el.innerHTML = `<div style="text-align:center;padding:60px;color:var(--muted);font-size:14px">Nenhuma atividade encontrada.</div>`;
+    return;
+  }
+  const canEd = canEdit('crm_atividades');
+  const today = new Date().toISOString().slice(0,10);
+  el.innerHTML = list.map(a => {
+    const overdue = !a.concluida && a.data < today;
+    const dateColor = overdue ? '#E74C3C' : a.data === today ? '#F39C12' : 'var(--muted)';
+    const [y,m,d] = (a.data||'').split('-');
+    const dateStr = a.data ? `${d}/${m}/${y}` : '—';
+    const leadNome = a.crm_leads?.nome || crmLeads.find(l=>l.id===a.lead_id)?.nome || '—';
+    return `<div class="ativ-row" style="${a.concluida?'opacity:0.6':''}">
+      ${canEd ? `<div class="ativ-check ${a.concluida?'done':''}" onclick="toggleAtividade('${a.id}',${!a.concluida})">
+        ${a.concluida?'<svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}
+      </div>` : `<div class="ativ-check ${a.concluida?'done':''}"></div>`}
+      <div class="ativ-info">
+        <div class="ativ-desc ${a.concluida?'done':''}">${a.descricao}</div>
+        <div class="ativ-meta">Lead: <strong>${leadNome}</strong></div>
+      </div>
+      <span class="ativ-date-badge" style="background:${dateColor}22;color:${dateColor}">${dateStr}</span>
+      ${canEd ? `<button class="btn btn-danger btn-sm" onclick="deleteAtividade('${a.id}')"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function openAtividadeForm(leadIdPre) {
+  if (!crmLeads.length) { toast('Carregue os leads primeiro.'); return; }
+  const leadsOpts = crmLeads.map(l=>`<option value="${l.id}" ${l.id===leadIdPre?'selected':''}>${l.nome}</option>`).join('');
+  document.getElementById('formTitle').textContent = 'Nova Atividade';
+  document.getElementById('formBody').innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Lead <span style="color:#e74c3c">*</span></label>
+      <select class="form-select" id="atividadeLead"><option value="">Selecione</option>${leadsOpts}</select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Data <span style="color:#e74c3c">*</span></label>
+      <input class="form-input" id="atividadeData" type="date" value="${new Date().toISOString().slice(0,10)}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descrição <span style="color:#e74c3c">*</span></label>
+      <textarea class="form-input" id="atividadeDesc" rows="3" placeholder="Ex: Ligar para apresentar proposta..."></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveAtividade()">Salvar</button>
+    </div>
+  `;
+  openModal('formModal');
+}
+
+async function saveAtividade() {
+  const lead_id   = document.getElementById('atividadeLead')?.value;
+  const data      = document.getElementById('atividadeData')?.value;
+  const descricao = document.getElementById('atividadeDesc')?.value.trim();
+  if (!lead_id || !data || !descricao) { toast('Preencha todos os campos obrigatórios.'); return; }
+  const res = await API.post('/crm/atividades', { lead_id, data, descricao });
+  if (res.erro) { toast('Erro: '+res.erro); return; }
+  closeModal('formModal');
+  toast('Atividade criada!');
+  renderAtividades();
+}
+
+async function toggleAtividade(id, concluida) {
+  const res = await API.put('/crm/atividades/'+id, { concluida });
+  if (res.erro) { toast('Erro: '+res.erro); return; }
+  renderAtividades();
+}
+
+async function deleteAtividade(id) {
+  if (!confirm('Remover esta atividade?')) return;
+  const res = await API.del('/crm/atividades/'+id);
+  if (res.erro) { toast('Erro: '+res.erro); return; }
+  toast('Atividade removida.');
+  renderAtividades();
+}
+
+// ── RELATÓRIOS CRM ───────────────────────
+async function renderCrmRelatorios() {
+  const el = document.getElementById('crmRelContent');
+  if (!el) return;
+  el.innerHTML = `<div style="text-align:center;padding:60px;color:var(--muted);font-size:14px">Carregando métricas…</div>`;
+  const res = await API.get('/crm/relatorios');
+  if (res.erro) { el.innerHTML = `<div style="text-align:center;padding:40px;color:#E74C3C">Erro ao carregar relatórios.</div>`; return; }
+  const { porEtapa, total, fechados, conversao, atividadesPendentes } = res;
+  const maxEtapa = Math.max(...CRM_ETAPAS.map(e => porEtapa[e.key]||0), 1);
+  el.innerHTML = `
+    <div class="crm-stat-grid">
+      <div class="crm-stat-card">
+        <div class="crm-stat-num">${total}</div>
+        <div class="crm-stat-lbl">Total de Leads</div>
+      </div>
+      <div class="crm-stat-card">
+        <div class="crm-stat-num">${fechados}</div>
+        <div class="crm-stat-lbl">Fechamentos</div>
+      </div>
+      <div class="crm-stat-card">
+        <div class="crm-stat-num">${conversao}%</div>
+        <div class="crm-stat-lbl">Taxa de Conversão</div>
+      </div>
+      <div class="crm-stat-card">
+        <div class="crm-stat-num">${atividadesPendentes}</div>
+        <div class="crm-stat-lbl">Follow-ups Pendentes</div>
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px;margin-bottom:20px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);margin-bottom:18px">Leads por Etapa do Funil</div>
+      ${CRM_ETAPAS.map(e => {
+        const count = porEtapa[e.key]||0;
+        const pct = total > 0 ? Math.round((count/total)*100) : 0;
+        return `<div class="crm-funil-bar-row">
+          <div class="crm-funil-bar-label" style="color:${e.color}">${e.label}</div>
+          <div class="crm-funil-bar-track"><div class="crm-funil-bar-fill" style="width:${Math.round((count/maxEtapa)*100)}%;background:${e.color}"></div></div>
+          <div class="crm-funil-bar-count">${count}</div>
+          <div style="font-size:10px;color:var(--muted);width:36px;text-align:right">${pct}%</div>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
 }
 
 // ═══════════════════════════════════════

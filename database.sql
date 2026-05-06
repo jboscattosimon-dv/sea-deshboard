@@ -31,6 +31,35 @@ CREATE TABLE IF NOT EXISTS usuarios (
   criado_em TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- ── CRM ───────────────────────────────────────────────────────────────
+
+-- Tabela de leads
+CREATE TABLE IF NOT EXISTS crm_leads (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  nome VARCHAR(100) NOT NULL,
+  telefone VARCHAR(30) NOT NULL,
+  email VARCHAR(150),
+  origem VARCHAR(50),
+  etapa VARCHAR(50) DEFAULT 'primeiro_contato'
+    CHECK (etapa IN ('primeiro_contato','resposta_inicial','tem_interesse','reuniao_agendada','fechou')),
+  criado_por UUID REFERENCES usuarios(id),
+  criado_em TIMESTAMPTZ DEFAULT NOW(),
+  atualizado_em TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Tabela de atividades (follow-up)
+CREATE TABLE IF NOT EXISTS crm_atividades (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  lead_id UUID NOT NULL REFERENCES crm_leads(id) ON DELETE CASCADE,
+  data DATE NOT NULL,
+  descricao TEXT NOT NULL,
+  concluida BOOLEAN DEFAULT false,
+  criado_por UUID REFERENCES usuarios(id),
+  criado_em TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ─────────────────────────────────────────────────────────────────────
+
 -- Tabela de demandas
 CREATE TABLE IF NOT EXISTS demandas (
   id TEXT PRIMARY KEY DEFAULT 'dem_' || substr(md5(random()::text), 1, 8),
