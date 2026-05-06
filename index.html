@@ -1087,6 +1087,10 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           Usuários
         </div>
+        <div class="nav-sub-item" data-page="crm_etapas" onclick="goTo('crm_etapas')" id="navCrmEtapas">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+          Etapas do Funil
+        </div>
       </div>
     </div>
 
@@ -1410,6 +1414,22 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     </div>
   </div>
 
+  <!-- ── CRM: ETAPAS DO FUNIL ── -->
+  <div class="page" id="page-crm_etapas">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Etapas do Funil</div>
+        <div class="page-sub">Configure as etapas do seu funil de vendas</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ordem</th><th>Etapa</th><th>Cor</th><th>Key</th><th></th></tr></thead>
+        <tbody id="etapasTable"></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- ── CRM: LEADS ── -->
   <div class="page" id="page-crm_leads">
     <div class="page-header">
@@ -1427,11 +1447,6 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
         <label class="filter-label">Etapa</label>
         <select class="form-select" id="leadsEtapaFilter" onchange="filterLeads()">
           <option value="all">Todas</option>
-          <option value="primeiro_contato">Primeiro Contato</option>
-          <option value="resposta_inicial">Resposta Inicial</option>
-          <option value="tem_interesse">Tem Interesse</option>
-          <option value="reuniao_agendada">Reunião Agendada</option>
-          <option value="fechou">Fechou</option>
         </select>
       </div>
       <div class="filter-group">
@@ -1777,14 +1792,15 @@ function goTo(page) {
     const g = document.getElementById('navGroupCRM');
     if (g) g.classList.add('open');
   }
-  if (cadastroPages.includes(page)) {
+  if (cadastroPages.includes(page) || page === 'crm_etapas') {
     const g = document.getElementById('navGroupCadastro');
     if (g) g.classList.add('open');
   }
   const titles = {
     dashboard:'Dashboard', demands:'Demandas', internal:'Demandas Internas',
     clients:'Clientes', statuses:'Status', formats:'Formatos', users:'Usuários', history:'Histórico',
-    crm_leads:'Leads', crm_funil:'Funil de Vendas', crm_atividades:'Atividades', crm_relatorios:'Relatórios CRM'
+    crm_leads:'Leads', crm_funil:'Funil de Vendas', crm_atividades:'Atividades', crm_relatorios:'Relatórios CRM',
+    crm_etapas:'Etapas do Funil'
   };
   document.getElementById('headerTitle').textContent = titles[page] || page;
   buildHeaderActions(page);
@@ -1802,6 +1818,7 @@ function goTo(page) {
   if (page === 'crm_funil')      renderFunil();
   if (page === 'crm_atividades') renderAtividades();
   if (page === 'crm_relatorios') renderCrmRelatorios();
+  if (page === 'crm_etapas')     renderEtapas();
 }
 
 function buildHeaderActions(page) {
@@ -1817,6 +1834,7 @@ function buildHeaderActions(page) {
     users:          canEdit('users')           ? btnNew('Novo usuário',     'openUserForm')      : '',
     crm_leads:      canEdit('crm_leads')       ? btnNew('Novo lead',        'openLeadForm')      : '',
     crm_atividades: canEdit('crm_atividades')  ? btnNew('Nova atividade',   'openAtividadeForm') : '',
+    crm_etapas:     canEdit('crm_etapas')      ? btnNew('Nova etapa',       'openEtapaForm')     : '',
     dashboard: `<button class="btn btn-ghost btn-sm" onclick="openExportModal()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M12 4v12m0 0l-4-4m4 4l4-4"/><path d="M4 20h16"/></svg> Exportar PDF</button>
                 ${canEdit('demands') ? btnNew('Nova demanda', 'openDemandForm') : ''}`,
   };
@@ -2788,6 +2806,7 @@ function openPermissoes(userId) {
     { key: 'crm_funil',       label: 'CRM — Funil' },
     { key: 'crm_atividades',  label: 'CRM — Atividades' },
     { key: 'crm_relatorios',  label: 'CRM — Relatórios' },
+    { key: 'crm_etapas',      label: 'CRM — Etapas do Funil' },
   ];
 
   function chk(page, perm) {
@@ -2842,7 +2861,7 @@ function onPermEditarChange(page, el) {
 }
 
 async function savePermissoes(userId) {
-  const pages = ['dashboard','demands','internal','clients','statuses','formats','users','crm_leads','crm_funil','crm_atividades','crm_relatorios'];
+  const pages = ['dashboard','demands','internal','clients','statuses','formats','users','crm_leads','crm_funil','crm_atividades','crm_relatorios','crm_etapas'];
   const permissoes = {};
   pages.forEach(page => {
     const visualizar = document.getElementById(`perm_${page}_visualizar`)?.checked ?? true;
@@ -2895,7 +2914,7 @@ function applyPermissions() {
     if (el) el.style.display = canView(page) ? '' : 'none';
   });
   // Cadastro sub-items
-  const cadastroPages = ['clients','statuses','formats','users'];
+  const cadastroPages = ['clients','statuses','formats','users','crm_etapas'];
   const hasCadastro = cadastroPages.some(p => canView(p));
   const cadastroGroup = document.getElementById('navGroupCadastro');
   if (cadastroGroup) cadastroGroup.style.display = hasCadastro ? '' : 'none';
@@ -3493,12 +3512,13 @@ async function deleteInternal(id, fromForm) {
 // ═══════════════════════════════════════
 
 // ── Constantes do funil ──────────────────
-const CRM_ETAPAS = [
-  { key: 'primeiro_contato',  label: 'Primeiro Contato',  color: '#3498DB' },
-  { key: 'resposta_inicial',  label: 'Resposta Inicial',  color: '#9B59B6' },
-  { key: 'tem_interesse',     label: 'Tem Interesse',     color: '#F39C12' },
-  { key: 'reuniao_agendada',  label: 'Reunião Agendada',  color: '#1ABC9C' },
-  { key: 'fechou',            label: 'Fechou',            color: '#27AE60' },
+// etapas carregadas dinamicamente do banco; fallback local enquanto não carrega
+let crmEtapas = [
+  { key: 'primeiro_contato',  label: 'Primeiro Contato',  cor: '#3498DB', ordem: 1 },
+  { key: 'resposta_inicial',  label: 'Resposta Inicial',  cor: '#9B59B6', ordem: 2 },
+  { key: 'tem_interesse',     label: 'Tem Interesse',     cor: '#F39C12', ordem: 3 },
+  { key: 'reuniao_agendada',  label: 'Reunião Agendada',  cor: '#1ABC9C', ordem: 4 },
+  { key: 'fechou',            label: 'Fechou',            cor: '#27AE60', ordem: 5 },
 ];
 const CRM_ORIGENS = {
   instagram: 'Instagram', google: 'Google', indicacao: 'Indicação',
@@ -3509,11 +3529,134 @@ let crmLeads = [];
 let crmAtividades = [];
 
 // ── helpers ──────────────────────────────
-function crmEtapa(key) { return CRM_ETAPAS.find(e => e.key === key) || { label: key, color: '#999' }; }
+function crmEtapa(key) {
+  const e = crmEtapas.find(e => e.key === key);
+  return e ? { ...e, color: e.cor } : { key, label: key, color: '#999', cor: '#999' };
+}
 function leadInitials(nome) { return nome.split(' ').slice(0,2).map(w => w[0]?.toUpperCase()).join(''); }
+
+async function loadCrmEtapas() {
+  const res = await API.get('/crm/etapas');
+  if (!res.erro && Array.isArray(res) && res.length > 0) crmEtapas = res;
+  _populateEtapaFilters();
+}
+
+function _populateEtapaFilters() {
+  const sel = document.getElementById('leadsEtapaFilter');
+  if (sel) {
+    const cur = sel.value;
+    sel.innerHTML = '<option value="all">Todas</option>' +
+      crmEtapas.map(e => `<option value="${e.key}">${e.label}</option>`).join('');
+    if (cur) sel.value = cur;
+  }
+}
+
+// ── ETAPAS DO FUNIL ──────────────────────
+let etapasData = [];
+
+async function renderEtapas() {
+  await loadCrmEtapas();
+  etapasData = [...crmEtapas];
+  const canEd = canEdit('crm_etapas');
+  const tbody = document.getElementById('etapasTable');
+  if (!tbody) return;
+  if (!etapasData.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted)">Nenhuma etapa cadastrada.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = etapasData.map(e => {
+    const cor = e.cor || '#999';
+    return `<tr>
+      <td style="color:var(--muted);font-size:13px;width:60px">${e.ordem}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${cor};flex-shrink:0"></span>
+          <span style="font-weight:600">${e.label}</span>
+        </div>
+      </td>
+      <td>
+        <span style="display:inline-block;padding:2px 10px;border-radius:100px;font-size:11px;font-weight:700;background:${cor}22;color:${cor}">${cor}</span>
+      </td>
+      <td style="color:var(--muted);font-size:12px;font-family:monospace">${e.key}</td>
+      <td style="text-align:right">
+        ${canEd ? `<div style="display:flex;gap:6px;justify-content:flex-end">
+          <button class="btn btn-ghost btn-sm" onclick="openEtapaForm('${e.id}')">Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteEtapa('${e.id}','${e.label}')"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
+        </div>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openEtapaForm(id) {
+  const et = id ? etapasData.find(e => e.id === id) : null;
+  document.getElementById('formTitle').textContent = et ? 'Editar Etapa' : 'Nova Etapa';
+  document.getElementById('formBody').innerHTML = `
+    ${!et ? `<div class="form-group">
+      <label class="form-label">Key <span style="color:#e74c3c">*</span> <span style="font-size:10px;color:var(--muted)">(slug único, ex: reuniao_fechada)</span></label>
+      <input class="form-input" id="etapaKey" placeholder="ex: reuniao_fechada" style="font-family:monospace">
+    </div>` : `<div class="form-group"><label class="form-label">Key</label><input class="form-input" value="${et.key}" readonly style="opacity:0.5;font-family:monospace"></div>`}
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Label <span style="color:#e74c3c">*</span></label>
+        <input class="form-input" id="etapaLabel" value="${et?.label||''}" placeholder="Ex: Reunião Agendada">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ordem</label>
+        <input class="form-input" id="etapaOrdem" type="number" min="1" value="${et?.ordem||etapasData.length+1}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Cor</label>
+      <div style="display:flex;gap:10px;align-items:center">
+        <input class="form-input" id="etapaCor" value="${et?.cor||'#3498DB'}" placeholder="#3498DB" style="flex:1">
+        <input type="color" id="etapaCorPicker" value="${et?.cor||'#3498DB'}" style="width:38px;height:38px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;padding:2px" oninput="document.getElementById('etapaCor').value=this.value">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEtapa('${id||''}')">Salvar</button>
+    </div>
+  `;
+  openModal('formModal');
+}
+
+async function saveEtapa(id) {
+  const label = document.getElementById('etapaLabel')?.value.trim();
+  const cor   = document.getElementById('etapaCor')?.value.trim() || '#999999';
+  const ordem = parseInt(document.getElementById('etapaOrdem')?.value) || 0;
+  if (!label) { toast('Label é obrigatório.'); return; }
+  let res;
+  if (id) {
+    res = await API.put('/crm/etapas/'+id, { label, cor, ordem });
+  } else {
+    const key = document.getElementById('etapaKey')?.value.trim().toLowerCase().replace(/\s+/g,'_');
+    if (!key) { toast('Key é obrigatória.'); return; }
+    res = await API.post('/crm/etapas', { key, label, cor, ordem });
+  }
+  if (res.erro) { toast('Erro: '+res.erro); return; }
+  closeModal('formModal');
+  toast(id ? 'Etapa atualizada!' : 'Etapa criada!');
+  // recarrega etapas globais
+  const all = await API.get('/crm/etapas');
+  if (!all.erro && Array.isArray(all)) crmEtapas = all;
+  renderEtapas();
+}
+
+async function deleteEtapa(id, label) {
+  if (!confirm(`Remover a etapa "${label}"?\nLeads nessa etapa precisam ser movidos antes.`)) return;
+  const res = await API.del('/crm/etapas/'+id);
+  if (res.erro) { toast('Erro: '+res.erro); return; }
+  toast('Etapa removida.');
+  const all = await API.get('/crm/etapas');
+  if (!all.erro && Array.isArray(all)) crmEtapas = all;
+  renderEtapas();
+}
 
 // ── LEADS ────────────────────────────────
 async function renderLeads() {
+  if (crmEtapas.length <= 1) await loadCrmEtapas();
+  else _populateEtapaFilters();
   const res = await API.get('/crm/leads');
   if (res.erro) {
     toast('Erro ao carregar leads: ' + res.erro);
@@ -3566,7 +3709,7 @@ function filterLeads() {
 function openLeadForm(id) {
   const lead = id ? crmLeads.find(l => l.id === id) : null;
   document.getElementById('formTitle').textContent = lead ? 'Editar Lead' : 'Novo Lead';
-  const etapasOpts = CRM_ETAPAS.map(e => `<option value="${e.key}" ${lead?.etapa===e.key?'selected':''}>${e.label}</option>`).join('');
+  const etapasOpts = crmEtapas.map(e => `<option value="${e.key}" ${lead?.etapa===e.key?'selected':''}>${e.label}</option>`).join('');
   const origensOpts = Object.entries(CRM_ORIGENS).map(([k,v]) => `<option value="${k}" ${lead?.origem===k?'selected':''}>${v}</option>`).join('');
   document.getElementById('formBody').innerHTML = `
     <div class="form-group">
@@ -3647,6 +3790,7 @@ function openLeadDetail(id) {
 
 // ── FUNIL KANBAN ─────────────────────────
 async function renderFunil() {
+  if (crmEtapas.length <= 1) await loadCrmEtapas();
   if (!crmLeads.length) {
     const res = await API.get('/crm/leads');
     if (!res.erro) crmLeads = res;
@@ -3654,8 +3798,9 @@ async function renderFunil() {
   const board = document.getElementById('funilBoard');
   if (!board) return;
   const canEd = canEdit('crm_funil');
-  board.innerHTML = CRM_ETAPAS.map(etapa => {
+  board.innerHTML = crmEtapas.map((etapa, currentIdx) => {
     const leads = crmLeads.filter(l => l.etapa === etapa.key);
+    const etapaColor = etapa.cor || etapa.color || '#999';
     const cards = leads.map(l => `
       <div class="funil-card" onclick="openLeadDetail('${l.id}')">
         <div class="funil-card-name">${l.nome}</div>
@@ -3663,15 +3808,21 @@ async function renderFunil() {
         <div class="funil-card-tags">
           ${l.origem ? `<span class="funil-tag">${CRM_ORIGENS[l.origem]||l.origem}</span>` : ''}
         </div>
-        ${canEd ? `<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
-          ${CRM_ETAPAS.filter(e=>e.key!==etapa.key).map(e =>
-            `<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px" onclick="event.stopPropagation();moveLeadEtapa('${l.id}','${e.key}')">→ ${e.label}</button>`
-          ).join('')}
+        ${canEd ? `<div style="display:flex;gap:5px;margin-top:10px;flex-wrap:wrap">
+          ${crmEtapas.filter(e => e.key !== etapa.key).map(e => {
+            const targetIdx = crmEtapas.findIndex(x => x.key === e.key);
+            const isBack    = targetIdx < currentIdx;
+            const arrow     = isBack ? '←' : '→';
+            const style     = isBack
+              ? 'font-size:10px;padding:3px 8px;color:#E74C3C;border-color:#FBCAC5'
+              : 'font-size:10px;padding:3px 8px';
+            return `<button class="btn btn-ghost btn-sm" style="${style}" onclick="event.stopPropagation();moveLeadEtapa('${l.id}','${e.key}')">${arrow} ${e.label}</button>`;
+          }).join('')}
         </div>` : ''}
       </div>`).join('');
     return `<div class="funil-col">
       <div class="funil-col-header">
-        <span class="funil-col-title" style="color:${etapa.color}">${etapa.label}</span>
+        <span class="funil-col-title" style="color:${etapaColor}">${etapa.label}</span>
         <span class="funil-col-count">${leads.length}</span>
       </div>
       <div id="funilCol_${etapa.key}">
@@ -3817,7 +3968,8 @@ async function renderCrmRelatorios() {
   const res = await API.get('/crm/relatorios');
   if (res.erro) { el.innerHTML = `<div style="text-align:center;padding:40px;color:#E74C3C">Erro: ${res.erro}</div>`; return; }
   const { porEtapa, porOrigem, porMes, total, fechados, conversao, atividadesPendentes } = res;
-  const maxEtapa = Math.max(...CRM_ETAPAS.map(e => porEtapa[e.key]||0), 1);
+  if (crmEtapas.length <= 1) await loadCrmEtapas();
+  const maxEtapa = Math.max(...crmEtapas.map(e => porEtapa[e.key]||0), 1);
 
   el.innerHTML = `
     <!-- KPIs -->
@@ -3869,12 +4021,13 @@ async function renderCrmRelatorios() {
     <!-- Barra de funil horizontal -->
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);margin-bottom:18px">Funil de Conversão</div>
-      ${CRM_ETAPAS.map(e => {
+      ${crmEtapas.map(e => {
+        const cor   = e.cor || e.color || '#999';
         const count = porEtapa[e.key]||0;
-        const pct = total > 0 ? Math.round((count/total)*100) : 0;
+        const pct   = total > 0 ? Math.round((count/total)*100) : 0;
         return `<div class="crm-funil-bar-row">
-          <div class="crm-funil-bar-label" style="color:${e.color}">${e.label}</div>
-          <div class="crm-funil-bar-track"><div class="crm-funil-bar-fill" style="width:${Math.round((count/maxEtapa)*100)}%;background:${e.color}"></div></div>
+          <div class="crm-funil-bar-label" style="color:${cor}">${e.label}</div>
+          <div class="crm-funil-bar-track"><div class="crm-funil-bar-fill" style="width:${Math.round((count/maxEtapa)*100)}%;background:${cor}"></div></div>
           <div class="crm-funil-bar-count">${count}</div>
           <div style="font-size:10px;color:var(--muted);width:36px;text-align:right">${pct}%</div>
         </div>`;
@@ -3894,8 +4047,8 @@ async function renderCrmRelatorios() {
   _crmCharts['etapa'] = new Chart(document.getElementById('chartEtapa'), {
     type: 'doughnut',
     data: {
-      labels: CRM_ETAPAS.map(e => e.label),
-      datasets: [{ data: CRM_ETAPAS.map(e => porEtapa[e.key]||0), backgroundColor: CRM_ETAPAS.map(e => e.color), borderWidth: 2, borderColor: '#fff' }]
+      labels: crmEtapas.map(e => e.label),
+      datasets: [{ data: crmEtapas.map(e => porEtapa[e.key]||0), backgroundColor: crmEtapas.map(e => e.cor||e.color||'#999'), borderWidth: 2, borderColor: '#fff' }]
     },
     options: { ...chartDefaults, cutout: '65%', plugins: { ...chartDefaults.plugins } }
   });

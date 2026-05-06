@@ -17,6 +17,48 @@ function checkCrmPerm(req, res, type) {
   return false;
 }
 
+// ── ETAPAS ────────────────────────────────────────────
+router.get('/etapas', async (req, res) => {
+  const { data, error } = await supabase.from('crm_etapas').select('*').order('ordem');
+  if (error) return res.status(500).json({ erro: error.message });
+  res.json(data);
+});
+
+router.post('/etapas', async (req, res) => {
+  const { key, label, cor, ordem } = req.body;
+  if (!key || !label) return res.status(400).json({ erro: 'key e label são obrigatórios' });
+  const { data, error } = await supabase
+    .from('crm_etapas')
+    .insert([{ key: key.toLowerCase().replace(/\s+/g,'_'), label, cor: cor||'#999999', ordem: ordem||0 }])
+    .select().single();
+  if (error) return res.status(400).json({ erro: error.message });
+  res.status(201).json(data);
+});
+
+router.put('/etapas/:id', async (req, res) => {
+  const { label, cor, ordem } = req.body;
+  const updates = {};
+  if (label !== undefined) updates.label = label;
+  if (cor   !== undefined) updates.cor   = cor;
+  if (ordem !== undefined) updates.ordem = parseInt(ordem);
+  const { data, error } = await supabase
+    .from('crm_etapas').update(updates).eq('id', req.params.id).select().single();
+  if (error) return res.status(400).json({ erro: error.message });
+  res.json(data);
+});
+
+router.delete('/etapas/:id', async (req, res) => {
+  const etapaRes = await supabase.from('crm_etapas').select('key').eq('id', req.params.id).single();
+  if (etapaRes.data) {
+    const { count } = await supabase
+      .from('crm_leads').select('id', { count: 'exact', head: true }).eq('etapa', etapaRes.data.key);
+    if (count > 0) return res.status(400).json({ erro: `${count} lead(s) estão nesta etapa. Mova-os antes de excluir.` });
+  }
+  const { error } = await supabase.from('crm_etapas').delete().eq('id', req.params.id);
+  if (error) return res.status(400).json({ erro: error.message });
+  res.json({ mensagem: 'Etapa removida' });
+});
+
 // ── LEADS ──────────────────────────────────────────────
 router.get('/leads', async (req, res) => {
   const { data, error } = await supabase

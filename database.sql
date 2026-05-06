@@ -33,6 +33,24 @@ CREATE TABLE IF NOT EXISTS usuarios (
 
 -- ── CRM ───────────────────────────────────────────────────────────────
 
+-- Tabela de etapas do funil (gerenciável)
+CREATE TABLE IF NOT EXISTS crm_etapas (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  key VARCHAR(50) UNIQUE NOT NULL,
+  label VARCHAR(100) NOT NULL,
+  cor VARCHAR(20) DEFAULT '#999999',
+  ordem INT DEFAULT 0,
+  criado_em TIMESTAMPTZ DEFAULT NOW()
+);
+
+INSERT INTO crm_etapas (key, label, cor, ordem) VALUES
+  ('primeiro_contato', 'Primeiro Contato', '#3498DB', 1),
+  ('resposta_inicial',  'Resposta Inicial',  '#9B59B6', 2),
+  ('tem_interesse',     'Tem Interesse',     '#F39C12', 3),
+  ('reuniao_agendada',  'Reunião Agendada',  '#1ABC9C', 4),
+  ('fechou',            'Fechou',            '#27AE60', 5)
+ON CONFLICT (key) DO NOTHING;
+
 -- Tabela de leads
 CREATE TABLE IF NOT EXISTS crm_leads (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -40,12 +58,14 @@ CREATE TABLE IF NOT EXISTS crm_leads (
   telefone VARCHAR(30) NOT NULL,
   email VARCHAR(150),
   origem VARCHAR(50),
-  etapa VARCHAR(50) DEFAULT 'primeiro_contato'
-    CHECK (etapa IN ('primeiro_contato','resposta_inicial','tem_interesse','reuniao_agendada','fechou')),
+  etapa VARCHAR(50) DEFAULT 'primeiro_contato',
   criado_por UUID REFERENCES usuarios(id),
   criado_em TIMESTAMPTZ DEFAULT NOW(),
   atualizado_em TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Remove CHECK constraint se existir (para permitir etapas customizadas)
+ALTER TABLE crm_leads DROP CONSTRAINT IF EXISTS crm_leads_etapa_check;
 
 -- Tabela de atividades (follow-up)
 CREATE TABLE IF NOT EXISTS crm_atividades (
