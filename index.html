@@ -2971,15 +2971,17 @@ async function savePermissoes(userId) {
 
 function canView(page) {
   const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
-  if (!u || u.papel === 'admin') return true;
-  const p = (u.permissoes || {})[page] || {};
-  return p.visualizar !== false || p.editar !== false;
+  if (!u) return false;
+  const p = (u.permissoes || {})[page];
+  if (!p) return true; // sem registro = acesso total (compatibilidade)
+  return p.visualizar !== false;
 }
 
 function canEdit(page) {
   const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
-  if (!u || u.papel === 'admin') return true;
-  const p = (u.permissoes || {})[page] || {};
+  if (!u) return false;
+  const p = (u.permissoes || {})[page];
+  if (!p) return true; // sem registro = acesso total (compatibilidade)
   return p.editar !== false;
 }
 
@@ -2988,7 +2990,8 @@ function applyPermissions() {
   // History always admin-only
   const histNav = document.getElementById('navHistory');
   if (histNav) histNav.style.display = (u.papel === 'admin') ? '' : 'none';
-  if (!u || u.papel === 'admin') return;
+  if (!u) return;
+
   const pages = ['dashboard','demands','internal','clients','statuses','formats','users'];
   pages.forEach(page => {
     const navEl = document.querySelector(`.nav-item[data-page="${page}"]`);
@@ -3005,8 +3008,12 @@ function applyPermissions() {
     const el = document.querySelector(`.nav-sub-item[data-page="${page}"]`);
     if (el) el.style.display = canView(page) ? '' : 'none';
   });
-  // Cadastro sub-items
+  // Cadastro sub-items (inclui crm_etapas)
   const cadastroPages = ['clients','statuses','formats','users','crm_etapas'];
+  cadastroPages.forEach(page => {
+    const el = document.querySelector(`.nav-sub-item[data-page="${page}"]`);
+    if (el) el.style.display = canView(page) ? '' : 'none';
+  });
   const hasCadastro = cadastroPages.some(p => canView(p));
   const cadastroGroup = document.getElementById('navGroupCadastro');
   if (cadastroGroup) cadastroGroup.style.display = hasCadastro ? '' : 'none';
