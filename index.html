@@ -3665,7 +3665,7 @@ async function openInternalDetail(id) {
     </div>
     <div class="form-group">
       <label class="form-label">Descrição</label>
-      <input class="form-input" type="text" id="idDesc" value="${d.descricao.replace(/"/g,'&quot;')}" ${ro}>
+      <textarea class="form-textarea" id="idDesc" ${ro}>${d.descricao}</textarea>
     </div>
     <div class="form-group">
       <label class="form-label">Anexo</label>
