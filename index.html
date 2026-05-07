@@ -4153,7 +4153,10 @@ const FD = {
   velX:0, velY:0, rotation:0, rotVel:0, scale:1,
   raf:null, activeCol:null, didDrag:false,
   startX:0, startY:0, offsetX:0, offsetY:0,
+  clientX:0,  // posição bruta do mouse para edge-scroll
 };
+const EDGE_ZONE = 120;  // px da borda que ativa o scroll
+const SCROLL_MAX = 22;  // velocidade máxima de scroll (px/frame)
 let _funilClickBlock = false;
 
 function funilCardClick(leadId) {
@@ -4220,6 +4223,7 @@ function funilPointerDown(e, leadId) {
 
 function funilPointerMove(e) {
   if (!FD.active) return;
+  FD.clientX = e.clientX;
   FD.mouseX = e.clientX - FD.offsetX;
   FD.mouseY = e.clientY - FD.offsetY;
   if (Math.hypot(e.clientX - FD.startX, e.clientY - FD.startY) > 6) FD.didDrag = true;
@@ -4255,6 +4259,24 @@ function funilAnimateGhost() {
 
   // Motion blur proporcional à velocidade
   const blur  = Math.min(speed * 0.15, 4);
+
+  // ── Edge-scroll horizontal ──────────────────────────────────────
+  const board = document.getElementById('funilBoard');
+  if (board && FD.didDrag) {
+    const br = board.getBoundingClientRect();
+    const distLeft  = FD.clientX - br.left;
+    const distRight = br.right - FD.clientX;
+    let scrollDelta = 0;
+    if (distLeft  < EDGE_ZONE) scrollDelta = -SCROLL_MAX * (1 - distLeft  / EDGE_ZONE);
+    if (distRight < EDGE_ZONE) scrollDelta =  SCROLL_MAX * (1 - distRight / EDGE_ZONE);
+    if (scrollDelta !== 0) {
+      board.scrollLeft += scrollDelta;
+      // Ajusta posições do ghost junto com o scroll
+      FD.mouseX  += scrollDelta;
+      FD.ghostX  += scrollDelta;
+    }
+  }
+  // ───────────────────────────────────────────────────────────────
 
   FD.ghost.style.left      = `${FD.ghostX}px`;
   FD.ghost.style.top       = `${FD.ghostY}px`;
