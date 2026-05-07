@@ -1570,6 +1570,10 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
 
 </main>
 
+<footer style="text-align:center;padding:18px 24px;font-size:11px;color:var(--muted);border-top:1px solid var(--border);margin-top:auto;letter-spacing:0.02em">
+  Desenvolvido por <strong style="color:var(--text);font-weight:600">João Guilherme Boscatto Simon</strong>
+</footer>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -4156,7 +4160,34 @@ const FD = {
   clientX:0,  // posição bruta do mouse para edge-scroll
 };
 const EDGE_ZONE = 120;  // px da borda que ativa o scroll
-const SCROLL_MAX = 22;  // velocidade máxima de scroll (px/frame)
+const SCROLL_MAX = 20;  // velocidade máxima de scroll (px/frame)
+
+// ── Hover edge-scroll (sem drag) ─────────────────────────────────
+let _funilScrollRaf = null;
+let _funilScrollDelta = 0;
+
+function _funilEdgeScroll() {
+  const board = document.getElementById('funilBoard');
+  if (board && _funilScrollDelta !== 0) board.scrollLeft += _funilScrollDelta;
+  _funilScrollRaf = requestAnimationFrame(_funilEdgeScroll);
+}
+
+document.addEventListener('mousemove', function(e) {
+  const board = document.getElementById('funilBoard');
+  if (!board) return;
+  const br = board.getBoundingClientRect();
+  // só ativa quando o mouse está sobre o board
+  if (e.clientY < br.top || e.clientY > br.bottom) { _funilScrollDelta = 0; return; }
+  const distLeft  = e.clientX - br.left;
+  const distRight = br.right  - e.clientX;
+  if (distLeft < EDGE_ZONE)       _funilScrollDelta = -SCROLL_MAX * Math.pow(1 - distLeft  / EDGE_ZONE, 2);
+  else if (distRight < EDGE_ZONE) _funilScrollDelta =  SCROLL_MAX * Math.pow(1 - distRight / EDGE_ZONE, 2);
+  else                            _funilScrollDelta = 0;
+  if (_funilScrollDelta !== 0 && !_funilScrollRaf) _funilScrollRaf = requestAnimationFrame(_funilEdgeScroll);
+  if (_funilScrollDelta === 0 && _funilScrollRaf)  { cancelAnimationFrame(_funilScrollRaf); _funilScrollRaf = null; }
+});
+// ─────────────────────────────────────────────────────────────────
+
 let _funilClickBlock = false;
 
 function funilCardClick(leadId) {
@@ -4259,24 +4290,6 @@ function funilAnimateGhost() {
 
   // Motion blur proporcional à velocidade
   const blur  = Math.min(speed * 0.15, 4);
-
-  // ── Edge-scroll horizontal ──────────────────────────────────────
-  const board = document.getElementById('funilBoard');
-  if (board && FD.didDrag) {
-    const br = board.getBoundingClientRect();
-    const distLeft  = FD.clientX - br.left;
-    const distRight = br.right - FD.clientX;
-    let scrollDelta = 0;
-    if (distLeft  < EDGE_ZONE) scrollDelta = -SCROLL_MAX * (1 - distLeft  / EDGE_ZONE);
-    if (distRight < EDGE_ZONE) scrollDelta =  SCROLL_MAX * (1 - distRight / EDGE_ZONE);
-    if (scrollDelta !== 0) {
-      board.scrollLeft += scrollDelta;
-      // Ajusta posições do ghost junto com o scroll
-      FD.mouseX  += scrollDelta;
-      FD.ghostX  += scrollDelta;
-    }
-  }
-  // ───────────────────────────────────────────────────────────────
 
   FD.ghost.style.left      = `${FD.ghostX}px`;
   FD.ghost.style.top       = `${FD.ghostY}px`;
