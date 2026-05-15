@@ -97,9 +97,50 @@ ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS responsavel_id UUID REFERENCES us
 
 -- ── SDR ───────────────────────────────────────────────────────────────
 
+-- Tópicos SDR (gerenciáveis pelo admin)
+CREATE TABLE IF NOT EXISTS sdr_topicos (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  label VARCHAR(200) NOT NULL,
+  icone VARCHAR(20) DEFAULT '',
+  ordem INT DEFAULT 0,
+  criado_em TIMESTAMPTZ DEFAULT NOW()
+);
+
+INSERT INTO sdr_topicos (label, icone, ordem) VALUES
+  ('Scripts de Abordagem',       '💬', 1),
+  ('Script de Follow Up',        '🔄', 2),
+  ('Script de Agendamento',      '📅', 3),
+  ('Quebra de Objeções',         '🛡️', 4),
+  ('Regras de Atendimento',      '📋', 5),
+  ('Rotina Diária',              '⏰', 6),
+  ('Metas',                      '🎯', 7),
+  ('Como Atualizar CRM',         '🔧', 8),
+  ('Como Qualificar Lead',       '✅', 9),
+  ('Tom de Comunicação da SEA',  '🎙️', 10),
+  ('Comissões',                  '💰', 11),
+  ('Público-alvo',               '🎯', 12),
+  ('Melhores Regiões/Cidades',   '📍', 13),
+  ('Reuniões',                   '🤝', 14),
+  ('Dúvidas/Suporte',            '❓', 15)
+;
+
+-- Migração: se sdr_conteudos já existia com topico_id INT, converter para UUID
+DO $$ BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'sdr_conteudos' AND column_name = 'topico_id'
+    AND data_type = 'integer'
+  ) THEN
+    ALTER TABLE sdr_conteudos DROP COLUMN topico_id;
+    ALTER TABLE sdr_conteudos
+      ADD COLUMN topico_id UUID REFERENCES sdr_topicos(id) ON DELETE CASCADE;
+  END IF;
+END $$;
+
+-- Conteúdos de cada tópico SDR
 CREATE TABLE IF NOT EXISTS sdr_conteudos (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  topico_id INT NOT NULL CHECK (topico_id BETWEEN 1 AND 15),
+  topico_id UUID REFERENCES sdr_topicos(id) ON DELETE CASCADE,
   titulo VARCHAR(200) NOT NULL,
   conteudo TEXT,
   ordem INT DEFAULT 0,

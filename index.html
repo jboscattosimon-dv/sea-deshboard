@@ -1126,6 +1126,10 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
           Etapas do Funil
         </div>
+        <div class="nav-sub-item" data-page="sdr_topicos" onclick="goTo('sdr_topicos')" id="navSdrTopicos">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Tópicos SDR
+        </div>
       </div>
     </div>
 
@@ -1573,6 +1577,17 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     </div>
   </div>
 
+  <!-- ── SDR: TÓPICOS (Cadastro) ── -->
+  <div class="page" id="page-sdr_topicos">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Tópicos SDR</div>
+        <div class="page-sub">Gerencie os tópicos da base de conhecimento SDR</div>
+      </div>
+    </div>
+    <div id="sdrTopicosAdminList"></div>
+  </div>
+
   <!-- ── SDR ── -->
   <div class="page" id="page-sdr">
     <div class="page-header">
@@ -1867,7 +1882,7 @@ function goTo(page) {
     const g = document.getElementById('navGroupCRM');
     if (g) g.classList.add('open');
   }
-  if (cadastroPages.includes(page) || page === 'crm_etapas') {
+  if (cadastroPages.includes(page) || page === 'crm_etapas' || page === 'sdr_topicos') {
     const g = document.getElementById('navGroupCadastro');
     if (g) g.classList.add('open');
   }
@@ -1875,7 +1890,7 @@ function goTo(page) {
     dashboard:'Dashboard', demands:'Demandas', internal:'Demandas Internas',
     clients:'Clientes', statuses:'Status', formats:'Formatos', users:'Usuários', history:'Histórico',
     crm_leads:'Leads', crm_funil:'Funil de Vendas', crm_atividades:'Atividades', crm_relatorios:'Relatórios CRM',
-    crm_etapas:'Etapas do Funil', sdr:'SDR'
+    crm_etapas:'Etapas do Funil', sdr:'SDR', sdr_topicos:'Tópicos SDR'
   };
   document.getElementById('headerTitle').textContent = titles[page] || page;
   buildHeaderActions(page);
@@ -1895,6 +1910,7 @@ function goTo(page) {
   if (page === 'crm_relatorios') renderCrmRelatorios();
   if (page === 'crm_etapas')     renderEtapas();
   if (page === 'sdr')            renderSDR();
+  if (page === 'sdr_topicos')    renderSdrTopicosAdmin();
 }
 
 function buildHeaderActions(page) {
@@ -1911,6 +1927,7 @@ function buildHeaderActions(page) {
     crm_leads:      canEdit('crm_leads')       ? btnNew('Novo lead',        'openLeadForm')      : '',
     crm_atividades: canEdit('crm_atividades')  ? btnNew('Nova atividade',   'openAtividadeForm') : '',
     crm_etapas:     canEdit('crm_etapas')      ? btnNew('Nova etapa',       'openEtapaForm')     : '',
+    sdr_topicos:    canEdit('sdr_topicos')     ? btnNew('Novo tópico',      'openSdrTopicoForm') : '',
     dashboard: `<button class="btn btn-ghost btn-sm" onclick="openExportModal()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M12 4v12m0 0l-4-4m4 4l4-4"/><path d="M4 20h16"/></svg> Exportar PDF</button>
                 ${canEdit('demands') ? btnNew('Nova demanda', 'openDemandForm') : ''}`,
   };
@@ -2920,7 +2937,8 @@ function openPermissoes(userId) {
         { key: 'statuses',   label: 'Status' },
         { key: 'formats',    label: 'Formatos' },
         { key: 'users',      label: 'Usuários' },
-        { key: 'crm_etapas', label: 'Etapas do Funil' },
+        { key: 'crm_etapas',  label: 'Etapas do Funil' },
+        { key: 'sdr_topicos', label: 'Tópicos SDR' },
       ]
     },
     {
@@ -2997,7 +3015,7 @@ function onPermEditarChange(page, el) {
 }
 
 async function savePermissoes(userId) {
-  const pages = ['dashboard','demands','internal','clients','statuses','formats','users','crm_leads','crm_funil','crm_atividades','crm_relatorios','crm_etapas','sdr'];
+  const pages = ['dashboard','demands','internal','clients','statuses','formats','users','crm_leads','crm_funil','crm_atividades','crm_relatorios','crm_etapas','sdr','sdr_topicos'];
   const permissoes = {};
   pages.forEach(page => {
     const visualizar = document.getElementById(`perm_${page}_visualizar`)?.checked ?? true;
@@ -3057,7 +3075,7 @@ function applyPermissions() {
     if (el) el.style.display = canView(page) ? '' : 'none';
   });
   // Cadastro sub-items (inclui crm_etapas)
-  const cadastroPages = ['clients','statuses','formats','users','crm_etapas'];
+  const cadastroPages = ['clients','statuses','formats','users','crm_etapas','sdr_topicos'];
   cadastroPages.forEach(page => {
     const el = document.querySelector(`.nav-sub-item[data-page="${page}"]`);
     if (el) el.style.display = canView(page) ? '' : 'none';
@@ -4977,26 +4995,14 @@ async function exportCrmPDF() {
 //  SDR — Base de Conhecimento
 // ═══════════════════════════════════════
 
-const SDR_TOPICOS = [
-  { id: 1,  label: 'Scripts de Abordagem',          icone: '💬' },
-  { id: 2,  label: 'Script de Follow Up',           icone: '🔄' },
-  { id: 3,  label: 'Script de Agendamento',         icone: '📅' },
-  { id: 4,  label: 'Quebra de Objeções',            icone: '🛡️' },
-  { id: 5,  label: 'Regras de Atendimento',         icone: '📋' },
-  { id: 6,  label: 'Rotina Diária',                 icone: '⏰' },
-  { id: 7,  label: 'Metas',                         icone: '🎯' },
-  { id: 8,  label: 'Como Atualizar CRM',            icone: '🔧' },
-  { id: 9,  label: 'Como Qualificar Lead',          icone: '✅' },
-  { id: 10, label: 'Tom de Comunicação da SEA',     icone: '🎙️' },
-  { id: 11, label: 'Comissões',                     icone: '💰' },
-  { id: 12, label: 'Público-alvo',                  icone: '🎯' },
-  { id: 13, label: 'Melhores Regiões/Cidades',      icone: '📍' },
-  { id: 14, label: 'Reuniões',                      icone: '🤝' },
-  { id: 15, label: 'Dúvidas/Suporte',               icone: '❓' },
-];
-
-let sdrTopicoAtivo = 1;
+let sdrTopicos = [];
+let sdrTopicoAtivo = null;
 let sdrConteudosCache = {};
+
+async function loadSdrTopicos() {
+  const res = await API.get('/sdr/topicos');
+  sdrTopicos = Array.isArray(res) ? res : [];
+}
 
 function renderMarkdown(text) {
   if (!text) return '';
@@ -5022,35 +5028,43 @@ function renderMarkdown(text) {
 
 async function renderSDR() {
   sdrConteudosCache = {};
-  sdrTopicoAtivo = 1;
+  await loadSdrTopicos();
+  if (sdrTopicos.length > 0) {
+    sdrTopicoAtivo = sdrTopicos[0].id;
+  }
   renderSDRTopicos();
-  await selectSDRTopico(1);
+  if (sdrTopicoAtivo) await selectSDRTopico(sdrTopicoAtivo);
 }
 
 function renderSDRTopicos() {
   const el = document.getElementById('sdrTopicos');
   if (!el) return;
-  el.innerHTML = SDR_TOPICOS.map(t => {
+  if (!sdrTopicos.length) {
+    el.innerHTML = `<div style="padding:20px;color:var(--muted);font-size:13px;text-align:center">Nenhum tópico cadastrado.</div>`;
+    return;
+  }
+  el.innerHTML = sdrTopicos.map((t, idx) => {
     const active = sdrTopicoAtivo === t.id;
     const count = sdrConteudosCache[t.id]?.length ?? null;
-    return `<div onclick="selectSDRTopico(${t.id})" id="sdr-topico-${t.id}" style="
+    const icone = t.icone ? `<span style="font-size:13px;flex-shrink:0">${t.icone}</span>` : '';
+    return `<div onclick="selectSDRTopico('${t.id}')" id="sdr-topico-${t.id}" style="
       padding:11px 16px;cursor:pointer;border-bottom:1px solid var(--border);
       display:flex;align-items:center;gap:10px;font-size:12.5px;
       font-weight:${active?'700':'500'};
       background:${active?'var(--surface2)':'transparent'};
       color:${active?'var(--text)':'var(--muted)'};
       transition:background 0.12s;
-    " onmouseover="if(sdrTopicoAtivo!==${t.id})this.style.background='var(--surface2)'"
-       onmouseout="if(sdrTopicoAtivo!==${t.id})this.style.background='transparent'">
-      <span style="font-size:13px;flex-shrink:0">${t.icone}</span>
-      <span style="flex:1;line-height:1.35">${t.id}. ${t.label}</span>
+    " onmouseover="if(sdrTopicoAtivo!=='${t.id}')this.style.background='var(--surface2)'"
+       onmouseout="if(sdrTopicoAtivo!=='${t.id}')this.style.background='transparent'">
+      ${icone}
+      <span style="flex:1;line-height:1.35">${idx+1}. ${t.label}</span>
       ${count !== null && count > 0 ? `<span style="background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:1px 7px;font-size:10px;font-weight:700;flex-shrink:0">${count}</span>` : ''}
     </div>`;
   }).join('');
 }
 
 async function selectSDRTopico(id) {
-  sdrTopicoAtivo = id;
+  sdrTopicoAtivo = String(id);
   renderSDRTopicos();
   if (!sdrConteudosCache[id]) {
     const res = await API.get('/sdr/conteudos?topico=' + id);
@@ -5063,7 +5077,7 @@ async function selectSDRTopico(id) {
 function renderSDRConteudo() {
   const el = document.getElementById('sdrConteudo');
   if (!el) return;
-  const topico = SDR_TOPICOS.find(t => t.id === sdrTopicoAtivo);
+  const topico = sdrTopicos.find(t => t.id === sdrTopicoAtivo);
   const items = sdrConteudosCache[sdrTopicoAtivo] || [];
   const canEd = canEdit('sdr');
   el.innerHTML = `
@@ -5099,7 +5113,7 @@ function renderSDRConteudo() {
 
 function openSDRConteudoForm(id) {
   const item = id ? (sdrConteudosCache[sdrTopicoAtivo] || []).find(c => c.id === id) : null;
-  const topico = SDR_TOPICOS.find(t => t.id === sdrTopicoAtivo);
+  const topico = sdrTopicos.find(t => t.id === sdrTopicoAtivo);
   document.getElementById('formTitle').textContent = item ? 'Editar Conteúdo' : 'Novo Conteúdo';
   document.getElementById('formBody').innerHTML = `
     <div style="font-size:12px;color:var(--muted);margin-bottom:12px;padding:8px 12px;background:var(--surface2);border-radius:6px">
@@ -5131,6 +5145,7 @@ async function saveSDRConteudo(id) {
     ? await API.put('/sdr/conteudos/' + id, { titulo, conteudo: conteudo || null })
     : await API.post('/sdr/conteudos', { topico_id: sdrTopicoAtivo, titulo, conteudo: conteudo || null });
   if (res.erro) { toast('Erro: ' + res.erro); return; }
+  logHistorico(id ? 'atualizado' : 'criado', 'sdr_conteudo', res.id || id, `Conteúdo SDR ${id?'atualizado':'criado'}: ${titulo}`);
   delete sdrConteudosCache[sdrTopicoAtivo];
   closeModal('formModal');
   toast(id ? 'Conteúdo atualizado!' : 'Conteúdo criado!');
@@ -5139,11 +5154,108 @@ async function saveSDRConteudo(id) {
 
 async function deleteSDRConteudo(id) {
   if (!confirm('Remover este conteúdo?')) return;
+  const item = (sdrConteudosCache[sdrTopicoAtivo] || []).find(c => c.id === id);
   const res = await API.del('/sdr/conteudos/' + id);
   if (res.erro) { toast('Erro: ' + res.erro); return; }
+  logHistorico('excluido', 'sdr_conteudo', id, `Conteúdo SDR excluído: ${item?.titulo || id}`);
   delete sdrConteudosCache[sdrTopicoAtivo];
   toast('Conteúdo removido.');
   await selectSDRTopico(sdrTopicoAtivo);
+}
+
+// ── SDR TÓPICOS (Admin / Cadastro) ───────────────────────────────────
+
+async function renderSdrTopicosAdmin() {
+  await loadSdrTopicos();
+  const canEd = canEdit('sdr_topicos');
+  const el = document.getElementById('sdrTopicosAdminList');
+  if (!el) return;
+  if (!sdrTopicos.length) {
+    el.innerHTML = `<div style="text-align:center;padding:60px;color:var(--muted);font-size:14px">Nenhum tópico cadastrado.</div>`;
+    return;
+  }
+  el.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead>
+        <tr style="border-bottom:2px solid var(--border)">
+          <th style="text-align:left;padding:10px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);width:50px">Ordem</th>
+          <th style="text-align:left;padding:10px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);width:60px">Ícone</th>
+          <th style="text-align:left;padding:10px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted)">Tópico</th>
+          ${canEd ? `<th style="padding:10px 14px;width:120px"></th>` : ''}
+        </tr>
+      </thead>
+      <tbody>
+        ${sdrTopicos.map((t, idx) => `
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:12px 14px;color:var(--muted);font-size:12px">${idx + 1}</td>
+            <td style="padding:12px 14px;font-size:18px">${t.icone || '—'}</td>
+            <td style="padding:12px 14px;font-weight:600">${t.label}</td>
+            ${canEd ? `<td style="padding:12px 14px;text-align:right">
+              <div style="display:flex;gap:6px;justify-content:flex-end">
+                <button class="btn btn-ghost btn-sm" onclick="openSdrTopicoForm('${t.id}')">Editar</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteSdrTopico('${t.id}','${t.label.replace(/'/g,"\\'")}')">
+                  <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                </button>
+              </div>
+            </td>` : ''}
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function openSdrTopicoForm(id) {
+  const t = id ? sdrTopicos.find(x => x.id === id) : null;
+  document.getElementById('formTitle').textContent = t ? 'Editar Tópico SDR' : 'Novo Tópico SDR';
+  document.getElementById('formBody').innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Nome do Tópico <span style="color:#e74c3c">*</span></label>
+      <input class="form-input" id="sdrTopicoLabel" value="${t?.label||''}" placeholder="Ex: Scripts de Abordagem">
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="flex:1">
+        <label class="form-label">Ícone (emoji) <span style="font-size:11px;font-weight:400;color:var(--muted)">opcional</span></label>
+        <input class="form-input" id="sdrTopicoIcone" value="${t?.icone||''}" placeholder="Ex: 💬" maxlength="10">
+      </div>
+      <div class="form-group" style="flex:1">
+        <label class="form-label">Ordem</label>
+        <input class="form-input" type="number" id="sdrTopicoOrdem" value="${t?.ordem ?? sdrTopicos.length + 1}" min="1">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveSdrTopico('${id||''}')">Salvar</button>
+    </div>
+  `;
+  openModal('formModal');
+}
+
+async function saveSdrTopico(id) {
+  const label = document.getElementById('sdrTopicoLabel')?.value.trim();
+  const icone = document.getElementById('sdrTopicoIcone')?.value.trim();
+  const ordem = parseInt(document.getElementById('sdrTopicoOrdem')?.value) || 0;
+  if (!label) { toast('Nome do tópico é obrigatório.'); return; }
+  const res = id
+    ? await API.put('/sdr/topicos/' + id, { label, icone, ordem })
+    : await API.post('/sdr/topicos', { label, icone, ordem });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  logHistorico(id ? 'atualizado' : 'criado', 'sdr_topico', res.id || id, `Tópico SDR ${id?'atualizado':'criado'}: ${label}`);
+  closeModal('formModal');
+  toast(id ? 'Tópico atualizado!' : 'Tópico criado!');
+  sdrTopicos = [];
+  await renderSdrTopicosAdmin();
+}
+
+async function deleteSdrTopico(id, label) {
+  if (!confirm(`Remover o tópico "${label}"?\nTodos os conteúdos deste tópico serão excluídos.`)) return;
+  const res = await API.del('/sdr/topicos/' + id);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  logHistorico('excluido', 'sdr_topico', id, `Tópico SDR excluído: ${label}`);
+  toast('Tópico removido.');
+  sdrTopicos = [];
+  sdrConteudosCache = {};
+  await renderSdrTopicosAdmin();
 }
 </script>
 </body>

@@ -9,9 +9,55 @@ function checkSdrEdit(req) {
   const u = req.usuario;
   if (!u) return false;
   if (u.papel === 'admin') return true;
-  const p = (u.permissoes || {})['sdr'] || {};
+  const p = (u.permissoes || {})['sdr_topicos'] || (u.permissoes || {})['sdr'] || {};
   return p.editar !== false;
 }
+
+// ── TÓPICOS ──────────────────────────────────────────────────────────
+
+router.get('/topicos', async (req, res) => {
+  const { data, error } = await supabase
+    .from('sdr_topicos')
+    .select('*')
+    .order('ordem', { ascending: true });
+  if (error) return res.status(500).json({ erro: error.message });
+  res.json(data);
+});
+
+router.post('/topicos', async (req, res) => {
+  if (!checkSdrEdit(req)) return res.status(403).json({ erro: 'Sem permissão para editar' });
+  const { label, icone, ordem } = req.body;
+  if (!label) return res.status(400).json({ erro: 'label é obrigatório' });
+  const { data, error } = await supabase
+    .from('sdr_topicos')
+    .insert([{ label, icone: icone || '', ordem: ordem || 0 }])
+    .select()
+    .single();
+  if (error) return res.status(400).json({ erro: error.message });
+  res.status(201).json(data);
+});
+
+router.put('/topicos/:id', async (req, res) => {
+  if (!checkSdrEdit(req)) return res.status(403).json({ erro: 'Sem permissão para editar' });
+  const { label, icone, ordem } = req.body;
+  const updates = {};
+  if (label !== undefined) updates.label = label;
+  if (icone !== undefined) updates.icone = icone || '';
+  if (ordem !== undefined) updates.ordem = parseInt(ordem) || 0;
+  const { data, error } = await supabase
+    .from('sdr_topicos').update(updates).eq('id', req.params.id).select().single();
+  if (error) return res.status(400).json({ erro: error.message });
+  res.json(data);
+});
+
+router.delete('/topicos/:id', async (req, res) => {
+  if (!checkSdrEdit(req)) return res.status(403).json({ erro: 'Sem permissão para editar' });
+  const { error } = await supabase.from('sdr_topicos').delete().eq('id', req.params.id);
+  if (error) return res.status(400).json({ erro: error.message });
+  res.json({ mensagem: 'Tópico removido' });
+});
+
+// ── CONTEÚDOS ─────────────────────────────────────────────────────────
 
 router.get('/conteudos', async (req, res) => {
   const { topico } = req.query;
@@ -20,7 +66,7 @@ router.get('/conteudos', async (req, res) => {
     .select('*')
     .order('ordem', { ascending: true })
     .order('criado_em', { ascending: true });
-  if (topico) query = query.eq('topico_id', parseInt(topico));
+  if (topico) query = query.eq('topico_id', topico);
   const { data, error } = await query;
   if (error) return res.status(500).json({ erro: error.message });
   res.json(data);
