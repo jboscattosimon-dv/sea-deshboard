@@ -1231,12 +1231,11 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     </div>
     <button class="section-toggle-btn" id="dashStatToggleBtn" onclick="toggleCardSection('dashStatSection')">
       <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><path d="M1 3l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Cards de status
+      Filtros
     </button>
     <div class="collapsible-section" id="dashStatSection" style="max-height:200px">
-      <div class="stats-row" id="dashStats"></div>
+      <div class="filter-bar" id="dashFilters"></div>
     </div>
-    <div class="filter-bar" id="dashFilters"></div>
     <div class="clients-grid" id="dashGrid"></div>
   </div>
 
@@ -2031,18 +2030,6 @@ function renderDashboard() {
   statuses.forEach(s => cnt[s.id] = 0);
   filtered.forEach(d => { if (cnt[d.statusId] !== undefined) cnt[d.statusId]++; });
 
-  let statsHtml = `<div class="stat-card"><div class="num">${filtered.length}</div><div class="lbl">Total no período</div></div>`;
-  statuses.forEach(s => {
-    statsHtml += `<div class="stat-card" style="border-left:3px solid ${s.color}">
-      <div class="num" style="color:${s.color}">${cnt[s.id]||0}</div>
-      <div class="lbl">${s.name}</div>
-    </div>`;
-  });
-  document.getElementById('dashStats').innerHTML = statsHtml;
-  const statSec = document.getElementById('dashStatSection');
-  if (statSec && !statSec.classList.contains('collapsed')) statSec.style.maxHeight = statSec.scrollHeight + 'px';
-  restoreCollapse('dashStatSection');
-
   const today = new Date().toISOString().slice(0, 10);
   const todayCount  = filtered.filter(d => d.date === today).length;
   const postadoCount = filtered.filter(d => d.postado).length;
@@ -2058,6 +2045,10 @@ function renderDashboard() {
     </div>`;
   });
   document.getElementById('dashFilters').innerHTML = pillsHtml;
+
+  const statSec = document.getElementById('dashStatSection');
+  if (statSec && !statSec.classList.contains('collapsed')) statSec.style.maxHeight = statSec.scrollHeight + 'px';
+  restoreCollapse('dashStatSection');
 
   // update Hoje button active state
   const todayBtn = document.getElementById('dashTodayBtn');
@@ -2151,12 +2142,12 @@ function openDetail(id) {
   const ro = editMode ? '' : 'readonly disabled style="pointer-events:none;opacity:0.7"';
   const roSel = editMode ? '' : 'disabled style="pointer-events:none;opacity:0.7"';
   document.getElementById('detailBody').innerHTML = `
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:18px;padding-right:38px;flex-wrap:wrap">
       <div style="flex:1;min-width:0">
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:2px">${editMode ? 'Editando demanda' : 'Visualizando demanda'}</div>
         <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${cl.name} · ${fmtDateFull(d.date)}</div>
       </div>
-      <span id="detailBadge" class="badge" style="background:${st.color}22;color:${st.color}"><span class="dot" style="background:${st.color}"></span>${st.name}</span>
+      <span id="detailBadge" class="badge" style="background:${st.color}22;color:${st.color};flex-shrink:0;margin-top:2px"><span class="dot" style="background:${st.color}"></span>${st.name}</span>
     </div>
     <div class="form-row">
       <div class="form-group">
@@ -4623,12 +4614,12 @@ async function openAtividadeDetail(id) {
   const respOpts  = crmUsuarios.filter(isRespUser).map(u => `<option value="${u.id}" ${u.id===a.responsavel_id?'selected':''}>${u.nome}</option>`).join('');
 
   document.getElementById('detailBody').innerHTML = `
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:18px;padding-right:38px;flex-wrap:wrap">
       <div style="flex:1;min-width:0">
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:2px">${editMode?'Editando atividade':'Visualizando atividade'}</div>
         <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${leadNome} · ${dateStr}</div>
       </div>
-      <span class="badge" style="background:${statusBg};color:${statusCl}">${statusLb}</span>
+      <span class="badge" style="background:${statusBg};color:${statusCl};flex-shrink:0;margin-top:2px">${statusLb}</span>
     </div>
     <div class="form-row">
       <div class="form-group">
