@@ -92,6 +92,22 @@ CREATE TABLE IF NOT EXISTS crm_atividades (
 -- Adiciona responsavel_id se a tabela já existia sem ela
 ALTER TABLE crm_atividades ADD COLUMN IF NOT EXISTS responsavel_id UUID REFERENCES usuarios(id);
 
+-- Responsável pelo lead
+ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS responsavel_id UUID REFERENCES usuarios(id);
+
+-- ── SDR ───────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS sdr_conteudos (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  topico_id INT NOT NULL CHECK (topico_id BETWEEN 1 AND 15),
+  titulo VARCHAR(200) NOT NULL,
+  conteudo TEXT,
+  ordem INT DEFAULT 0,
+  criado_por UUID REFERENCES usuarios(id),
+  criado_em TIMESTAMPTZ DEFAULT NOW(),
+  atualizado_em TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ─────────────────────────────────────────────────────────────────────
 
 -- Tabela de demandas

@@ -71,11 +71,11 @@ router.get('/leads', async (req, res) => {
 });
 
 router.post('/leads', async (req, res) => {
-  const { nome, telefone, instagram, area_atuacao, cidade, origem, etapa, informacoes } = req.body;
+  const { nome, telefone, instagram, area_atuacao, cidade, origem, etapa, informacoes, responsavel_id } = req.body;
   if (!nome || !telefone) return res.status(400).json({ erro: 'Nome e telefone são obrigatórios' });
   const { data, error } = await supabase
     .from('crm_leads')
-    .insert([{ nome, telefone, instagram: instagram || null, area_atuacao: area_atuacao || null, cidade: cidade || null, origem: origem || null, etapa: etapa || 'primeiro_contato', informacoes: informacoes || null, criado_por: req.usuario.id }])
+    .insert([{ nome, telefone, instagram: instagram || null, area_atuacao: area_atuacao || null, cidade: cidade || null, origem: origem || null, etapa: etapa || 'primeiro_contato', informacoes: informacoes || null, responsavel_id: responsavel_id || null, criado_por: req.usuario.id }])
     .select()
     .single();
   if (error) return res.status(400).json({ erro: error.message });
@@ -83,17 +83,18 @@ router.post('/leads', async (req, res) => {
 });
 
 router.put('/leads/:id', async (req, res) => {
-  const { nome, telefone, instagram, area_atuacao, cidade, origem, etapa, informacoes, motivo_etapa } = req.body;
+  const { nome, telefone, instagram, area_atuacao, cidade, origem, etapa, informacoes, motivo_etapa, responsavel_id } = req.body;
   const updates = {};
-  if (nome          !== undefined) updates.nome          = nome;
-  if (telefone      !== undefined) updates.telefone      = telefone;
-  if (instagram     !== undefined) updates.instagram     = instagram;
-  if (area_atuacao  !== undefined) updates.area_atuacao  = area_atuacao;
-  if (cidade        !== undefined) updates.cidade        = cidade;
-  if (origem        !== undefined) updates.origem        = origem;
-  if (etapa         !== undefined) updates.etapa         = etapa;
-  if (informacoes   !== undefined) updates.informacoes   = informacoes;
-  if (motivo_etapa  !== undefined) updates.motivo_etapa  = motivo_etapa;
+  if (nome           !== undefined) updates.nome           = nome;
+  if (telefone       !== undefined) updates.telefone       = telefone;
+  if (instagram      !== undefined) updates.instagram      = instagram;
+  if (area_atuacao   !== undefined) updates.area_atuacao   = area_atuacao;
+  if (cidade         !== undefined) updates.cidade         = cidade;
+  if (origem         !== undefined) updates.origem         = origem;
+  if (etapa          !== undefined) updates.etapa          = etapa;
+  if (informacoes    !== undefined) updates.informacoes    = informacoes;
+  if (motivo_etapa   !== undefined) updates.motivo_etapa   = motivo_etapa;
+  if (responsavel_id !== undefined) updates.responsavel_id = responsavel_id || null;
   updates.atualizado_em = new Date().toISOString();
   const { data, error } = await supabase
     .from('crm_leads')
