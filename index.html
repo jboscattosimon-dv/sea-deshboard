@@ -4999,6 +4999,8 @@ let sdrTopicos = [];
 let sdrTopicoAtivo = null;
 let sdrConteudosCache = {};
 let sdrAnexosCache = {};
+let sdrPendingFiles = [];
+let sdrFormConteudoId = null;
 
 async function loadSdrTopicos() {
   const res = await API.get('/sdr/topicos');
@@ -5123,9 +5125,14 @@ function renderSDRConteudo() {
   }, 0);
 }
 
-function openSDRConteudoForm(id) {
+async function openSDRConteudoForm(id) {
   const item = id ? (sdrConteudosCache[sdrTopicoAtivo] || []).find(c => c.id === id) : null;
   const topico = sdrTopicos.find(t => t.id === sdrTopicoAtivo);
+  sdrPendingFiles = [];
+  sdrFormConteudoId = id || null;
+  if (id) {
+    await sdrLoadAnexos(id);
+  }
   document.getElementById('formTitle').textContent = item ? 'Editar Conteúdo' : 'Novo Conteúdo';
   document.getElementById('formBody').innerHTML = `
     <div style="font-size:12px;color:var(--muted);margin-bottom:12px;padding:8px 12px;background:var(--surface2);border-radius:6px">
@@ -5139,13 +5146,23 @@ function openSDRConteudoForm(id) {
       <label class="form-label">Conteúdo
         <span style="font-size:11px;font-weight:400;color:var(--muted)"> — suporta **negrito**, *itálico*, - listas</span>
       </label>
-      <textarea class="form-textarea" id="sdrConteudoText" rows="10" placeholder="Digite o conteúdo aqui...">${item?.conteudo||''}</textarea>
+      <textarea class="form-textarea" id="sdrConteudoText" rows="8" placeholder="Digite o conteúdo aqui...">${item?.conteudo||''}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Anexos</label>
+      <div id="formAnexosList"></div>
+      <label for="formAnexoInput" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);padding:6px 12px;border:1px dashed var(--border);border-radius:6px;margin-top:8px;transition:all 0.15s" onmouseover="this.style.borderColor='var(--text)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+        Adicionar arquivo
+        <input type="file" id="formAnexoInput" multiple style="display:none" onchange="addFormAnexo(this)">
+      </label>
     </div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveSDRConteudo('${id||''}')">Salvar</button>
     </div>
   `;
+  renderFormAnexos(id ? (sdrAnexosCache[id] || []) : []);
   openModal('formModal');
 }
 
@@ -5157,8 +5174,28 @@ async function saveSDRConteudo(id) {
     ? await API.put('/sdr/conteudos/' + id, { titulo, conteudo: conteudo || null })
     : await API.post('/sdr/conteudos', { topico_id: sdrTopicoAtivo, titulo, conteudo: conteudo || null });
   if (res.erro) { toast('Erro: ' + res.erro); return; }
-  logHistorico(id ? 'atualizado' : 'criado', 'sdr_conteudo', res.id || id, `Conteúdo SDR ${id?'atualizado':'criado'}: ${titulo}`);
+  const conteudoId = res.id || id;
+  if (sdrPendingFiles.length > 0) {
+    toast(`Enviando ${sdrPendingFiles.length} arquivo(s)…`);
+    for (const { file } of sdrPendingFiles) {
+      await new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const r = await API.post('/sdr/anexos', {
+            conteudo_id: conteudoId, nome: file.name,
+            tipo: file.type, tamanho: file.size, data: e.target.result.split(',')[1]
+          });
+          if (r.erro) toast('Erro ao enviar ' + file.name + ': ' + r.erro);
+          resolve();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    sdrPendingFiles = [];
+  }
+  logHistorico(id ? 'atualizado' : 'criado', 'sdr_conteudo', conteudoId, `Conteúdo SDR ${id?'atualizado':'criado'}: ${titulo}`);
   delete sdrConteudosCache[sdrTopicoAtivo];
+  delete sdrAnexosCache[conteudoId];
   closeModal('formModal');
   toast(id ? 'Conteúdo atualizado!' : 'Conteúdo criado!');
   await selectSDRTopico(sdrTopicoAtivo);
@@ -5269,6 +5306,60 @@ async function deleteSdrTopico(id, label) {
   sdrConteudosCache = {};
   sdrAnexosCache = {};
   await renderSdrTopicosAdmin();
+}
+
+// ── SDR ANEXOS — FORMULÁRIO ───────────────────────────────────────────
+
+function renderFormAnexos(existingAnexos) {
+  const el = document.getElementById('formAnexosList');
+  if (!el) return;
+  const existingHtml = existingAnexos.map(a => `
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:12px;margin-bottom:6px">
+      <span style="flex-shrink:0">${sdrFileIcon(a.tipo)}</span>
+      <a href="${a.url}" target="_blank" rel="noopener" style="flex:1;color:var(--text);text-decoration:none;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${a.nome}">${a.nome}</a>
+      ${a.tamanho ? `<span style="color:var(--muted);flex-shrink:0">${sdrFormatBytes(a.tamanho)}</span>` : ''}
+      <button onclick="removeExistingFormAnexo('${a.id}')" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:0;line-height:1;flex-shrink:0" title="Remover">×</button>
+    </div>
+  `).join('');
+  const pendingHtml = sdrPendingFiles.map((f, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface2);border:1px dashed var(--border);border-radius:6px;font-size:12px;margin-bottom:6px">
+      <span style="flex-shrink:0">${sdrFileIcon(f.file.type)}</span>
+      <span style="flex:1;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${f.file.name}">${f.file.name}</span>
+      <span style="color:var(--muted);flex-shrink:0">${sdrFormatBytes(f.file.size)}</span>
+      <span style="font-size:10px;font-weight:700;color:#E67E22;flex-shrink:0">PENDENTE</span>
+      <button onclick="removePendingFormAnexo(${i})" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:0;line-height:1;flex-shrink:0" title="Remover">×</button>
+    </div>
+  `).join('');
+  el.innerHTML = existingHtml + pendingHtml;
+}
+
+function addFormAnexo(input) {
+  const MAX = 10 * 1024 * 1024;
+  for (const file of Array.from(input.files)) {
+    if (file.size > MAX) { toast(`${file.name}: máximo 10 MB.`); continue; }
+    sdrPendingFiles.push({ file });
+  }
+  input.value = '';
+  const existingAnexos = sdrFormConteudoId ? (sdrAnexosCache[sdrFormConteudoId] || []) : [];
+  renderFormAnexos(existingAnexos);
+}
+
+function removePendingFormAnexo(idx) {
+  sdrPendingFiles.splice(idx, 1);
+  const existingAnexos = sdrFormConteudoId ? (sdrAnexosCache[sdrFormConteudoId] || []) : [];
+  renderFormAnexos(existingAnexos);
+}
+
+async function removeExistingFormAnexo(id) {
+  if (!confirm('Remover este anexo?')) return;
+  const res = await API.del('/sdr/anexos/' + id);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  if (sdrFormConteudoId) {
+    delete sdrAnexosCache[sdrFormConteudoId];
+    await sdrLoadAnexos(sdrFormConteudoId);
+  }
+  renderFormAnexos(sdrFormConteudoId ? (sdrAnexosCache[sdrFormConteudoId] || []) : []);
+  toast('Anexo removido.');
 }
 
 // ── SDR ANEXOS ────────────────────────────────────────────────────────
