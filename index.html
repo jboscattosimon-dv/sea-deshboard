@@ -5334,9 +5334,9 @@ function renderFormAnexos(existingAnexos) {
 }
 
 function addFormAnexo(input) {
-  const MAX = 10 * 1024 * 1024;
+  const MAX = 20 * 1024 * 1024;
   for (const file of Array.from(input.files)) {
-    if (file.size > MAX) { toast(`${file.name}: máximo 10 MB.`); continue; }
+    if (file.size > MAX) { toast(`"${file.name}" não foi adicionado pois ultrapassa o limite máximo de 20 MB por arquivo.`); continue; }
     sdrPendingFiles.push({ file });
   }
   input.value = '';
@@ -5426,8 +5426,8 @@ function sdrRenderAnexos(conteudoId, canEd) {
 async function sdrUploadAnexo(conteudoId, input) {
   const file = input.files[0];
   if (!file) return;
-  const MAX = 10 * 1024 * 1024;
-  if (file.size > MAX) { toast('Arquivo muito grande. Máximo 10 MB.'); input.value = ''; return; }
+  const MAX = 20 * 1024 * 1024;
+  if (file.size > MAX) { toast(`"${file.name}" não pode ser enviado pois ultrapassa o limite máximo de 20 MB por arquivo.`); input.value = ''; return; }
   toast('Enviando arquivo…');
   const reader = new FileReader();
   reader.onload = async (e) => {
