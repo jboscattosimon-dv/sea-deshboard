@@ -1,4 +1,4 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 
@@ -15,7 +15,7 @@ const sdrRoutes = require('./routes/sdr');
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '20mb' }));
 app.use(express.static('./'));
 
 app.use('/api/auth', authRoutes);
@@ -31,3 +31,4 @@ app.use('/api/sdr', sdrRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+
