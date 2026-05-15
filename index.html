@@ -1220,7 +1220,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
       </div>
       <div style="display:flex;flex-direction:column;gap:4px">
         <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted)">&nbsp;</span>
-        <button id="dashTodayBtn" class="btn btn-ghost btn-sm" onclick="setDashFilter(dashFilter==='today'?'all':'today')" style="align-self:flex-end;border-color:var(--primary);color:var(--primary)">Hoje</button>
+        <button id="dashTodayBtn" class="btn btn-ghost btn-sm" onclick="setDashFilter(dashFilter==='today'?'all':'today')" style="align-self:flex-end">Hoje</button>
       </div>
       <div style="margin-left:auto;align-self:flex-end">
         <div class="search-wrap">
@@ -2053,8 +2053,9 @@ function renderDashboard() {
   // update Hoje button active state
   const todayBtn = document.getElementById('dashTodayBtn');
   if (todayBtn) {
-    todayBtn.style.background = dashFilter === 'today' ? 'var(--primary)' : '';
-    todayBtn.style.color = dashFilter === 'today' ? '#fff' : 'var(--primary)';
+    todayBtn.style.background   = dashFilter === 'today' ? 'var(--primary)' : '';
+    todayBtn.style.color        = dashFilter === 'today' ? '#fff' : '';
+    todayBtn.style.borderColor  = dashFilter === 'today' ? 'var(--primary)' : '';
     todayBtn.textContent = `Hoje ${todayCount}`;
   }
 
