@@ -4998,6 +4998,7 @@ async function exportCrmPDF() {
 let sdrTopicos = [];
 let sdrTopicoAtivo = null;
 let sdrConteudosCache = {};
+let sdrAnexosCache = {};
 
 async function loadSdrTopicos() {
   const res = await API.get('/sdr/topicos');
@@ -5028,6 +5029,7 @@ function renderMarkdown(text) {
 
 async function renderSDR() {
   sdrConteudosCache = {};
+  sdrAnexosCache = {};
   await loadSdrTopicos();
   if (sdrTopicos.length > 0) {
     sdrTopicoAtivo = sdrTopicos[0].id;
@@ -5105,10 +5107,20 @@ function renderSDRConteudo() {
             </div>` : ''}
           </div>
           ${item.conteudo ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:13px;color:var(--muted);line-height:1.75">${renderMarkdown(item.conteudo)}</div>` : ''}
+          <div id="sdr-anexos-${item.id}">
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">Carregando anexos…</div>
+          </div>
         </div>
       `).join('')}
     </div>
   `;
+  setTimeout(async () => {
+    const canEd = canEdit('sdr');
+    for (const item of items) {
+      await sdrLoadAnexos(item.id);
+      sdrRenderAnexos(item.id, canEd);
+    }
+  }, 0);
 }
 
 function openSDRConteudoForm(id) {
@@ -5255,7 +5267,102 @@ async function deleteSdrTopico(id, label) {
   toast('Tópico removido.');
   sdrTopicos = [];
   sdrConteudosCache = {};
+  sdrAnexosCache = {};
   await renderSdrTopicosAdmin();
+}
+
+// ── SDR ANEXOS ────────────────────────────────────────────────────────
+
+function sdrFileIcon(tipo) {
+  if (!tipo) return '📎';
+  if (tipo.includes('pdf'))                                      return '📄';
+  if (tipo.includes('image'))                                    return '🖼️';
+  if (tipo.includes('word') || tipo.includes('document'))        return '📝';
+  if (tipo.includes('sheet') || tipo.includes('excel'))          return '📊';
+  if (tipo.includes('presentation') || tipo.includes('powerpoint')) return '📋';
+  if (tipo.includes('video'))                                    return '🎥';
+  if (tipo.includes('audio'))                                    return '🎵';
+  if (tipo.includes('zip') || tipo.includes('archive') || tipo.includes('compressed')) return '📦';
+  return '📎';
+}
+
+function sdrFormatBytes(bytes) {
+  if (!bytes) return '';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+async function sdrLoadAnexos(conteudoId) {
+  if (sdrAnexosCache[conteudoId] !== undefined) return;
+  const res = await API.get('/sdr/anexos?conteudo_id=' + conteudoId);
+  sdrAnexosCache[conteudoId] = Array.isArray(res) ? res : [];
+}
+
+function sdrRenderAnexos(conteudoId, canEd) {
+  const el = document.getElementById('sdr-anexos-' + conteudoId);
+  if (!el) return;
+  const anexos = sdrAnexosCache[conteudoId] || [];
+  const hasContent = anexos.length > 0 || canEd;
+  if (!hasContent) { el.innerHTML = ''; return; }
+
+  el.innerHTML = `
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+      ${anexos.length > 0 ? `
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:8px">Anexos</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:${canEd?'8px':'0'}">
+          ${anexos.map(a => `
+            <div style="display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;max-width:280px">
+              <span style="flex-shrink:0">${sdrFileIcon(a.tipo)}</span>
+              <a href="${a.url}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px" title="${a.nome}">${a.nome}</a>
+              ${a.tamanho ? `<span style="color:var(--muted);flex-shrink:0">${sdrFormatBytes(a.tamanho)}</span>` : ''}
+              ${canEd ? `<button onclick="sdrDeleteAnexo('${a.id}','${conteudoId}')" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:0;line-height:1;font-size:14px;flex-shrink:0" title="Remover">×</button>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+      ${canEd ? `
+        <label for="sdr-file-${conteudoId}" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);padding:5px 10px;border:1px dashed var(--border);border-radius:6px;transition:all 0.15s" onmouseover="this.style.borderColor='var(--text)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+          Anexar arquivo
+          <input type="file" id="sdr-file-${conteudoId}" style="display:none" onchange="sdrUploadAnexo('${conteudoId}', this)">
+        </label>
+      ` : ''}
+    </div>
+  `;
+}
+
+async function sdrUploadAnexo(conteudoId, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const MAX = 10 * 1024 * 1024;
+  if (file.size > MAX) { toast('Arquivo muito grande. Máximo 10 MB.'); input.value = ''; return; }
+  toast('Enviando arquivo…');
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const base64 = e.target.result.split(',')[1];
+    const res = await API.post('/sdr/anexos', {
+      conteudo_id: conteudoId, nome: file.name,
+      tipo: file.type, tamanho: file.size, data: base64
+    });
+    input.value = '';
+    if (res.erro) { toast('Erro: ' + res.erro); return; }
+    delete sdrAnexosCache[conteudoId];
+    await sdrLoadAnexos(conteudoId);
+    sdrRenderAnexos(conteudoId, canEdit('sdr'));
+    toast('Arquivo anexado!');
+  };
+  reader.readAsDataURL(file);
+}
+
+async function sdrDeleteAnexo(id, conteudoId) {
+  if (!confirm('Remover este arquivo?')) return;
+  const res = await API.del('/sdr/anexos/' + id);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  delete sdrAnexosCache[conteudoId];
+  await sdrLoadAnexos(conteudoId);
+  sdrRenderAnexos(conteudoId, canEdit('sdr'));
+  toast('Arquivo removido.');
 }
 </script>
 </body>

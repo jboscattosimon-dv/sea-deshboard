@@ -149,6 +149,19 @@ CREATE TABLE IF NOT EXISTS sdr_conteudos (
   atualizado_em TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Anexos dos conteúdos SDR (armazenados no Supabase Storage)
+CREATE TABLE IF NOT EXISTS sdr_anexos (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  conteudo_id UUID NOT NULL REFERENCES sdr_conteudos(id) ON DELETE CASCADE,
+  nome VARCHAR(300) NOT NULL,
+  url TEXT NOT NULL,
+  storage_path TEXT NOT NULL,
+  tipo VARCHAR(100),
+  tamanho INT,
+  criado_por UUID REFERENCES usuarios(id),
+  criado_em TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ─────────────────────────────────────────────────────────────────────
 
 -- Tabela de demandas

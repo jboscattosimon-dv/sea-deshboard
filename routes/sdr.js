@@ -109,4 +109,58 @@ router.delete('/conteudos/:id', async (req, res) => {
   res.json({ mensagem: 'Conteúdo removido' });
 });
 
+// ── ANEXOS ───────────────────────────────────────────────────────────
+
+router.get('/anexos', async (req, res) => {
+  const { conteudo_id } = req.query;
+  if (!conteudo_id) return res.status(400).json({ erro: 'conteudo_id é obrigatório' });
+  const { data, error } = await supabase
+    .from('sdr_anexos')
+    .select('*')
+    .eq('conteudo_id', conteudo_id)
+    .order('criado_em', { ascending: true });
+  if (error) return res.status(500).json({ erro: error.message });
+  res.json(data);
+});
+
+router.post('/anexos', async (req, res) => {
+  if (!checkSdrEdit(req)) return res.status(403).json({ erro: 'Sem permissão para editar' });
+  const { conteudo_id, nome, tipo, tamanho, data: base64Data } = req.body;
+  if (!conteudo_id || !nome || !base64Data) {
+    return res.status(400).json({ erro: 'conteudo_id, nome e data são obrigatórios' });
+  }
+  const safeName = nome.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const storagePath = `${conteudo_id}/${Date.now()}_${safeName}`;
+  const buffer = Buffer.from(base64Data, 'base64');
+
+  const { error: upErr } = await supabase.storage
+    .from('sdr-anexos')
+    .upload(storagePath, buffer, { contentType: tipo || 'application/octet-stream', upsert: false });
+  if (upErr) return res.status(400).json({ erro: upErr.message });
+
+  const { data: urlData } = supabase.storage.from('sdr-anexos').getPublicUrl(storagePath);
+
+  const { data, error } = await supabase
+    .from('sdr_anexos')
+    .insert([{
+      conteudo_id, nome, url: urlData.publicUrl, storage_path: storagePath,
+      tipo: tipo || null, tamanho: tamanho || null, criado_por: req.usuario.id
+    }])
+    .select().single();
+  if (error) return res.status(400).json({ erro: error.message });
+  res.status(201).json(data);
+});
+
+router.delete('/anexos/:id', async (req, res) => {
+  if (!checkSdrEdit(req)) return res.status(403).json({ erro: 'Sem permissão para editar' });
+  const { data: anexo } = await supabase
+    .from('sdr_anexos').select('storage_path').eq('id', req.params.id).single();
+  if (anexo?.storage_path) {
+    await supabase.storage.from('sdr-anexos').remove([anexo.storage_path]);
+  }
+  const { error } = await supabase.from('sdr_anexos').delete().eq('id', req.params.id);
+  if (error) return res.status(400).json({ erro: error.message });
+  res.json({ mensagem: 'Arquivo removido' });
+});
+
 module.exports = router;
