@@ -1665,7 +1665,7 @@ const LOGO_B64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAlgAAAFwCAYAAABk
 // ═══════════════════════════════════════
 //  API CLIENT
 // ═══════════════════════════════════════
-const API_URL = 'https://sea-deshboard.onrender.com/api';
+const API_URL = 'https://sea-deshboard-production.up.railway.app/api';
 
 const API = {
   token() { return localStorage.getItem('sea_token'); },
@@ -5117,6 +5117,15 @@ async function selectSDRTopico(id) {
   renderSDRConteudo();
 }
 
+function toggleSDRCard(id) {
+  const body = document.getElementById('sdr-body-' + id);
+  const arrow = document.getElementById('sdr-arrow-' + id);
+  if (!body) return;
+  const open = body.style.display === 'none';
+  body.style.display = open ? 'block' : 'none';
+  if (arrow) arrow.style.transform = open ? 'rotate(90deg)' : '';
+}
+
 function renderSDRConteudo() {
   const el = document.getElementById('sdrConteudo');
   if (!el) return;
@@ -5139,7 +5148,10 @@ function renderSDRConteudo() {
       ${items.map(item => `
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
-            <div style="font-size:14px;font-weight:700;line-height:1.4;flex:1">${item.titulo}</div>
+            <div style="display:flex;align-items:center;gap:10px;flex:1;cursor:pointer" onclick="toggleSDRCard('${item.id}')">
+              <svg id="sdr-arrow-${item.id}" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;transition:transform 0.2s"><path d="M9 18l6-6-6-6"/></svg>
+              <div style="font-size:14px;font-weight:700;line-height:1.4">${item.titulo}</div>
+            </div>
             ${canEd ? `<div style="display:flex;gap:6px;flex-shrink:0">
               <button class="btn btn-ghost btn-sm" onclick="openSDRConteudoForm('${item.id}')">Editar</button>
               <button class="btn btn-danger btn-sm" onclick="deleteSDRConteudo('${item.id}')">
@@ -5147,9 +5159,11 @@ function renderSDRConteudo() {
               </button>
             </div>` : ''}
           </div>
-          ${item.conteudo ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:13px;color:var(--muted);line-height:1.75">${renderMarkdown(item.conteudo)}</div>` : ''}
-          <div id="sdr-anexos-${item.id}">
-            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">Carregando anexos…</div>
+          <div id="sdr-body-${item.id}" style="display:none">
+            ${item.conteudo ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:13px;color:var(--muted);line-height:1.75">${renderMarkdown(item.conteudo)}</div>` : ''}
+            <div id="sdr-anexos-${item.id}">
+              <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">Carregando anexos…</div>
+            </div>
           </div>
         </div>
       `).join('')}
