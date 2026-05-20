@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -5149,7 +5149,7 @@ function renderSDRConteudo() {
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
             <div style="display:flex;align-items:center;gap:10px;flex:1;cursor:pointer" onclick="toggleSDRCard('${item.id}')">
-              <svg id="sdr-arrow-${item.id}" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;transition:transform 0.2s"><path d="M9 18l6-6-6-6"/></svg>
+              <svg id="sdr-arrow-${item.id}" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;transition:transform 0.2s;transform:rotate(90deg)"><path d="M9 18l6-6-6-6"/></svg>
               <div style="font-size:14px;font-weight:700;line-height:1.4">${item.titulo}</div>
             </div>
             ${canEd ? `<div style="display:flex;gap:6px;flex-shrink:0">
@@ -5159,7 +5159,7 @@ function renderSDRConteudo() {
               </button>
             </div>` : ''}
           </div>
-          <div id="sdr-body-${item.id}" style="display:none">
+          <div id="sdr-body-${item.id}" style="display:block">
             ${item.conteudo ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:13px;color:var(--muted);line-height:1.75">${renderMarkdown(item.conteudo)}</div>` : ''}
             <div id="sdr-anexos-${item.id}">
               <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">Carregando anexos…</div>
@@ -5511,3 +5511,4 @@ async function sdrDeleteAnexo(id, conteudoId) {
 </script>
 </body>
 </html>
+
