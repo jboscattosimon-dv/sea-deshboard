@@ -5280,16 +5280,23 @@ async function renderSdrTopicosAdmin() {
     el.innerHTML = `<div style="text-align:center;padding:60px;color:var(--muted);font-size:14px">Nenhum tópico cadastrado.</div>`;
     return;
   }
-  const roots = sdrTopicos.filter(t => !t.parent_id);
+  const roots = sdrTopicos.filter(t => !t.parent_id).sort((a, b) => a.ordem - b.ordem);
   const childrenOf = (pid) => sdrTopicos.filter(t => t.parent_id === pid);
-  const rowHtml = (t, isChild) => `
+  const rowHtml = (t, isChild, idx) => `
     <tr style="border-bottom:1px solid var(--border);${isChild ? 'background:var(--surface)' : ''}">
       <td style="padding:12px 14px;font-size:18px">${t.icone || '—'}</td>
       <td style="padding:12px ${isChild ? '14px 12px 32px' : '14px'};font-weight:${isChild ? '400' : '600'}">
         ${isChild ? '<span style="color:var(--muted);margin-right:6px">↳</span>' : ''}${t.label}
       </td>
       ${canEd ? `<td style="padding:12px 14px;text-align:right">
-        <div style="display:flex;gap:6px;justify-content:flex-end">
+        <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center">
+          ${!isChild ? `
+          <button class="btn btn-ghost btn-sm" onclick="moveSdrTopico('${t.id}','up')" ${idx === 0 ? 'disabled style="opacity:0.3;cursor:default"' : ''} title="Mover para cima">
+            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="moveSdrTopico('${t.id}','down')" ${idx === roots.length - 1 ? 'disabled style="opacity:0.3;cursor:default"' : ''} title="Mover para baixo">
+            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>` : ''}
           <button class="btn btn-ghost btn-sm" onclick="openSdrTopicoForm('${t.id}')">Editar</button>
           <button class="btn btn-danger btn-sm" onclick="deleteSdrTopico('${t.id}','${t.label.replace(/'/g,"\\'")}')">
             <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
@@ -5297,7 +5304,7 @@ async function renderSdrTopicosAdmin() {
         </div>
       </td>` : ''}
     </tr>
-    ${childrenOf(t.id).map(c => rowHtml(c, true)).join('')}
+    ${childrenOf(t.id).map(c => rowHtml(c, true, 0)).join('')}
   `;
   el.innerHTML = `
     <table style="width:100%;border-collapse:collapse;font-size:13px">
@@ -5309,10 +5316,25 @@ async function renderSdrTopicosAdmin() {
         </tr>
       </thead>
       <tbody>
-        ${roots.map(t => rowHtml(t, false)).join('')}
+        ${roots.map((t, i) => rowHtml(t, false, i)).join('')}
       </tbody>
     </table>
   `;
+}
+
+async function moveSdrTopico(id, direction) {
+  const roots = sdrTopicos.filter(t => !t.parent_id).sort((a, b) => a.ordem - b.ordem);
+  const idx = roots.findIndex(t => t.id === id);
+  const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+  if (swapIdx < 0 || swapIdx >= roots.length) return;
+  const a = roots[idx];
+  const b = roots[swapIdx];
+  await Promise.all([
+    API.put('/sdr/topicos/' + a.id, { ordem: b.ordem }),
+    API.put('/sdr/topicos/' + b.id, { ordem: a.ordem })
+  ]);
+  sdrTopicos = [];
+  await renderSdrTopicosAdmin();
 }
 
 function openSdrTopicoForm(id) {
