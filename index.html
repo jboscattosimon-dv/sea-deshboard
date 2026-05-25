@@ -5072,9 +5072,9 @@ async function renderSDR() {
   sdrConteudosCache = {};
   sdrAnexosCache = {};
   await loadSdrTopicos();
-  if (sdrTopicos.length > 0) {
-    sdrTopicoAtivo = sdrTopicos[0].id;
-  }
+  const roots = sdrTopicos.filter(t => !t.parent_id);
+  const first = roots.length > 0 ? roots[0] : sdrTopicos[0];
+  if (first) sdrTopicoAtivo = first.id;
   renderSDRTopicos();
   if (sdrTopicoAtivo) await selectSDRTopico(sdrTopicoAtivo);
 }
@@ -5086,24 +5086,28 @@ function renderSDRTopicos() {
     el.innerHTML = `<div style="padding:20px;color:var(--muted);font-size:13px;text-align:center">Nenhum tópico cadastrado.</div>`;
     return;
   }
-  el.innerHTML = sdrTopicos.map((t, idx) => {
+  const roots = sdrTopicos.filter(t => !t.parent_id);
+  const childrenOf = (pid) => sdrTopicos.filter(t => t.parent_id === pid);
+  const topicoHtml = (t, isChild) => {
     const active = sdrTopicoAtivo === t.id;
     const count = sdrConteudosCache[t.id]?.length ?? null;
     const icone = t.icone ? `<span style="font-size:13px;flex-shrink:0">${t.icone}</span>` : '';
     return `<div onclick="selectSDRTopico('${t.id}')" id="sdr-topico-${t.id}" style="
-      padding:11px 16px;cursor:pointer;border-bottom:1px solid var(--border);
-      display:flex;align-items:center;gap:10px;font-size:12.5px;
-      font-weight:${active?'700':'500'};
-      background:${active?'var(--surface2)':'transparent'};
-      color:${active?'var(--text)':'var(--muted)'};
+      padding:${isChild ? '8px 16px 8px 32px' : '11px 16px'};cursor:pointer;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;gap:8px;font-size:${isChild ? '12px' : '12.5px'};
+      font-weight:${active ? '700' : '500'};
+      background:${active ? 'var(--surface2)' : 'transparent'};
+      color:${active ? 'var(--text)' : 'var(--muted)'};
       transition:background 0.12s;
     " onmouseover="if(sdrTopicoAtivo!=='${t.id}')this.style.background='var(--surface2)'"
        onmouseout="if(sdrTopicoAtivo!=='${t.id}')this.style.background='transparent'">
+      ${isChild ? '<span style="color:var(--muted);flex-shrink:0;font-size:10px;margin-right:2px">↳</span>' : ''}
       ${icone}
-      <span style="flex:1;line-height:1.35">${idx+1}. ${t.label}</span>
+      <span style="flex:1;line-height:1.35">${t.label}</span>
       ${count !== null && count > 0 ? `<span style="background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:1px 7px;font-size:10px;font-weight:700;flex-shrink:0">${count}</span>` : ''}
     </div>`;
-  }).join('');
+  };
+  el.innerHTML = roots.map(t => topicoHtml(t, false) + childrenOf(t.id).map(c => topicoHtml(c, true)).join('')).join('');
 }
 
 async function selectSDRTopico(id) {
@@ -5276,6 +5280,26 @@ async function renderSdrTopicosAdmin() {
     el.innerHTML = `<div style="text-align:center;padding:60px;color:var(--muted);font-size:14px">Nenhum tópico cadastrado.</div>`;
     return;
   }
+  const roots = sdrTopicos.filter(t => !t.parent_id);
+  const childrenOf = (pid) => sdrTopicos.filter(t => t.parent_id === pid);
+  const rowHtml = (t, isChild) => `
+    <tr style="border-bottom:1px solid var(--border);${isChild ? 'background:var(--surface)' : ''}">
+      <td style="padding:12px 14px;color:var(--muted);font-size:12px">${t.ordem}</td>
+      <td style="padding:12px 14px;font-size:18px">${t.icone || '—'}</td>
+      <td style="padding:12px ${isChild ? '14px 12px 32px' : '14px'};font-weight:${isChild ? '400' : '600'}">
+        ${isChild ? '<span style="color:var(--muted);margin-right:6px">↳</span>' : ''}${t.label}
+      </td>
+      ${canEd ? `<td style="padding:12px 14px;text-align:right">
+        <div style="display:flex;gap:6px;justify-content:flex-end">
+          <button class="btn btn-ghost btn-sm" onclick="openSdrTopicoForm('${t.id}')">Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteSdrTopico('${t.id}','${t.label.replace(/'/g,"\\'")}')">
+            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          </button>
+        </div>
+      </td>` : ''}
+    </tr>
+    ${childrenOf(t.id).map(c => rowHtml(c, true)).join('')}
+  `;
   el.innerHTML = `
     <table style="width:100%;border-collapse:collapse;font-size:13px">
       <thead>
@@ -5287,21 +5311,7 @@ async function renderSdrTopicosAdmin() {
         </tr>
       </thead>
       <tbody>
-        ${sdrTopicos.map((t, idx) => `
-          <tr style="border-bottom:1px solid var(--border)">
-            <td style="padding:12px 14px;color:var(--muted);font-size:12px">${idx + 1}</td>
-            <td style="padding:12px 14px;font-size:18px">${t.icone || '—'}</td>
-            <td style="padding:12px 14px;font-weight:600">${t.label}</td>
-            ${canEd ? `<td style="padding:12px 14px;text-align:right">
-              <div style="display:flex;gap:6px;justify-content:flex-end">
-                <button class="btn btn-ghost btn-sm" onclick="openSdrTopicoForm('${t.id}')">Editar</button>
-                <button class="btn btn-danger btn-sm" onclick="deleteSdrTopico('${t.id}','${t.label.replace(/'/g,"\\'")}')">
-                  <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-                </button>
-              </div>
-            </td>` : ''}
-          </tr>
-        `).join('')}
+        ${roots.map(t => rowHtml(t, false)).join('')}
       </tbody>
     </table>
   `;
@@ -5309,11 +5319,19 @@ async function renderSdrTopicosAdmin() {
 
 function openSdrTopicoForm(id) {
   const t = id ? sdrTopicos.find(x => x.id === id) : null;
+  const rootTopicos = sdrTopicos.filter(x => !x.parent_id && x.id !== id);
   document.getElementById('formTitle').textContent = t ? 'Editar Tópico SDR' : 'Novo Tópico SDR';
   document.getElementById('formBody').innerHTML = `
     <div class="form-group">
       <label class="form-label">Nome do Tópico <span style="color:#e74c3c">*</span></label>
       <input class="form-input" id="sdrTopicoLabel" value="${t?.label||''}" placeholder="Ex: Scripts de Abordagem">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tópico pai <span style="font-size:11px;font-weight:400;color:var(--muted)">opcional — deixe em branco para tópico raiz</span></label>
+      <select class="form-input" id="sdrTopicoParent">
+        <option value="">— Nenhum (tópico raiz) —</option>
+        ${rootTopicos.map(x => `<option value="${x.id}" ${t?.parent_id === x.id ? 'selected' : ''}>${x.icone ? x.icone + ' ' : ''}${x.label}</option>`).join('')}
+      </select>
     </div>
     <div class="form-row">
       <div class="form-group" style="flex:1">
@@ -5337,10 +5355,11 @@ async function saveSdrTopico(id) {
   const label = document.getElementById('sdrTopicoLabel')?.value.trim();
   const icone = document.getElementById('sdrTopicoIcone')?.value.trim();
   const ordem = parseInt(document.getElementById('sdrTopicoOrdem')?.value) || 0;
+  const parent_id = document.getElementById('sdrTopicoParent')?.value || null;
   if (!label) { toast('Nome do tópico é obrigatório.'); return; }
   const res = id
-    ? await API.put('/sdr/topicos/' + id, { label, icone, ordem })
-    : await API.post('/sdr/topicos', { label, icone, ordem });
+    ? await API.put('/sdr/topicos/' + id, { label, icone, ordem, parent_id })
+    : await API.post('/sdr/topicos', { label, icone, ordem, parent_id });
   if (res.erro) { toast('Erro: ' + res.erro); return; }
   logHistorico(id ? 'atualizado' : 'criado', 'sdr_topico', res.id || id, `Tópico SDR ${id?'atualizado':'criado'}: ${label}`);
   closeModal('formModal');
@@ -5511,4 +5530,5 @@ async function sdrDeleteAnexo(id, conteudoId) {
 </script>
 </body>
 </html>
+
 
