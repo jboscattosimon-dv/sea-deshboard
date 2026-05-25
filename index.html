@@ -5284,7 +5284,6 @@ async function renderSdrTopicosAdmin() {
   const childrenOf = (pid) => sdrTopicos.filter(t => t.parent_id === pid);
   const rowHtml = (t, isChild) => `
     <tr style="border-bottom:1px solid var(--border);${isChild ? 'background:var(--surface)' : ''}">
-      <td style="padding:12px 14px;color:var(--muted);font-size:12px">${t.ordem}</td>
       <td style="padding:12px 14px;font-size:18px">${t.icone || '—'}</td>
       <td style="padding:12px ${isChild ? '14px 12px 32px' : '14px'};font-weight:${isChild ? '400' : '600'}">
         ${isChild ? '<span style="color:var(--muted);margin-right:6px">↳</span>' : ''}${t.label}
@@ -5304,7 +5303,6 @@ async function renderSdrTopicosAdmin() {
     <table style="width:100%;border-collapse:collapse;font-size:13px">
       <thead>
         <tr style="border-bottom:2px solid var(--border)">
-          <th style="text-align:left;padding:10px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);width:50px">Ordem</th>
           <th style="text-align:left;padding:10px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);width:60px">Ícone</th>
           <th style="text-align:left;padding:10px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted)">Tópico</th>
           ${canEd ? `<th style="padding:10px 14px;width:120px"></th>` : ''}
