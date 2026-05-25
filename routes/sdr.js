@@ -26,11 +26,11 @@ router.get('/topicos', async (req, res) => {
 
 router.post('/topicos', async (req, res) => {
   if (!checkSdrEdit(req)) return res.status(403).json({ erro: 'Sem permissão para editar' });
-  const { label, icone, ordem } = req.body;
+  const { label, icone, ordem, parent_id } = req.body;
   if (!label) return res.status(400).json({ erro: 'label é obrigatório' });
   const { data, error } = await supabase
     .from('sdr_topicos')
-    .insert([{ label, icone: icone || '', ordem: ordem || 0 }])
+    .insert([{ label, icone: icone || '', ordem: ordem || 0, parent_id: parent_id || null }])
     .select()
     .single();
   if (error) return res.status(400).json({ erro: error.message });
@@ -39,11 +39,12 @@ router.post('/topicos', async (req, res) => {
 
 router.put('/topicos/:id', async (req, res) => {
   if (!checkSdrEdit(req)) return res.status(403).json({ erro: 'Sem permissão para editar' });
-  const { label, icone, ordem } = req.body;
+  const { label, icone, ordem, parent_id } = req.body;
   const updates = {};
   if (label !== undefined) updates.label = label;
   if (icone !== undefined) updates.icone = icone || '';
   if (ordem !== undefined) updates.ordem = parseInt(ordem) || 0;
+  if (parent_id !== undefined) updates.parent_id = parent_id || null;
   const { data, error } = await supabase
     .from('sdr_topicos').update(updates).eq('id', req.params.id).select().single();
   if (error) return res.status(400).json({ erro: error.message });
@@ -164,3 +165,4 @@ router.delete('/anexos/:id', async (req, res) => {
 });
 
 module.exports = router;
+
