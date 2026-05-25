@@ -5333,15 +5333,9 @@ function openSdrTopicoForm(id) {
         ${rootTopicos.map(x => `<option value="${x.id}" ${t?.parent_id === x.id ? 'selected' : ''}>${x.icone ? x.icone + ' ' : ''}${x.label}</option>`).join('')}
       </select>
     </div>
-    <div class="form-row">
-      <div class="form-group" style="flex:1">
-        <label class="form-label">Ícone (emoji) <span style="font-size:11px;font-weight:400;color:var(--muted)">opcional</span></label>
-        <input class="form-input" id="sdrTopicoIcone" value="${t?.icone||''}" placeholder="Ex: 💬" maxlength="10">
-      </div>
-      <div class="form-group" style="flex:1">
-        <label class="form-label">Ordem</label>
-        <input class="form-input" type="number" id="sdrTopicoOrdem" value="${t?.ordem ?? sdrTopicos.length + 1}" min="1">
-      </div>
+    <div class="form-group">
+      <label class="form-label">Ícone (emoji) <span style="font-size:11px;font-weight:400;color:var(--muted)">opcional</span></label>
+      <input class="form-input" id="sdrTopicoIcone" value="${t?.icone||''}" placeholder="Ex: 💬" maxlength="10">
     </div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
@@ -5354,12 +5348,11 @@ function openSdrTopicoForm(id) {
 async function saveSdrTopico(id) {
   const label = document.getElementById('sdrTopicoLabel')?.value.trim();
   const icone = document.getElementById('sdrTopicoIcone')?.value.trim();
-  const ordem = parseInt(document.getElementById('sdrTopicoOrdem')?.value) || 0;
   const parent_id = document.getElementById('sdrTopicoParent')?.value || null;
   if (!label) { toast('Nome do tópico é obrigatório.'); return; }
   const res = id
-    ? await API.put('/sdr/topicos/' + id, { label, icone, ordem, parent_id })
-    : await API.post('/sdr/topicos', { label, icone, ordem, parent_id });
+    ? await API.put('/sdr/topicos/' + id, { label, icone, parent_id })
+    : await API.post('/sdr/topicos', { label, icone, parent_id });
   if (res.erro) { toast('Erro: ' + res.erro); return; }
   logHistorico(id ? 'atualizado' : 'criado', 'sdr_topico', res.id || id, `Tópico SDR ${id?'atualizado':'criado'}: ${label}`);
   closeModal('formModal');
