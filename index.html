@@ -1,4 +1,4 @@
-﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1846,8 +1846,6 @@ function seed() {
 // ═══════════════════════════════════════
 let statuses = [], clients = [], demands = [], formats = [];
 let dashFilter = 'all';
-let alertDays = parseInt(localStorage.getItem('sea_alertDays') || '2');
-let dashAlertsOpen = true;
 let currentUser = null;
 
 async function loadFromAPI() {
@@ -5954,6 +5952,8 @@ function openDemandFormDate(date) {
 </script>
 </body>
 </html>
+
+
 
 
 
