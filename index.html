@@ -1059,9 +1059,10 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
 
 <!-- LOGIN SCREEN -->
 <div id="loginScreen" style="
-  position:fixed;inset:0;background:#F7F5F0;z-index:9999;
+  position:fixed;inset:0;z-index:9999;
   display:flex;align-items:center;justify-content:center;
   font-family:'Instrument Sans',sans-serif;
+  background:var(--bg);
 ">
   <div style="width:100%;max-width:380px;padding:24px;display:flex;flex-direction:column;align-items:center">
     <img src="/logo.png" alt="SEA Agência de Marketing" style="width:220px;display:block;margin-bottom:36px">
@@ -1070,17 +1071,17 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     <div style="margin-bottom:14px">
       <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px">E-mail</label>
       <input id="loginEmail" type="email" placeholder="seu@email.com" style="
-        width:100%;padding:10px 14px;border:1.5px solid #E8E4DC;border-radius:9px;
+        width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;
         font-family:'Instrument Sans',sans-serif;font-size:14px;outline:none;
-        background:#fff;
+        background:var(--surface);color:var(--text);
       ">
     </div>
     <div style="margin-bottom:24px">
       <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px">Senha</label>
       <input id="loginSenha" type="password" placeholder="••••••••" style="
-        width:100%;padding:10px 14px;border:1.5px solid #E8E4DC;border-radius:9px;
+        width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;
         font-family:'Instrument Sans',sans-serif;font-size:14px;outline:none;
-        background:#fff;
+        background:var(--surface);color:var(--text);
       " onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <button onclick="doLogin()" style="
