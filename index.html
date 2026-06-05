@@ -1,4 +1,4 @@
-﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -2194,7 +2194,7 @@ function renderDashboard() {
             <span style="color:${d.postado?'var(--muted)':st.color}">${st.name}</span>
           </div>
         </div>
-        ${isToday && canPostToday ? `<button onclick="event.stopPropagation();togglePostado('${d.id}',${!d.postado})"
+        ${canPostToday ? `<button onclick="event.stopPropagation();togglePostado('${d.id}',${!d.postado})"
           style="flex-shrink:0;width:22px;height:22px;border-radius:50%;border:2px solid ${d.postado?'#27AE60':'#ccc'};background:${d.postado?'#27AE60':'transparent'};cursor:pointer;display:flex;align-items:center;justify-content:center;margin-left:6px;transition:all 0.2s">
           ${d.postado?`<svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>`:''}
         </button>` : ''}
@@ -2503,10 +2503,10 @@ function renderDemandsTable(filtered) {
       </td>
       <td style="color:var(--muted);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.obs||'—'}</td>
       <td onclick="event.stopPropagation()"><div class="row-actions">
-        ${isToday ? `<button class="btn btn-sm" style="padding:4px 10px;border-radius:100px;border:1px solid ${d.postado?'#27AE60':'var(--border)'};background:${d.postado?'#27AE6015':'var(--surface)'};color:${d.postado?'#27AE60':'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap"
+        `<button class="btn btn-sm" style="padding:4px 10px;border-radius:100px;border:1px solid ${d.postado?'#27AE60':'var(--border)'};background:${d.postado?'#27AE6015':'var(--surface)'};color:${d.postado?'#27AE60':'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap"
           onclick="togglePostado('${d.id}', ${!d.postado})">
           ${d.postado ? '✓ Postado' : 'Marcar postado'}
-        </button>` : ''}
+        </button>`
         ${editDemands ? `<button class="btn btn-danger btn-sm" onclick="deleteDemand('${d.id}')">Excluir</button>` : ''}
       </div></td>
     </tr>`;
@@ -2569,9 +2569,9 @@ function renderDemandsCards(filtered) {
               </div>
               ${d.obs ? `<div style="font-size:11px;color:var(--muted);margin-top:4px">${d.obs}</div>` : ''}
             </div>
-            ${isToday ? `<button onclick="togglePostado('${d.id}', ${!d.postado})" style="flex-shrink:0;width:28px;height:28px;border-radius:50%;border:2px solid ${d.postado?'#27AE60':'var(--border)'};background:${d.postado?'#27AE60':'transparent'};cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s" title="${d.postado?'Desmarcar':'Marcar como postado'}">
+            `<button onclick="togglePostado('${d.id}', ${!d.postado})" style="flex-shrink:0;width:28px;height:28px;border-radius:50%;border:2px solid ${d.postado?'#27AE60':'var(--border)'};background:${d.postado?'#27AE60':'transparent'};cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s" title="${d.postado?'Desmarcar':'Marcar como postado'}">
               ${d.postado ? `<svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>` : ''}
-            </button>` : ''}
+            </button>`
           </div>
         </div>`;
       }).join('');
@@ -3123,16 +3123,18 @@ async function savePermissoes(userId) {
 function canView(page) {
   const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
   if (!u) return false;
+  if (u.papel === 'admin') return true;
   const p = (u.permissoes || {})[page];
-  if (!p) return true; // sem registro = acesso total (compatibilidade)
+  if (!p) return true;
   return p.visualizar !== false;
 }
 
 function canEdit(page) {
   const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
   if (!u) return false;
+  if (u.papel === 'admin') return true;
   const p = (u.permissoes || {})[page];
-  if (!p) return true; // sem registro = acesso total (compatibilidade)
+  if (!p) return true;
   return p.editar !== false;
 }
 
@@ -5976,6 +5978,13 @@ function openDemandFormDate(date) {
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
 
 
 
