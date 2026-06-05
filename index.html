@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -2569,9 +2569,9 @@ function renderDemandsCards(filtered) {
               </div>
               ${d.obs ? `<div style="font-size:11px;color:var(--muted);margin-top:4px">${d.obs}</div>` : ''}
             </div>
-            `<button onclick="togglePostado('${d.id}', ${!d.postado})" style="flex-shrink:0;width:28px;height:28px;border-radius:50%;border:2px solid ${d.postado?'#27AE60':'var(--border)'};background:${d.postado?'#27AE60':'transparent'};cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s" title="${d.postado?'Desmarcar':'Marcar como postado'}">
+            ${`<button onclick="togglePostado('${d.id}', ${!d.postado})" style="flex-shrink:0;width:28px;height:28px;border-radius:50%;border:2px solid ${d.postado?'#27AE60':'var(--border)'};background:${d.postado?'#27AE60':'transparent'};cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s" title="${d.postado?'Desmarcar':'Marcar como postado'}">
               ${d.postado ? `<svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>` : ''}
-            </button>`
+            </button>`}
           </div>
         </div>`;
       }).join('');
@@ -5978,6 +5978,10 @@ function openDemandFormDate(date) {
 </script>
 </body>
 </html>
+
+
+
+
 
 
 
