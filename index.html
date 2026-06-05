@@ -1232,6 +1232,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
 
   <!-- ── DASHBOARD ── -->
   <div class="page active" id="page-dashboard">
+    <div id="dashAlerts"></div>
     <!-- date range + search: rendered once -->
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:20px">
       <div style="display:flex;flex-direction:column;gap:4px">
@@ -1769,6 +1770,7 @@ async function doLogin() {
     initDemandsFilters();
     buildHeaderActions('dashboard');
     renderDashboard();
+    showAlertToast();
   } catch(e) {
     errEl.textContent = 'Erro de conexão com o servidor'; errEl.style.display = 'block';
   }
@@ -1844,6 +1846,8 @@ function seed() {
 // ═══════════════════════════════════════
 let statuses = [], clients = [], demands = [], formats = [];
 let dashFilter = 'all';
+let alertDays = parseInt(localStorage.getItem('sea_alertDays') || '2');
+let dashAlertsOpen = true;
 let currentUser = null;
 
 async function loadFromAPI() {
@@ -2074,6 +2078,7 @@ function restoreCollapse(sectionId) {
 //  DASHBOARD
 // ═══════════════════════════════════════
 function renderDashboard() {
+  renderDashAlerts();
   const dateFrom = document.getElementById('dashDateFrom')?.value || '';
   const dateTo   = document.getElementById('dashDateTo')?.value   || '';
 
@@ -3370,11 +3375,11 @@ document.querySelectorAll('.modal-overlay').forEach(o => {
 // ═══════════════════════════════════════
 //  TOAST
 // ═══════════════════════════════════════
-function toast(msg) {
+function toast(msg, ms) {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2500);
+  setTimeout(() => el.classList.remove('show'), ms || 2500);
 }
 
 // ═══════════════════════════════════════
@@ -5109,6 +5114,7 @@ function updateDarkToggle() {
   initDemandsFilters();
   buildHeaderActions('dashboard');
   renderDashboard();
+  showAlertToast();
 })();
 
 // ═══════════════════════════════════════
@@ -5683,6 +5689,107 @@ async function sdrDeleteAnexo(id, conteudoId) {
 // ═══════════════════════════════════════
 //  CALENDÁRIO EDITORIAL
 // ═══════════════════════════════════════
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//  ALERTAS DE PRAZO
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+let alertDays = parseInt(localStorage.getItem('sea_alertDays') || '2');
+let dashAlertsOpen = true;
+
+function getAlertDemands() {
+  const today = new Date().toISOString().slice(0, 10);
+  const limit = new Date(); limit.setDate(limit.getDate() + alertDays);
+  const limitStr = limit.toISOString().slice(0, 10);
+  const result = [];
+  demands.forEach(d => {
+    if (d.postado || !d.date) return;
+    if (d.date < today)                          result.push({ d, urgency: 'overdue' });
+    else if (d.date === today)                   result.push({ d, urgency: 'today' });
+    else if (d.date > today && d.date <= limitStr) result.push({ d, urgency: 'upcoming' });
+  });
+  return result.sort((a, b) => a.d.date.localeCompare(b.d.date));
+}
+
+function renderDashAlerts() {
+  const el = document.getElementById('dashAlerts');
+  if (!el) return;
+  const alerts = getAlertDemands();
+  if (!alerts.length) { el.innerHTML = ''; return; }
+
+  const today   = new Date().toISOString().slice(0, 10);
+  const overdue = alerts.filter(a => a.urgency === 'overdue').length;
+  const todayC  = alerts.filter(a => a.urgency === 'today').length;
+  const badge   = overdue + todayC;
+
+  const urgencyColor = { overdue: '#ef4444', today: '#f97316', upcoming: '#f59e0b' };
+  const urgencyLabel = { overdue: 'Vencida', today: 'Hoje', upcoming: null };
+
+  const rows = alerts.map(({ d, urgency }) => {
+    const st    = getStatus(d.statusId);
+    const cl    = getClient(d.clientId);
+    const color = urgencyColor[urgency];
+    const diffDays = Math.ceil((new Date(d.date + 'T12:00:00') - new Date(today + 'T12:00:00')) / 86400000);
+    const label = urgencyLabel[urgency] || `${diffDays}d`;
+    return `<div onclick="openDetail('${d.id}')" style="display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:7px;background:var(--bg);border:1px solid ${color}33;cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='${color}12'" onmouseout="this.style.background='var(--bg)'">
+      <span style="flex-shrink:0;background:${color};color:#fff;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700;min-width:46px;text-align:center">${label}</span>
+      <span style="flex-shrink:0;font-size:11px;color:var(--muted);min-width:72px">${fmtDateFull(d.date)}</span>
+      <span style="flex:1;font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.desc || 'â€”'}</span>
+      <span style="flex-shrink:0;font-size:11px;font-weight:600;color:${st.color}">${st.name}</span>
+      <span style="flex-shrink:0;font-size:11px;color:var(--muted)">${cl.name}</span>
+    </div>`;
+  }).join('');
+
+  const dayOptions = [1,2,3,5,7].map(n =>
+    `<option value="${n}" ${alertDays == n ? 'selected' : ''}>${n} ${n === 1 ? 'dia' : 'dias'}</option>`
+  ).join('');
+
+  el.innerHTML = `
+    <div style="border:1px solid #f59e0b55;border-radius:10px;overflow:hidden;margin-bottom:16px">
+      <div onclick="toggleDashAlerts()" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;background:#fefce8;user-select:none">
+        <div style="display:flex;align-items:center;gap:8px">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#d97706" stroke-width="2.2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span style="font-size:13px;font-weight:700;color:#92400e">Alertas de prazo</span>
+          ${badge ? `<span style="background:#ef4444;color:#fff;border-radius:100px;padding:1px 8px;font-size:11px;font-weight:700">${badge}</span>` : ''}
+        </div>
+        <div style="display:flex;align-items:center;gap:10px" onclick="event.stopPropagation()">
+          <span style="font-size:11px;color:#92400e">Alertar com antecedÃªncia de</span>
+          <select onchange="setAlertDays(this.value)" style="border:1px solid #f59e0b77;border-radius:5px;padding:3px 6px;font-size:11px;background:#fff;color:#92400e;font-weight:600;cursor:pointer">
+            ${dayOptions}
+          </select>
+          <span onclick="event.stopPropagation();toggleDashAlerts()" style="font-size:14px;color:#92400e;cursor:pointer;transform:${dashAlertsOpen?'rotate(0)':'rotate(-90deg)'};display:inline-block;transition:transform 0.2s" id="dashAlertsArrow">â–¾</span>
+        </div>
+      </div>
+      <div id="dashAlertsBody" style="padding:10px 14px;display:${dashAlertsOpen?'flex':'none'};flex-direction:column;gap:6px">
+        ${rows}
+      </div>
+    </div>`;
+}
+
+function toggleDashAlerts() {
+  dashAlertsOpen = !dashAlertsOpen;
+  const body  = document.getElementById('dashAlertsBody');
+  const arrow = document.getElementById('dashAlertsArrow');
+  if (body)  body.style.display  = dashAlertsOpen ? 'flex' : 'none';
+  if (arrow) arrow.style.transform = dashAlertsOpen ? 'rotate(0deg)' : 'rotate(-90deg)';
+}
+
+function setAlertDays(val) {
+  alertDays = parseInt(val);
+  localStorage.setItem('sea_alertDays', alertDays);
+  renderDashAlerts();
+}
+
+function showAlertToast() {
+  const alerts  = getAlertDemands();
+  const overdue = alerts.filter(a => a.urgency === 'overdue').length;
+  const todayC  = alerts.filter(a => a.urgency === 'today').length;
+  if (!overdue && !todayC) return;
+  const parts = [];
+  if (overdue) parts.push(`${overdue} demanda${overdue > 1 ? 's' : ''} vencida${overdue > 1 ? 's' : ''}`);
+  if (todayC)  parts.push(`${todayC} vencem hoje`);
+  toast('âš ï¸ ' + parts.join(' Â· '), 5000);
+}
+
 let calYear       = new Date().getFullYear();
 let calMonth      = new Date().getMonth() + 1;
 let calDragItemId = null;
@@ -5847,3 +5954,7 @@ function openDemandFormDate(date) {
 </script>
 </body>
 </html>
+
+
+
+
