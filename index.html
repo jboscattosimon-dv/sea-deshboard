@@ -2504,10 +2504,10 @@ function renderDemandsTable(filtered) {
       </td>
       <td style="color:var(--muted);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.obs||'—'}</td>
       <td onclick="event.stopPropagation()"><div class="row-actions">
-        `<button class="btn btn-sm" style="padding:4px 10px;border-radius:100px;border:1px solid ${d.postado?'#27AE60':'var(--border)'};background:${d.postado?'#27AE6015':'var(--surface)'};color:${d.postado?'#27AE60':'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap"
+        ${`<button class="btn btn-sm" style="padding:4px 10px;border-radius:100px;border:1px solid ${d.postado?'#27AE60':'var(--border)'};background:${d.postado?'#27AE6015':'var(--surface)'};color:${d.postado?'#27AE60':'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap"
           onclick="togglePostado('${d.id}', ${!d.postado})">
           ${d.postado ? '✓ Postado' : 'Marcar postado'}
-        </button>`
+        </button>`}
         ${editDemands ? `<button class="btn btn-danger btn-sm" onclick="deleteDemand('${d.id}')">Excluir</button>` : ''}
       </div></td>
     </tr>`;
