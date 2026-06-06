@@ -5767,7 +5767,7 @@ function toggleAlertDropdown() {
   drop.style.top   = (rect.bottom + 6) + 'px';
   drop.style.right = (window.innerWidth - rect.right) + 'px';
 
-  const label = alertDaysConfig === 1 ? 'de ontem' : `dos Ãºltimos ${alertDaysConfig} dias`;
+  const label = alertDaysConfig === 1 ? 'de ontem' : `dos últimos ${alertDaysConfig} dias`;
 
   if (!alerts.length) {
     drop.innerHTML = `<div style="padding:14px 16px;font-size:13px;color:var(--muted);text-align:center">Nenhuma demanda atrasada ${label}.</div>`;
@@ -5782,8 +5782,8 @@ function toggleAlertDropdown() {
         return `<div onclick="openDetail('${d.id}');toggleAlertDropdown()" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
           <span style="width:8px;height:8px;border-radius:50%;background:${st.color};flex-shrink:0"></span>
           <div style="flex:1;min-width:0">
-            <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.desc || 'â€”'}</div>
-            <div style="font-size:11px;color:var(--muted)">${cl.name} Â· ${fmtDateFull(d.date)}</div>
+            <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.desc || '—'}</div>
+            <div style="font-size:11px;color:var(--muted)">${cl.name} · ${fmtDateFull(d.date)}</div>
           </div>
         </div>`;
       }).join('')}`;
@@ -5801,7 +5801,7 @@ function _closeAlertDrop(e) {
 function showAlertToast() {
   const count = getOverdueDemands().length;
   if (!count) return;
-  toast(`âš ï¸ ${count} demanda${count > 1 ? 's' : ''} atrasada${count > 1 ? 's' : ''}`, 4000);
+  toast(`⚠️ ${count} demanda${count > 1 ? 's' : ''} atrasada${count > 1 ? 's' : ''}`, 4000);
 }
 
 function renderConfigSection() {
@@ -5855,7 +5855,7 @@ function renderCalGrid() {
   const grid  = document.getElementById('calGrid');
   if (!label || !grid) return;
 
-  const MESES = ['Janeiro','Fevereiro','MarÃ§o','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   label.textContent = `${MESES[calMonth - 1]} ${calYear}`;
 
   const fCliente = document.getElementById('calFilterCliente')?.value || '';
@@ -5882,7 +5882,7 @@ function renderCalGrid() {
   const totalDays  = new Date(calYear, calMonth, 0).getDate();
   const today      = new Date().toISOString().split('T')[0];
   const canEd      = canEdit('calendario');
-  const DAYS       = ['Dom','Seg','Ter','Qua','Qui','Sex','SÃ¡b'];
+  const DAYS       = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   const totalCells = Math.ceil((firstDow + totalDays) / 7) * 7;
 
   let html = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden">
@@ -5920,7 +5920,7 @@ function renderCalGrid() {
                 <span style="width:5px;height:5px;border-radius:50%;background:${st.color};flex-shrink:0"></span>
                 ${fmt ? `<span style="font-size:9px;font-weight:700;color:${st.color};text-transform:uppercase;letter-spacing:0.3px">${fmt.name}</span>` : ''}
               </div>
-              <div style="font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${(d.desc||'').replace(/"/g,'&quot;')}">${d.desc || 'â€”'}</div>
+              <div style="font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${(d.desc||'').replace(/"/g,'&quot;')}">${d.desc || '—'}</div>
               <div style="font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${cl.name}</div>
             </div>`;
           }).join('')}
