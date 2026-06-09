@@ -67,6 +67,16 @@ CREATE TABLE IF NOT EXISTS crm_leads (
 -- Remove CHECK constraint se existir (para permitir etapas customizadas)
 ALTER TABLE crm_leads DROP CONSTRAINT IF EXISTS crm_leads_etapa_check;
 
+-- Novos campos de lead (migração)
+ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS instagram VARCHAR(100);
+ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS area_atuacao VARCHAR(100);
+ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS cidade VARCHAR(100);
+ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS informacoes TEXT;
+ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS motivo_etapa TEXT;
+
+-- Campo pedir_motivo nas etapas
+ALTER TABLE crm_etapas ADD COLUMN IF NOT EXISTS pedir_motivo BOOLEAN DEFAULT false;
+
 -- Tabela de atividades (follow-up)
 CREATE TABLE IF NOT EXISTS crm_atividades (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -81,6 +91,76 @@ CREATE TABLE IF NOT EXISTS crm_atividades (
 
 -- Adiciona responsavel_id se a tabela já existia sem ela
 ALTER TABLE crm_atividades ADD COLUMN IF NOT EXISTS responsavel_id UUID REFERENCES usuarios(id);
+
+-- Responsável pelo lead
+ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS responsavel_id UUID REFERENCES usuarios(id);
+
+-- ── SDR ───────────────────────────────────────────────────────────────
+
+-- Tópicos SDR (gerenciáveis pelo admin)
+CREATE TABLE IF NOT EXISTS sdr_topicos (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  label VARCHAR(200) NOT NULL,
+  icone VARCHAR(20) DEFAULT '',
+  ordem INT DEFAULT 0,
+  criado_em TIMESTAMPTZ DEFAULT NOW()
+);
+
+INSERT INTO sdr_topicos (label, icone, ordem) VALUES
+  ('Scripts de Abordagem',       '💬', 1),
+  ('Script de Follow Up',        '🔄', 2),
+  ('Script de Agendamento',      '📅', 3),
+  ('Quebra de Objeções',         '🛡️', 4),
+  ('Regras de Atendimento',      '📋', 5),
+  ('Rotina Diária',              '⏰', 6),
+  ('Metas',                      '🎯', 7),
+  ('Como Atualizar CRM',         '🔧', 8),
+  ('Como Qualificar Lead',       '✅', 9),
+  ('Tom de Comunicação da SEA',  '🎙️', 10),
+  ('Comissões',                  '💰', 11),
+  ('Público-alvo',               '🎯', 12),
+  ('Melhores Regiões/Cidades',   '📍', 13),
+  ('Reuniões',                   '🤝', 14),
+  ('Dúvidas/Suporte',            '❓', 15)
+;
+
+-- Migração: se sdr_conteudos já existia com topico_id INT, converter para UUID
+DO $$ BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'sdr_conteudos' AND column_name = 'topico_id'
+    AND data_type = 'integer'
+  ) THEN
+    ALTER TABLE sdr_conteudos DROP COLUMN topico_id;
+    ALTER TABLE sdr_conteudos
+      ADD COLUMN topico_id UUID REFERENCES sdr_topicos(id) ON DELETE CASCADE;
+  END IF;
+END $$;
+
+-- Conteúdos de cada tópico SDR
+CREATE TABLE IF NOT EXISTS sdr_conteudos (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  topico_id UUID REFERENCES sdr_topicos(id) ON DELETE CASCADE,
+  titulo VARCHAR(200) NOT NULL,
+  conteudo TEXT,
+  ordem INT DEFAULT 0,
+  criado_por UUID REFERENCES usuarios(id),
+  criado_em TIMESTAMPTZ DEFAULT NOW(),
+  atualizado_em TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Anexos dos conteúdos SDR (armazenados no Supabase Storage)
+CREATE TABLE IF NOT EXISTS sdr_anexos (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  conteudo_id UUID NOT NULL REFERENCES sdr_conteudos(id) ON DELETE CASCADE,
+  nome VARCHAR(300) NOT NULL,
+  url TEXT NOT NULL,
+  storage_path TEXT NOT NULL,
+  tipo VARCHAR(100),
+  tamanho INT,
+  criado_por UUID REFERENCES usuarios(id),
+  criado_em TIMESTAMPTZ DEFAULT NOW()
+);
 
 -- ─────────────────────────────────────────────────────────────────────
 

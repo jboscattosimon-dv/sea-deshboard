@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -17,12 +17,33 @@
   --text: #081542;
   --muted: #8C8878;
   --accent: #18170F;
+  --primary: #18170F;
+  --sidebar-bg: #081542;
   --sidebar-w: 240px;
   --header-h: 58px;
   --r: 14px;
   --r-sm: 9px;
   --shadow: 0 2px 12px rgba(0,0,0,0.07);
 }
+
+body.dark {
+  --bg: #111214;
+  --surface: #1c1d1f;
+  --surface2: #252628;
+  --border: #2e3035;
+  --text: #e4e2dd;
+  --muted: #6e6c68;
+  --accent: #e4e2dd;
+  --primary: #c8b98a;
+  --sidebar-bg: #16171a;
+  --shadow: 0 2px 12px rgba(0,0,0,0.45);
+}
+body.dark .btn-primary {
+  background: linear-gradient(135deg, #3a3830 0%, #2a2820 100%);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+body.dark .sidebar-logo span { opacity: 0.3; }
+body.dark table thead th { background: linear-gradient(to bottom, var(--surface2), var(--surface)); }
 
 body {
   font-family: 'Instrument Sans', sans-serif;
@@ -38,7 +59,7 @@ body {
   top: 0; left: 0;
   width: var(--sidebar-w);
   height: 100vh;
-  background: var(--text);
+  background: var(--sidebar-bg);
   color: #fff;
   display: flex;
   flex-direction: column;
@@ -187,7 +208,7 @@ header {
 .btn-danger:hover { background: #FDD; border-color: #E74C3C; transform: translateY(-1px); }
 
 /* ─── MAIN ─── */
-main { padding: 28px 24px 60px; max-width: 1200px; margin: 0 auto; }
+main { padding: 28px 24px 40px; max-width: 1200px; margin: 0 auto; min-height: calc(100vh - var(--header-h) - 38px); }
 
 /* ─── PAGE SYSTEM ─── */
 .page { display: none; }
@@ -840,27 +861,38 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
   background: #fff;
   border: 1px solid var(--border);
   border-radius: var(--r-sm);
-  padding: 12px;
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: all 0.18s cubic-bezier(.22,1,.36,1);
+  padding: 22px 20px;
+  margin-bottom: 12px;
+  cursor: grab;
+  transition: box-shadow 0.18s, border-color 0.18s;
   position: relative;
+  user-select: none;
 }
 .funil-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.10);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.09);
   border-color: #95875f;
 }
+.funil-card.fd-placeholder {
+  opacity: 0.22;
+  pointer-events: none;
+}
+.funil-col {
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.funil-col.drag-over {
+  box-shadow: 0 0 0 2px var(--text);
+  background: rgba(8,21,66,0.04);
+}
 .funil-card-name {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 .funil-card-phone {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
-  margin-bottom: 6px;
+  margin-bottom: 10px;
 }
 .funil-card-tags {
   display: flex;
@@ -868,9 +900,9 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
   gap: 4px;
 }
 .funil-tag {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
-  padding: 2px 7px;
+  padding: 4px 11px;
   border-radius: 100px;
   background: #f0ede5;
   color: #95875f;
@@ -975,7 +1007,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
 }
 .crm-funil-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #95875f, #d4c07a);
+  background: var(--text);
   border-radius: 99px;
   transition: width 0.6s cubic-bezier(.22,1,.36,1);
 }
@@ -986,6 +1018,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-sm);
+  cursor: pointer;
   padding: 12px 16px;
   display: flex;
   align-items: flex-start;
@@ -1026,9 +1059,10 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
 
 <!-- LOGIN SCREEN -->
 <div id="loginScreen" style="
-  position:fixed;inset:0;background:#F7F5F0;z-index:9999;
+  position:fixed;inset:0;z-index:9999;
   display:flex;align-items:center;justify-content:center;
   font-family:'Instrument Sans',sans-serif;
+  background:var(--bg);
 ">
   <div style="width:100%;max-width:380px;padding:24px;display:flex;flex-direction:column;align-items:center">
     <div style="width:100%">
@@ -1036,17 +1070,17 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     <div style="margin-bottom:14px">
       <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px">E-mail</label>
       <input id="loginEmail" type="email" placeholder="seu@email.com" style="
-        width:100%;padding:10px 14px;border:1.5px solid #E8E4DC;border-radius:9px;
+        width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;
         font-family:'Instrument Sans',sans-serif;font-size:14px;outline:none;
-        background:#fff;
+        background:var(--surface);color:var(--text);
       ">
     </div>
     <div style="margin-bottom:24px">
       <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px">Senha</label>
       <input id="loginSenha" type="password" placeholder="••••••••" style="
-        width:100%;padding:10px 14px;border:1.5px solid #E8E4DC;border-radius:9px;
+        width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;
         font-family:'Instrument Sans',sans-serif;font-size:14px;outline:none;
-        background:#fff;
+        background:var(--surface);color:var(--text);
       " onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <button onclick="doLogin()" style="
@@ -1071,6 +1105,10 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     <div class="nav-item active" data-page="dashboard" onclick="goTo('dashboard')">
       <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       Dashboard
+    </div>
+    <div class="nav-item" data-page="calendario" onclick="goTo('calendario')" id="navCalendario">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Calendário
     </div>
 
     <!-- Operações -->
@@ -1113,6 +1151,10 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
           Etapas do Funil
         </div>
+        <div class="nav-sub-item" data-page="sdr_topicos" onclick="goTo('sdr_topicos')" id="navSdrTopicos">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Tópicos SDR
+        </div>
       </div>
     </div>
 
@@ -1144,6 +1186,13 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
       </div>
     </div>
 
+    <!-- SDR -->
+    <div class="nav-item" data-page="sdr" onclick="goTo('sdr')" id="navSDR">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      SDR
+    </div>
+
+
     <!-- Auditoria -->
     <div class="sidebar-section">Auditoria</div>
     <div class="nav-item" data-page="history" onclick="goTo('history')" id="navHistory">
@@ -1174,6 +1223,12 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
   <img src="/logo.png" alt="SEA" class="header-logo">
   <div class="header-title" id="headerTitle">Dashboard</div>
   <div class="header-actions" id="headerActions"></div>
+  <button id="alertBtn" onclick="toggleAlertDropdown()" title="Demandas atrasadas" style="position:relative;width:36px;height:36px;border-radius:var(--r-sm);border:1px solid var(--border);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:all 0.15s;flex-shrink:0">
+  <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+  <span id="alertBadge" style="display:none;position:absolute;top:-3px;right:-3px;background:#ef4444;color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:9px;font-weight:700;line-height:16px;text-align:center;padding:0 3px"></span>
+</button>
+<div id="alertDropdown" style="display:none;position:fixed;top:0;right:0;min-width:300px;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.15);z-index:1000;overflow:hidden"></div>
+<button id="darkToggle" onclick="toggleDarkMode()" title="Alternar tema" style="width:36px;height:36px;border-radius:var(--r-sm);border:1px solid var(--border);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:all 0.15s;flex-shrink:0"></button>
 </header>
 
 <!-- MAIN -->
@@ -1197,7 +1252,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
       </div>
       <div style="display:flex;flex-direction:column;gap:4px">
         <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted)">&nbsp;</span>
-        <button id="dashTodayBtn" class="btn btn-ghost btn-sm" onclick="setDashFilter(dashFilter==='today'?'all':'today')" style="align-self:flex-end;border-color:var(--primary);color:var(--primary)">Hoje</button>
+        <button id="dashTodayBtn" class="btn btn-ghost btn-sm" onclick="setDashFilter(dashFilter==='today'?'all':'today')" style="align-self:flex-end">Hoje</button>
       </div>
       <div style="margin-left:auto;align-self:flex-end">
         <div class="search-wrap">
@@ -1208,12 +1263,11 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     </div>
     <button class="section-toggle-btn" id="dashStatToggleBtn" onclick="toggleCardSection('dashStatSection')">
       <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><path d="M1 3l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Cards de status
+      Filtros
     </button>
     <div class="collapsible-section" id="dashStatSection" style="max-height:200px">
-      <div class="stats-row" id="dashStats"></div>
+      <div class="filter-bar" id="dashFilters"></div>
     </div>
-    <div class="filter-bar" id="dashFilters"></div>
     <div class="clients-grid" id="dashGrid"></div>
   </div>
 
@@ -1305,6 +1359,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
           <option value="all">Todos</option>
           <option value="pendente">Pendente</option>
           <option value="concluida">Concluída</option>
+          <option value="aceita">Demanda aceita</option>
         </select>
       </div>
       <div class="filter-group">
@@ -1390,6 +1445,32 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
         <tbody id="usersTable"></tbody>
       </table>
     </div>
+    <!-- Configurações (admin only) -->
+    <div id="configSection" style="display:none;margin-top:28px">
+      <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden">
+        <div style="padding:14px 18px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          <span style="font-size:13px;font-weight:700;color:var(--text)">Configurações do sistema</span>
+        </div>
+        <div style="padding:18px">
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <div style="flex:1;min-width:280px">
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">Alertas de demandas atrasadas</div>
+              <div style="font-size:12px;color:var(--muted)">Exibir no botão de alerta demandas com prazo vencido nos últimos N dias</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <select id="configAlertDays" class="form-select" style="width:auto;min-width:130px" onchange="saveConfigAlertDays(this.value)">
+                <option value="1">1 dia (ontem)</option>
+                <option value="2">2 dias</option>
+                <option value="3">3 dias</option>
+                <option value="5">5 dias</option>
+                <option value="7">7 dias</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="page" id="page-history">
@@ -1451,7 +1532,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Ordem</th><th>Etapa</th><th>Cor</th><th></th></tr></thead>
+        <thead><tr><th>Ordem</th><th>Etapa</th><th>Cor</th><th style="text-align:center">Pedir Motivo</th><th></th></tr></thead>
         <tbody id="etapasTable"></tbody>
       </table>
     </div>
@@ -1553,8 +1634,65 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     </div>
   </div>
 
+  <!-- ── SDR: TÓPICOS (Cadastro) ── -->
+  <div class="page" id="page-sdr_topicos">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Tópicos SDR</div>
+        <div class="page-sub">Gerencie os tópicos da base de conhecimento SDR</div>
+      </div>
+    </div>
+    <div id="sdrTopicosAdminList"></div>
+  </div>
+
+  <!-- ── SDR ── -->
+  <div class="page" id="page-sdr">
+    <div class="page-header">
+      <div>
+        <div class="page-title">SDR</div>
+        <div class="page-sub">Base de conhecimento e materiais de apoio</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:0;height:calc(100vh - 170px);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+      <div id="sdrTopicos" style="width:250px;flex-shrink:0;border-right:1px solid var(--border);overflow-y:auto;background:var(--surface)"></div>
+      <div id="sdrConteudo" style="flex:1;overflow-y:auto;padding:28px;background:var(--bg)"></div>
+    </div>
+  </div>
+
+  <!-- ── CALENDÁRIO EDITORIAL ── -->
+  <div class="page" id="page-calendario">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Calendário Editorial</div>
+        <div class="page-sub">Planejamento visual de conteúdo por data e canal</div>
+      </div>
+    </div>
+    <!-- Barra de controles -->
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:0 0 18px 0">
+      <div style="display:flex;align-items:center;gap:8px">
+        <button onclick="calPrevMonth()" style="width:30px;height:30px;border:1px solid var(--border);background:var(--surface);border-radius:6px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;color:var(--text)" title="Mês anterior">‹</button>
+        <span id="calMonthLabel" style="font-size:15px;font-weight:700;min-width:140px;text-align:center"></span>
+        <button onclick="calNextMonth()" style="width:30px;height:30px;border:1px solid var(--border);background:var(--surface);border-radius:6px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;color:var(--text)" title="Próximo mês">›</button>
+      </div>
+      <select id="calFilterCliente" class="form-select" style="width:auto;min-width:160px;font-size:12px;padding:6px 10px" onchange="renderCalGrid()">
+        <option value="">Todos os clientes</option>
+      </select>
+      <select id="calFilterFormato" class="form-select" style="width:auto;min-width:140px;font-size:12px;padding:6px 10px" onchange="renderCalGrid()">
+        <option value="">Todos os formatos</option>
+      </select>
+      <select id="calFilterStatus" class="form-select" style="width:auto;min-width:140px;font-size:12px;padding:6px 10px" onchange="renderCalGrid()">
+        <option value="">Todos os status</option>
+      </select>
+    </div>
+    <!-- Grid do calendário -->
+    <div id="calGrid" style="overflow-y:auto;flex:1"></div>
+  </div>
 
 </main>
+
+<footer style="text-align:center;padding:10px 24px;font-size:11px;color:var(--muted);border-top:1px solid var(--border);background:var(--bg);letter-spacing:0.02em">
+  Desenvolvido por <strong style="color:var(--text);font-weight:600">João Guilherme Boscatto Simon</strong>
+</footer>
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
@@ -1591,7 +1729,7 @@ const LOGO_B64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAlgAAAFwCAYAAABk
 // ═══════════════════════════════════════
 //  API CLIENT
 // ═══════════════════════════════════════
-const API_URL = 'https://sea-deshboard-production.up.railway.app/api';
+const API_URL = '/api';
 
 const API = {
   token() { return localStorage.getItem('sea_token'); },
@@ -1661,6 +1799,8 @@ async function doLogin() {
     initDemandsFilters();
     buildHeaderActions('dashboard');
     renderDashboard();
+    showAlertToast();
+    updateAlertBadge();
   } catch(e) {
     errEl.textContent = 'Erro de conexão com o servidor'; errEl.style.display = 'block';
   }
@@ -1829,7 +1969,7 @@ function goTo(page) {
     const g = document.getElementById('navGroupCRM');
     if (g) g.classList.add('open');
   }
-  if (cadastroPages.includes(page) || page === 'crm_etapas') {
+  if (cadastroPages.includes(page) || page === 'crm_etapas' || page === 'sdr_topicos') {
     const g = document.getElementById('navGroupCadastro');
     if (g) g.classList.add('open');
   }
@@ -1837,7 +1977,7 @@ function goTo(page) {
     dashboard:'Dashboard', demands:'Demandas', internal:'Demandas Internas',
     clients:'Clientes', statuses:'Status', formats:'Formatos', users:'Usuários', history:'Histórico',
     crm_leads:'Leads', crm_funil:'Funil de Vendas', crm_atividades:'Atividades', crm_relatorios:'Relatórios CRM',
-    crm_etapas:'Etapas do Funil'
+    crm_etapas:'Etapas do Funil', sdr:'SDR', sdr_topicos:'Tópicos SDR', calendario:'Calendário Editorial'
   };
   document.getElementById('headerTitle').textContent = titles[page] || page;
   buildHeaderActions(page);
@@ -1857,6 +1997,9 @@ function goTo(page) {
   if (page === 'crm_atividades') renderAtividades();
   if (page === 'crm_relatorios') renderCrmRelatorios();
   if (page === 'crm_etapas')     renderEtapas();
+  if (page === 'sdr')            renderSDR();
+  if (page === 'sdr_topicos')    renderSdrTopicosAdmin();
+  if (page === 'calendario')     renderCalendario();
 }
 
 function buildHeaderActions(page) {
@@ -1873,6 +2016,8 @@ function buildHeaderActions(page) {
     crm_leads:      canEdit('crm_leads')       ? btnNew('Novo lead',        'openLeadForm')      : '',
     crm_atividades: canEdit('crm_atividades')  ? btnNew('Nova atividade',   'openAtividadeForm') : '',
     crm_etapas:     canEdit('crm_etapas')      ? btnNew('Nova etapa',       'openEtapaForm')     : '',
+    sdr_topicos:    canEdit('sdr_topicos')     ? btnNew('Novo tópico',      'openSdrTopicoForm') : '',
+    calendario:     canEdit('calendario')      ? btnNew('Nova demanda',      'openDemandForm')       : '',
     dashboard: `<button class="btn btn-ghost btn-sm" onclick="openExportModal()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M12 4v12m0 0l-4-4m4 4l4-4"/><path d="M4 20h16"/></svg> Exportar PDF</button>
                 ${canEdit('demands') ? btnNew('Nova demanda', 'openDemandForm') : ''}`,
   };
@@ -1976,18 +2121,6 @@ function renderDashboard() {
   statuses.forEach(s => cnt[s.id] = 0);
   filtered.forEach(d => { if (cnt[d.statusId] !== undefined) cnt[d.statusId]++; });
 
-  let statsHtml = `<div class="stat-card"><div class="num">${filtered.length}</div><div class="lbl">Total no período</div></div>`;
-  statuses.forEach(s => {
-    statsHtml += `<div class="stat-card" style="border-left:3px solid ${s.color}">
-      <div class="num" style="color:${s.color}">${cnt[s.id]||0}</div>
-      <div class="lbl">${s.name}</div>
-    </div>`;
-  });
-  document.getElementById('dashStats').innerHTML = statsHtml;
-  const statSec = document.getElementById('dashStatSection');
-  if (statSec && !statSec.classList.contains('collapsed')) statSec.style.maxHeight = statSec.scrollHeight + 'px';
-  restoreCollapse('dashStatSection');
-
   const today = new Date().toISOString().slice(0, 10);
   const todayCount  = filtered.filter(d => d.date === today).length;
   const postadoCount = filtered.filter(d => d.postado).length;
@@ -2004,11 +2137,16 @@ function renderDashboard() {
   });
   document.getElementById('dashFilters').innerHTML = pillsHtml;
 
+  const statSec = document.getElementById('dashStatSection');
+  if (statSec && !statSec.classList.contains('collapsed')) statSec.style.maxHeight = statSec.scrollHeight + 'px';
+  restoreCollapse('dashStatSection');
+
   // update Hoje button active state
   const todayBtn = document.getElementById('dashTodayBtn');
   if (todayBtn) {
-    todayBtn.style.background = dashFilter === 'today' ? 'var(--primary)' : '';
-    todayBtn.style.color = dashFilter === 'today' ? '#fff' : 'var(--primary)';
+    todayBtn.style.background   = dashFilter === 'today' ? 'var(--primary)' : '';
+    todayBtn.style.color        = dashFilter === 'today' ? '#fff' : '';
+    todayBtn.style.borderColor  = dashFilter === 'today' ? 'var(--primary)' : '';
     todayBtn.textContent = `Hoje ${todayCount}`;
   }
 
@@ -2056,7 +2194,7 @@ function renderDashboard() {
             <span style="color:${d.postado?'var(--muted)':st.color}">${st.name}</span>
           </div>
         </div>
-        ${isToday && canPostToday ? `<button onclick="event.stopPropagation();togglePostado('${d.id}',${!d.postado})"
+        ${canPostToday ? `<button onclick="event.stopPropagation();togglePostado('${d.id}',${!d.postado})"
           style="flex-shrink:0;width:22px;height:22px;border-radius:50%;border:2px solid ${d.postado?'#27AE60':'#ccc'};background:${d.postado?'#27AE60':'transparent'};cursor:pointer;display:flex;align-items:center;justify-content:center;margin-left:6px;transition:all 0.2s">
           ${d.postado?`<svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>`:''}
         </button>` : ''}
@@ -2096,12 +2234,12 @@ function openDetail(id) {
   const ro = editMode ? '' : 'readonly disabled style="pointer-events:none;opacity:0.7"';
   const roSel = editMode ? '' : 'disabled style="pointer-events:none;opacity:0.7"';
   document.getElementById('detailBody').innerHTML = `
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:18px;padding-right:38px;flex-wrap:wrap">
       <div style="flex:1;min-width:0">
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:2px">${editMode ? 'Editando demanda' : 'Visualizando demanda'}</div>
         <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${cl.name} · ${fmtDateFull(d.date)}</div>
       </div>
-      <span id="detailBadge" class="badge" style="background:${st.color}22;color:${st.color}"><span class="dot" style="background:${st.color}"></span>${st.name}</span>
+      <span id="detailBadge" class="badge" style="background:${st.color}22;color:${st.color};flex-shrink:0;margin-top:2px"><span class="dot" style="background:${st.color}"></span>${st.name}</span>
     </div>
     <div class="form-row">
       <div class="form-group">
@@ -2365,10 +2503,10 @@ function renderDemandsTable(filtered) {
       </td>
       <td style="color:var(--muted);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.obs||'—'}</td>
       <td onclick="event.stopPropagation()"><div class="row-actions">
-        ${isToday ? `<button class="btn btn-sm" style="padding:4px 10px;border-radius:100px;border:1px solid ${d.postado?'#27AE60':'var(--border)'};background:${d.postado?'#27AE6015':'var(--surface)'};color:${d.postado?'#27AE60':'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap"
+        ${`<button class="btn btn-sm" style="padding:4px 10px;border-radius:100px;border:1px solid ${d.postado?'#27AE60':'var(--border)'};background:${d.postado?'#27AE6015':'var(--surface)'};color:${d.postado?'#27AE60':'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap"
           onclick="togglePostado('${d.id}', ${!d.postado})">
           ${d.postado ? '✓ Postado' : 'Marcar postado'}
-        </button>` : ''}
+        </button>`}
         ${editDemands ? `<button class="btn btn-danger btn-sm" onclick="deleteDemand('${d.id}')">Excluir</button>` : ''}
       </div></td>
     </tr>`;
@@ -2431,9 +2569,9 @@ function renderDemandsCards(filtered) {
               </div>
               ${d.obs ? `<div style="font-size:11px;color:var(--muted);margin-top:4px">${d.obs}</div>` : ''}
             </div>
-            ${isToday ? `<button onclick="togglePostado('${d.id}', ${!d.postado})" style="flex-shrink:0;width:28px;height:28px;border-radius:50%;border:2px solid ${d.postado?'#27AE60':'var(--border)'};background:${d.postado?'#27AE60':'transparent'};cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s" title="${d.postado?'Desmarcar':'Marcar como postado'}">
+            ${`<button onclick="togglePostado('${d.id}', ${!d.postado})" style="flex-shrink:0;width:28px;height:28px;border-radius:50%;border:2px solid ${d.postado?'#27AE60':'var(--border)'};background:${d.postado?'#27AE60':'transparent'};cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s" title="${d.postado?'Desmarcar':'Marcar como postado'}">
               ${d.postado ? `<svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>` : ''}
-            </button>` : ''}
+            </button>`}
           </div>
         </div>`;
       }).join('');
@@ -2882,7 +3020,8 @@ function openPermissoes(userId) {
         { key: 'statuses',   label: 'Status' },
         { key: 'formats',    label: 'Formatos' },
         { key: 'users',      label: 'Usuários' },
-        { key: 'crm_etapas', label: 'Etapas do Funil' },
+        { key: 'crm_etapas',  label: 'Etapas do Funil' },
+        { key: 'sdr_topicos', label: 'Tópicos SDR' },
       ]
     },
     {
@@ -2892,6 +3031,18 @@ function openPermissoes(userId) {
         { key: 'crm_funil',      label: 'Funil de Vendas' },
         { key: 'crm_atividades', label: 'Atividades' },
         { key: 'crm_relatorios', label: 'Relatórios' },
+      ]
+    },
+    {
+      label: 'SDR',
+      pages: [
+        { key: 'sdr', label: 'SDR' },
+      ]
+    },
+    {
+      label: 'Conteúdo',
+      pages: [
+        { key: 'calendario', label: 'Calendário Editorial' },
       ]
     },
   ];
@@ -2953,7 +3104,7 @@ function onPermEditarChange(page, el) {
 }
 
 async function savePermissoes(userId) {
-  const pages = ['dashboard','demands','internal','clients','statuses','formats','users','crm_leads','crm_funil','crm_atividades','crm_relatorios','crm_etapas'];
+  const pages = ['dashboard','demands','internal','clients','statuses','formats','users','crm_leads','crm_funil','crm_atividades','crm_relatorios','crm_etapas','sdr','sdr_topicos','calendario'];
   const permissoes = {};
   pages.forEach(page => {
     const visualizar = document.getElementById(`perm_${page}_visualizar`)?.checked ?? true;
@@ -2972,16 +3123,18 @@ async function savePermissoes(userId) {
 function canView(page) {
   const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
   if (!u) return false;
+  if (u.papel === 'admin') return true;
   const p = (u.permissoes || {})[page];
-  if (!p) return true; // sem registro = acesso total (compatibilidade)
+  if (!p) return true;
   return p.visualizar !== false;
 }
 
 function canEdit(page) {
   const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
   if (!u) return false;
+  if (u.papel === 'admin') return true;
   const p = (u.permissoes || {})[page];
-  if (!p) return true; // sem registro = acesso total (compatibilidade)
+  if (!p) return true;
   return p.editar !== false;
 }
 
@@ -2999,6 +3152,13 @@ function applyPermissions() {
     const subEl = document.querySelector(`.nav-sub-item[data-page="${page}"]`);
     if (subEl) subEl.style.display = canView(page) ? '' : 'none';
   });
+  // SDR page
+  const sdrNav = document.getElementById('navSDR');
+  if (sdrNav) sdrNav.style.display = canView('sdr') ? '' : 'none';
+  // Calendário Editorial
+  const calNav = document.getElementById('navCalendario');
+  if (calNav) calNav.style.display = canView('calendario') ? '' : 'none';
+
   // CRM pages
   const crmPages = ['crm_leads','crm_funil','crm_atividades','crm_relatorios'];
   const hasCrm = crmPages.some(p => canView(p));
@@ -3009,7 +3169,7 @@ function applyPermissions() {
     if (el) el.style.display = canView(page) ? '' : 'none';
   });
   // Cadastro sub-items (inclui crm_etapas)
-  const cadastroPages = ['clients','statuses','formats','users','crm_etapas'];
+  const cadastroPages = ['clients','statuses','formats','users','crm_etapas','sdr_topicos'];
   cadastroPages.forEach(page => {
     const el = document.querySelector(`.nav-sub-item[data-page="${page}"]`);
     if (el) el.style.display = canView(page) ? '' : 'none';
@@ -3017,6 +3177,9 @@ function applyPermissions() {
   const hasCadastro = cadastroPages.some(p => canView(p));
   const cadastroGroup = document.getElementById('navGroupCadastro');
   if (cadastroGroup) cadastroGroup.style.display = hasCadastro ? '' : 'none';
+  // Config section: admin only
+  const cfgSec = document.getElementById('configSection');
+  if (cfgSec) { cfgSec.style.display = (u.papel === 'admin') ? '' : 'none'; if (u.papel === 'admin') renderConfigSection(); }
 }
 
 // ═══════════════════════════════════════
@@ -3245,11 +3408,11 @@ document.querySelectorAll('.modal-overlay').forEach(o => {
 // ═══════════════════════════════════════
 //  TOAST
 // ═══════════════════════════════════════
-function toast(msg) {
+function toast(msg, ms) {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2500);
+  setTimeout(() => el.classList.remove('show'), ms || 2500);
 }
 
 // ═══════════════════════════════════════
@@ -3427,6 +3590,9 @@ td{padding:7px 10px;border-bottom:1px solid #e8e4dc;vertical-align:middle;color:
 // ═══════════════════════════════════════
 //  DEMANDAS INTERNAS
 // ═══════════════════════════════════════
+const DEV_EMAILS = ['admin@dev.com', 'admin2@dev.com'];
+const isRespUser = u => !DEV_EMAILS.includes(u.email);
+
 let internals = [];
 let internalUsuarios = [];
 
@@ -3443,7 +3609,7 @@ async function renderInternals() {
   }
 
   const curR = respSel.value, curC = clientSel.value;
-  respSel.innerHTML   = '<option value="all">Todos</option>' + internalUsuarios.map(u => `<option value="${u.id}">${u.nome}</option>`).join('');
+  respSel.innerHTML   = '<option value="all">Todos</option>' + internalUsuarios.filter(isRespUser).map(u => `<option value="${u.id}">${u.nome}</option>`).join('');
   clientSel.innerHTML = '<option value="all">Todos</option>' + clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
   if (curR) respSel.value   = curR;
   if (curC) clientSel.value = curC;
@@ -3472,9 +3638,9 @@ async function renderInternals() {
   document.getElementById('internalTable').innerHTML = filtered.length ? filtered.map(d => {
     const cl       = getClient(d.cliente_id);
     const vencida  = d.status === 'pendente' && d.prazo < today;
-    const statusBg = d.status === 'concluida' ? '#27AE6022' : vencida ? '#E74C3C22' : '#E6B80022';
-    const statusCl = d.status === 'concluida' ? '#27AE60'   : vencida ? '#E74C3C'   : '#B8860B';
-    const statusLb = d.status === 'concluida' ? 'Concluída' : vencida ? 'Vencida'   : 'Pendente';
+    const statusBg = d.status === 'concluida' ? '#27AE6022' : d.status === 'aceita' ? '#3498DB22' : '#E6B80022';
+    const statusCl = d.status === 'concluida' ? '#27AE60'   : d.status === 'aceita' ? '#3498DB'   : '#B8860B';
+    const statusLb = d.status === 'concluida' ? 'Concluída' : d.status === 'aceita' ? 'Demanda aceita' : 'Pendente';
     const anexoHtml = d.anexo_b64
       ? `<a href="${d.anexo_b64}" download="${d.anexo_nome||'anexo'}" style="font-size:11px;color:var(--primary);font-weight:600" title="${d.anexo_nome||''}">📎 ${d.anexo_nome||'Anexo'}</a>`
       : '—';
@@ -3484,15 +3650,16 @@ async function renderInternals() {
            style="border:1px solid ${statusCl}55;background:${statusBg};color:${statusCl};border-radius:100px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;outline:none">
            <option value="pendente" ${d.status==='pendente'?'selected':''}>Pendente</option>
            <option value="concluida" ${d.status==='concluida'?'selected':''}>Concluída</option>
+           <option value="aceita" ${d.status==='aceita'?'selected':''}>Demanda aceita</option>
          </select>`
       : `<span class="badge" style="background:${statusBg};color:${statusCl}">${statusLb}</span>`;
-    return `<tr style="${d.status==='concluida'?'opacity:0.6':''}">
+    return `<tr style="cursor:pointer;${d.status==='concluida'?'opacity:0.6':''}" onclick="openInternalDetail('${d.id}')">
       <td style="white-space:nowrap;${vencida&&d.status!=='concluida'?'color:#E74C3C;font-weight:600':''}">${fmtDateFull(d.prazo)}</td>
       <td><strong>${cl.name}</strong></td>
       <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${d.status==='concluida'?'text-decoration:line-through':''}">${d.descricao}</td>
       <td>${d.responsavel_nome||'—'}</td>
-      <td>${statusCell}</td>
-      <td>${anexoHtml}</td>
+      <td onclick="event.stopPropagation()">${statusCell}</td>
+      <td onclick="event.stopPropagation()">${anexoHtml}</td>
       <td onclick="event.stopPropagation()"><div class="row-actions">
         ${editI ? `<button class="btn btn-ghost btn-sm" onclick="openInternalForm('${d.id}')">Editar</button>
         <button class="btn btn-danger btn-sm" onclick="deleteInternal('${d.id}')">Excluir</button>` : ''}
@@ -3508,7 +3675,7 @@ async function openInternalForm(editId) {
   }
   const editing = editId ? internals.find(d => d.id === editId) : null;
   const clientOpts = clients.map(c => `<option value="${c.id}" ${editing?.cliente_id===c.id?'selected':''}>${c.name}</option>`).join('');
-  const respOpts   = internalUsuarios.map(u => `<option value="${u.id}" ${editing?.responsavel_id===u.id?'selected':''}>${u.nome}</option>`).join('');
+  const respOpts   = internalUsuarios.filter(isRespUser).map(u => `<option value="${u.id}" ${editing?.responsavel_id===u.id?'selected':''}>${u.nome}</option>`).join('');
   const today      = new Date().toISOString().slice(0,10);
   document.getElementById('formTitle').textContent = editing ? 'Editar Demanda Interna' : 'Nova Demanda Interna';
   document.getElementById('formBody').innerHTML = `
@@ -3536,14 +3703,17 @@ async function openInternalForm(editId) {
         <select class="form-select" id="intFStatus">
           <option value="pendente" ${(!editing||editing.status==='pendente')?'selected':''}>Pendente</option>
           <option value="concluida" ${editing?.status==='concluida'?'selected':''}>Concluída</option>
+          <option value="aceita" ${editing?.status==='aceita'?'selected':''}>Demanda aceita</option>
         </select>
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Anexo <span style="font-weight:400;color:var(--muted)">(imagem, PDF, doc — máx. 3MB)</span></label>
+      <label class="form-label">Anexo</label>
       ${editing?.anexo_b64 ? `<div style="margin-bottom:8px;font-size:12px">Atual: <a href="${editing.anexo_b64}" download="${editing.anexo_nome||'anexo'}" style="color:var(--primary);font-weight:600">${editing.anexo_nome||'Anexo'}</a></div>` : ''}
-      <input class="form-input" type="file" id="intFAnexo" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx"
-        onchange="const f=this.files[0];if(f&&f.size>3*1024*1024){toast('Arquivo muito grande. Máximo 3MB.');this.value=''}">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <label for="intFAnexo" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);padding:6px 12px;border:1px dashed var(--border);border-radius:6px;transition:all 0.15s" onmouseover="this.style.borderColor='var(--text)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>Escolher arquivo<input type="file" id="intFAnexo" style="display:none" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx" onchange="const f=this.files[0];if(!f)return;if(f.size>3*1024*1024){toast('&quot;'+f.name+'&quot; não pode ser enviado pois ultrapassa o limite máximo de 3 MB.');this.value='';return}document.getElementById('intFAnexoNome').textContent=f.name"></label>
+        <span id="intFAnexoNome" style="font-size:12px;color:var(--muted)"></span>
+      </div>
     </div>
     <div class="form-actions">
       ${editing ? `<button class="btn btn-danger btn-sm" onclick="deleteInternal('${editing.id}',true)">Excluir</button>` : ''}
@@ -3606,6 +3776,120 @@ async function deleteInternal(id, fromForm) {
   renderInternals();
 }
 
+async function openInternalDetail(id) {
+  const d = internals.find(x => x.id === id);
+  if (!d) return;
+  if (!internalUsuarios.length) {
+    const u = await API.get('/usuarios');
+    if (!u.erro) internalUsuarios = u;
+  }
+  const cl = getClient(d.cliente_id);
+  const editMode = canEdit('internal');
+  const ro    = editMode ? '' : 'readonly disabled style="pointer-events:none;opacity:0.7"';
+  const roSel = editMode ? '' : 'disabled style="pointer-events:none;opacity:0.7"';
+
+  const statusBg = d.status === 'concluida' ? '#27AE6022' : d.status === 'aceita' ? '#3498DB22' : '#E6B80022';
+  const statusCl = d.status === 'concluida' ? '#27AE60'   : d.status === 'aceita' ? '#3498DB'   : '#B8860B';
+  const statusLb = d.status === 'concluida' ? 'Concluída' : d.status === 'aceita' ? 'Demanda aceita' : 'Pendente';
+
+  const clientOpts = clients.map(c => `<option value="${c.id}" ${d.cliente_id===c.id?'selected':''}>${c.name}</option>`).join('');
+  const respOpts   = internalUsuarios.filter(isRespUser).map(u => `<option value="${u.id}" ${d.responsavel_id===u.id?'selected':''}>${u.nome}</option>`).join('');
+  const statusOpts = `
+    <option value="pendente"  ${d.status==='pendente' ?'selected':''}>Pendente</option>
+    <option value="concluida" ${d.status==='concluida'?'selected':''}>Concluída</option>
+    <option value="aceita"    ${d.status==='aceita'   ?'selected':''}>Demanda aceita</option>`;
+
+  document.getElementById('detailBody').innerHTML = `
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:18px;padding-right:38px;flex-wrap:wrap">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:2px">${editMode?'Editando demanda interna':'Visualizando demanda interna'}</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${cl.name} · ${fmtDateFull(d.prazo)}</div>
+      </div>
+      <span class="badge" style="background:${statusBg};color:${statusCl};flex-shrink:0;margin-top:2px">${statusLb}</span>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Prazo</label>
+        <input class="form-input" type="date" id="idPrazo" value="${d.prazo}" ${ro}>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cliente</label>
+        <select class="form-select" id="idClient" ${roSel}>${clientOpts}</select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Responsável</label>
+        <select class="form-select" id="idResp" ${roSel}><option value="">Selecione...</option>${respOpts}</select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-select" id="idStatus" ${roSel}>${statusOpts}</select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descrição</label>
+      <textarea class="form-textarea" id="idDesc" ${ro}>${d.descricao}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Anexo</label>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        ${d.anexo_b64
+          ? `<a href="${d.anexo_b64}" download="${d.anexo_nome||'anexo'}" style="font-size:12px;color:var(--primary);font-weight:600">📎 ${d.anexo_nome||'Anexo'}</a>`
+          : '<span style="color:var(--muted);font-size:12px">Nenhum anexo</span>'}
+        ${editMode ? `<label for="idAnexo" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);padding:6px 12px;border:1px dashed var(--border);border-radius:6px;transition:all 0.15s" onmouseover="this.style.borderColor='var(--text)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>Escolher arquivo<input type="file" id="idAnexo" style="display:none" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx" onchange="const f=this.files[0];if(!f)return;if(f.size>3*1024*1024){toast('&quot;'+f.name+'&quot; não pode ser enviado pois ultrapassa o limite máximo de 3 MB.');this.value='';return}document.getElementById('idAnexoNome').textContent=f.name"></label><span id="idAnexoNome" style="font-size:12px;color:var(--muted)"></span>` : ''}
+      </div>
+    </div>
+    <div class="form-actions">
+      ${editMode ? `<button class="btn btn-danger btn-sm" onclick="deleteInternalFromDetail('${d.id}')">Excluir</button>` : ''}
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn btn-ghost" onclick="closeModal('detailModal')">Fechar</button>
+        ${editMode ? `<button class="btn btn-primary" onclick="saveInternalDetail('${d.id}')">Salvar alterações</button>` : ''}
+      </div>
+    </div>
+  `;
+  openModal('detailModal');
+}
+
+async function saveInternalDetail(id) {
+  const respId   = document.getElementById('idResp').value;
+  const clientId = document.getElementById('idClient').value;
+  const desc     = document.getElementById('idDesc').value.trim();
+  const prazo    = document.getElementById('idPrazo').value;
+  const status   = document.getElementById('idStatus').value;
+  const fileEl   = document.getElementById('idAnexo');
+  if (!respId || !clientId || !desc || !prazo) { toast('Preencha todos os campos obrigatórios.'); return; }
+
+  const resp = internalUsuarios.find(u => u.id === respId);
+  const body = { responsavel_id: respId, responsavel_nome: resp?.nome||'', cliente_id: clientId, descricao: desc, prazo, status };
+
+  const file = fileEl?.files?.[0];
+  if (file) {
+    if (file.size > 3 * 1024 * 1024) { toast('Arquivo muito grande. Máximo 3MB.'); return; }
+    body.anexo_b64  = await new Promise(resolve => {
+      const r = new FileReader(); r.onload = e => resolve(e.target.result); r.readAsDataURL(file);
+    });
+    body.anexo_nome = file.name;
+  }
+
+  const res = await API.put('/demandas-internas/' + id, body);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  logHistorico('atualizado', 'demanda_interna', id, `Demanda interna atualizada: ${desc}`);
+  closeModal('detailModal');
+  toast('Demanda atualizada!');
+  renderInternals();
+}
+
+async function deleteInternalFromDetail(id) {
+  if (!confirm('Excluir esta demanda interna?')) return;
+  const res = await API.del('/demandas-internas/' + id);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  logHistorico('excluido', 'demanda_interna', id, `Demanda interna excluída`);
+  closeModal('detailModal');
+  toast('Demanda excluída.');
+  renderInternals();
+}
+
 // ═══════════════════════════════════════
 //  CRM
 // ═══════════════════════════════════════
@@ -3623,6 +3907,63 @@ const CRM_ORIGENS = {
   instagram: 'Instagram', google: 'Google', indicacao: 'Indicação',
   linkedin: 'LinkedIn', site: 'Site', outro: 'Outro',
 };
+
+const CIDADES_BR = [
+  // AC
+  'Rio Branco - AC','Cruzeiro do Sul - AC','Sena Madureira - AC','Tarauacá - AC',
+  // AL
+  'Maceió - AL','Arapiraca - AL','Palmeira dos Índios - AL','União dos Palmares - AL','Rio Largo - AL','Penedo - AL','Santana do Ipanema - AL',
+  // AM
+  'Manaus - AM','Parintins - AM','Itacoatiara - AM','Manacapuru - AM','Coari - AM','Tefé - AM','Tabatinga - AM',
+  // AP
+  'Macapá - AP','Santana - AP',
+  // BA
+  'Salvador - BA','Feira de Santana - BA','Vitória da Conquista - BA','Camaçari - BA','Itabuna - BA','Ilhéus - BA','Lauro de Freitas - BA','Barreiras - BA','Jequié - BA','Alagoinhas - BA','Cruz das Almas - BA','Amargosa - BA','Teixeira de Freitas - BA','Porto Seguro - BA','Paulo Afonso - BA','Senhor do Bonfim - BA','Juazeiro - BA','Valença - BA','Santo Antônio de Jesus - BA','Serrinha - BA',
+  // CE
+  'Fortaleza - CE','Caucaia - CE','Juazeiro do Norte - CE','Maracanaú - CE','Sobral - CE','Crato - CE','Itapipoca - CE','Maranguape - CE','Iguatu - CE','Quixadá - CE','Canindé - CE','Pacatuba - CE',
+  // DF
+  'Brasília - DF','Ceilândia - DF','Samambaia - DF','Taguatinga - DF','Gama - DF','Planaltina - DF','Águas Claras - DF',
+  // ES
+  'Vitória - ES','Vila Velha - ES','Serra - ES','Cariacica - ES','Cachoeiro de Itapemirim - ES','Linhares - ES','São Mateus - ES','Colatina - ES','Guarapari - ES','Afonso Cláudio - ES','Aracruz - ES',
+  // GO
+  'Goiânia - GO','Aparecida de Goiânia - GO','Anápolis - GO','Rio Verde - GO','Luziânia - GO','Águas Lindas de Goiás - GO','Valparaíso de Goiás - GO','Trindade - GO','Formosa - GO','Novo Gama - GO','Itumbiara - GO','Mineiros - GO','Catalão - GO','Jataí - GO','Caldas Novas - GO',
+  // MA
+  'São Luís - MA','Imperatriz - MA','São José de Ribamar - MA','Timon - MA','Caxias - MA','Codó - MA','Paço do Lumiar - MA','Açailândia - MA','Bacabal - MA','Balsas - MA',
+  // MG
+  'Belo Horizonte - MG','Uberlândia - MG','Contagem - MG','Juiz de Fora - MG','Betim - MG','Montes Claros - MG','Ribeirão das Neves - MG','Uberaba - MG','Governador Valadares - MG','Ipatinga - MG','Santa Luzia - MG','Sete Lagoas - MG','Divinópolis - MG','Ibirité - MG','Poços de Caldas - MG','Patos de Minas - MG','Pouso Alegre - MG','Coronel Fabriciano - MG','Barbacena - MG','Sabará - MG','Vespasiano - MG','Conselheiro Lafaiete - MG','Muriaé - MG','Viçosa - MG','Araxá - MG','Itabira - MG','Timóteo - MG','Brumadinho - MG','João Monlevade - MG','Teófilo Otoni - MG','Ubá - MG','Itaúna - MG','Nova Lima - MG',
+  // MS
+  'Campo Grande - MS','Dourados - MS','Três Lagoas - MS','Corumbá - MS','Ponta Porã - MS','Naviraí - MS','Nova Andradina - MS',
+  // MT
+  'Cuiabá - MT','Várzea Grande - MT','Rondonópolis - MT','Sinop - MT','Tangará da Serra - MT','Cáceres - MT','Sorriso - MT','Lucas do Rio Verde - MT','Alta Floresta - MT',
+  // PA
+  'Belém - PA','Ananindeua - PA','Santarém - PA','Marabá - PA','Parauapebas - PA','Castanhal - PA','Altamira - PA','Bragança - PA','Abaetetuba - PA','Cametá - PA','Itaituba - PA','Tucuruí - PA',
+  // PB
+  'João Pessoa - PB','Campina Grande - PB','Santa Rita - PB','Patos - PB','Bayeux - PB','Sousa - PB','Cajazeiras - PB','Guarabira - PB',
+  // PE
+  'Recife - PE','Jaboatão dos Guararapes - PE','Olinda - PE','Caruaru - PE','Petrolina - PE','Paulista - PE','Garanhuns - PE','Vitória de Santo Antão - PE','Igarassu - PE','Cabo de Santo Agostinho - PE','Camaragibe - PE','Gravatá - PE','Caruaru - PE',
+  // PI
+  'Teresina - PI','Parnaíba - PI','Picos - PI','Floriano - PI','Campo Maior - PI',
+  // PR
+  'Curitiba - PR','Londrina - PR','Maringá - PR','Ponta Grossa - PR','Cascavel - PR','São José dos Pinhais - PR','Guarapuava - PR','Colombo - PR','Paranaguá - PR','Apucarana - PR','Toledo - PR','Araucária - PR','Foz do Iguaçu - PR','Campo Largo - PR','Campo Mourão - PR','Umuarama - PR','Pinhais - PR','Almirante Tamandaré - PR','Francisco Beltrão - PR','Cornélio Procópio - PR',
+  // RJ
+  'Rio de Janeiro - RJ','São Gonçalo - RJ','Duque de Caxias - RJ','Nova Iguaçu - RJ','Niterói - RJ','Belford Roxo - RJ','São João de Meriti - RJ','Petrópolis - RJ','Volta Redonda - RJ','Macaé - RJ','Mesquita - RJ','Itaboraí - RJ','Nova Friburgo - RJ','Teresópolis - RJ','Campos dos Goytacazes - RJ','Angra dos Reis - RJ','Maricá - RJ','Queimados - RJ','Magé - RJ','Cabo Frio - RJ','Resende - RJ','Barra Mansa - RJ',
+  // RN
+  'Natal - RN','Mossoró - RN','Parnamirim - RN','São Gonçalo do Amarante - RN','Caicó - RN','Açu - RN','Currais Novos - RN',
+  // RO
+  'Porto Velho - RO','Ji-Paraná - RO','Ariquemes - RO','Vilhena - RO','Cacoal - RO','Jaru - RO','Rolim de Moura - RO',
+  // RR
+  'Boa Vista - RR','Rorainópolis - RR',
+  // RS
+  'Porto Alegre - RS','Caxias do Sul - RS','Pelotas - RS','Canoas - RS','Santa Maria - RS','Gravataí - RS','Viamão - RS','Novo Hamburgo - RS','São Leopoldo - RS','Passo Fundo - RS','Erechim - RS','Sapucaia do Sul - RS','Alvorada - RS','Bagé - RS','Bento Gonçalves - RS','Cachoeirinha - RS','Rio Grande - RS','Lajeado - RS','Santa Cruz do Sul - RS','Uruguaiana - RS','Pelotas - RS','Ijuí - RS',
+  // SC
+  'Florianópolis - SC','Joinville - SC','Blumenau - SC','São José - SC','Criciúma - SC','Chapecó - SC','Itajaí - SC','Palhoça - SC','Lages - SC','Caçador - SC','Jaraguá do Sul - SC','Balneário Camboriú - SC','Camboriú - SC','Brusque - SC','Tubarão - SC',
+  // SE
+  'Aracaju - SE','Nossa Senhora do Socorro - SE','Lagarto - SE','Itabaiana - SE','Estância - SE','São Cristóvão - SE',
+  // SP
+  'São Paulo - SP','Guarulhos - SP','Campinas - SP','São Bernardo do Campo - SP','Santo André - SP','Osasco - SP','São José dos Campos - SP','Sorocaba - SP','Ribeirão Preto - SP','Mauá - SP','Santos - SP','Mogi das Cruzes - SP','Diadema - SP','Jundiaí - SP','Carapicuíba - SP','Piracicaba - SP','Bauru - SP','São Vicente - SP','São Caetano do Sul - SP','Guarujá - SP','Franca - SP','Limeira - SP','Taubaté - SP','Suzano - SP','Itaquaquecetuba - SP','Barueri - SP','Americana - SP','Indaiatuba - SP','Jacareí - SP','Araraquara - SP','Araras - SP','São Carlos - SP','Itapetininga - SP','Bragança Paulista - SP','Atibaia - SP','Embu das Artes - SP','Cotia - SP','Itapevi - SP','Assis - SP','Botucatu - SP','Cruzeiro - SP','Itatiba - SP','Presidente Prudente - SP','Araçatuba - SP','São José do Rio Preto - SP','Marília - SP','Barretos - SP','Franco da Rocha - SP','Espírito Santo do Pinhal - SP','Hortolândia - SP','Sumaré - SP','Praia Grande - SP','Taboão da Serra - SP','Mogi Guaçu - SP','Itu - SP','Piracicaba - SP','Rio Claro - SP','Pindamonhangaba - SP','Caçapava - SP','Jacareí - SP','Guaratinguetá - SP','Aparecida - SP',
+  // TO
+  'Palmas - TO','Araguaína - TO','Gurupi - TO','Porto Nacional - TO',
+];
 
 let crmLeads = [];
 let crmAtividades = [];
@@ -3676,6 +4017,9 @@ async function renderEtapas() {
       <td>
         <span style="display:inline-block;padding:2px 10px;border-radius:100px;font-size:11px;font-weight:700;background:${cor}22;color:${cor}">${cor}</span>
       </td>
+      <td style="text-align:center">
+        ${e.pedir_motivo ? `<span title="Pede motivo ao mover lead" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#27AE60"><svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Sim</span>` : `<span style="font-size:11px;color:var(--muted)">—</span>`}
+      </td>
       <td style="text-align:right">
         ${canEd ? `<div style="display:flex;gap:6px;justify-content:flex-end">
           <button class="btn btn-ghost btn-sm" onclick="openEtapaForm('${e.id}')">Editar</button>
@@ -3707,6 +4051,13 @@ function openEtapaForm(id) {
         <input type="color" id="etapaCorPicker" value="${et?.cor||'#3498DB'}" style="width:38px;height:38px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;padding:2px" oninput="document.getElementById('etapaCor').value=this.value">
       </div>
     </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">
+        <input type="checkbox" id="etapaPedirMotivo" ${et?.pedir_motivo ? 'checked' : ''} style="width:16px;height:16px;accent-color:var(--text);cursor:pointer">
+        Pedir motivo ao mover lead para esta etapa
+      </label>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;margin-left:26px">Quando ativado, ao arrastar um lead para esta etapa será solicitado um motivo.</div>
+    </div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveEtapa('${id||''}')">Salvar</button>
@@ -3716,18 +4067,19 @@ function openEtapaForm(id) {
 }
 
 async function saveEtapa(id) {
-  const label = document.getElementById('etapaLabel')?.value.trim();
-  const cor   = document.getElementById('etapaCor')?.value.trim() || '#999999';
-  const ordem = parseInt(document.getElementById('etapaOrdem')?.value) || 0;
+  const label       = document.getElementById('etapaLabel')?.value.trim();
+  const cor         = document.getElementById('etapaCor')?.value.trim() || '#999999';
+  const ordem       = parseInt(document.getElementById('etapaOrdem')?.value) || 0;
+  const pedir_motivo = document.getElementById('etapaPedirMotivo')?.checked || false;
   if (!label) { toast('Descrição é obrigatória.'); return; }
   let res;
   if (id) {
-    res = await API.put('/crm/etapas/'+id, { label, cor, ordem });
+    res = await API.put('/crm/etapas/'+id, { label, cor, ordem, pedir_motivo });
   } else {
     const key = label.toLowerCase()
       .normalize('NFD').replace(/[̀-ͯ]/g,'')
       .replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
-    res = await API.post('/crm/etapas', { key, label, cor, ordem });
+    res = await API.post('/crm/etapas', { key, label, cor, ordem, pedir_motivo });
   }
   if (res.erro) { toast('Erro: '+res.erro); return; }
   closeModal('formModal');
@@ -3792,7 +4144,7 @@ function filterLeads() {
       <div class="lead-avatar">${leadInitials(l.nome)}</div>
       <div class="lead-info">
         <div class="lead-name">${l.nome}</div>
-        <div class="lead-contact">${l.telefone}${l.email ? ' · ' + l.email : ''}${l.origem ? ' · ' + (CRM_ORIGENS[l.origem]||l.origem) : ''}</div>
+        <div class="lead-contact">${l.telefone}${l.instagram ? ' · @' + l.instagram.replace(/^@/,'') : ''}${l.area_atuacao ? ' · ' + l.area_atuacao : ''}${l.cidade ? ' · ' + l.cidade : ''}${l.origem ? ' · ' + (CRM_ORIGENS[l.origem]||l.origem) : ''}${l.responsavel_id ? ' · <strong>' + (usuarios.find(u=>u.id===l.responsavel_id)?.nome||'') + '</strong>' : ''}</div>
       </div>
       <span class="lead-etapa-badge" style="background:${etapaObj.color}22;color:${etapaObj.color}">${etapaObj.label}</span>
       ${canEd ? `<button class="btn btn-ghost btn-sm" style="margin-left:8px" onclick="event.stopPropagation();openLeadForm('${l.id}')">Editar</button>` : ''}
@@ -3811,12 +4163,18 @@ function maskTelefone(el) {
   el.value = v;
 }
 
-function openLeadForm(id) {
+async function openLeadForm(id) {
   const lead = id ? crmLeads.find(l => l.id === id) : null;
+  if (!usuarios.length) {
+    const uRes = await API.get('/usuarios');
+    if (!uRes.erro && Array.isArray(uRes)) usuarios = uRes;
+  }
   document.getElementById('formTitle').textContent = lead ? 'Editar Lead' : 'Novo Lead';
   const etapasOpts = crmEtapas.map(e => `<option value="${e.key}" ${lead?.etapa===e.key?'selected':''}>${e.label}</option>`).join('');
   const origensOpts = Object.entries(CRM_ORIGENS).map(([k,v]) => `<option value="${k}" ${lead?.origem===k?'selected':''}>${v}</option>`).join('');
+  const cidadesOpts = CIDADES_BR.map(c => `<option value="${c}">`).join('');
   document.getElementById('formBody').innerHTML = `
+    <datalist id="cidadesList">${cidadesOpts}</datalist>
     <div class="form-group">
       <label class="form-label">Nome <span style="color:#e74c3c">*</span></label>
       <input class="form-input" id="leadNome" value="${lead?.nome||''}" placeholder="Nome completo">
@@ -3826,8 +4184,16 @@ function openLeadForm(id) {
       <input class="form-input" id="leadTelefone" value="${lead?.telefone||''}" placeholder="(00) 00000-0000" oninput="maskTelefone(this)" maxlength="16">
     </div>
     <div class="form-group">
-      <label class="form-label">E-mail</label>
-      <input class="form-input" id="leadEmail" type="email" value="${lead?.email||''}" placeholder="email@exemplo.com">
+      <label class="form-label">Instagram <span style="color:#e74c3c">*</span></label>
+      <input class="form-input" id="leadInstagram" value="${lead?.instagram||''}" placeholder="@usuario">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Área de Atuação <span style="color:#e74c3c">*</span></label>
+      <input class="form-input" id="leadAreaAtuacao" value="${lead?.area_atuacao||''}" placeholder="Ex: Marketing, Saúde, Tecnologia...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Cidade / Estado</label>
+      <input class="form-input" id="leadCidade" list="cidadesList" value="${lead?.cidade||''}" placeholder="Buscar cidade..." autocomplete="off">
     </div>
     <div class="form-row">
       <div class="form-group">
@@ -3839,6 +4205,17 @@ function openLeadForm(id) {
         <select class="form-select" id="leadEtapa">${etapasOpts}</select>
       </div>
     </div>
+    <div class="form-group">
+      <label class="form-label">Informações</label>
+      <textarea class="form-textarea" id="leadInformacoes" rows="3" placeholder="Observações adicionais sobre o lead...">${lead?.informacoes||''}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Responsável</label>
+      <select class="form-select" id="leadResponsavelId">
+        <option value="">Sem responsável</option>
+        ${usuarios.map(u => `<option value="${u.id}" ${lead?.responsavel_id===u.id?'selected':''}>${u.nome}</option>`).join('')}
+      </select>
+    </div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveLead('${id||''}')">Salvar</button>
@@ -3848,13 +4225,20 @@ function openLeadForm(id) {
 }
 
 async function saveLead(id) {
-  const nome     = document.getElementById('leadNome')?.value.trim();
-  const telefone = document.getElementById('leadTelefone')?.value.trim();
-  const email    = document.getElementById('leadEmail')?.value.trim();
-  const origem   = document.getElementById('leadOrigem')?.value;
-  const etapa    = document.getElementById('leadEtapa')?.value;
-  if (!nome || !telefone) { toast('Nome e telefone são obrigatórios.'); return; }
-  const body = { nome, telefone, email: email||null, origem: origem||null, etapa };
+  const nome           = document.getElementById('leadNome')?.value.trim();
+  const telefone       = document.getElementById('leadTelefone')?.value.trim();
+  const instagram      = document.getElementById('leadInstagram')?.value.trim();
+  const area_atuacao   = document.getElementById('leadAreaAtuacao')?.value.trim();
+  const cidade         = document.getElementById('leadCidade')?.value.trim();
+  const origem         = document.getElementById('leadOrigem')?.value;
+  const etapa          = document.getElementById('leadEtapa')?.value;
+  const informacoes    = document.getElementById('leadInformacoes')?.value.trim();
+  const responsavel_id = document.getElementById('leadResponsavelId')?.value || null;
+  if (!nome)         { toast('Nome é obrigatório.'); return; }
+  if (!telefone)     { toast('Telefone é obrigatório.'); return; }
+  if (!instagram)    { toast('Instagram é obrigatório.'); return; }
+  if (!area_atuacao) { toast('Área de Atuação é obrigatória.'); return; }
+  const body = { nome, telefone, instagram: instagram||null, area_atuacao: area_atuacao||null, cidade: cidade||null, origem: origem||null, etapa, informacoes: informacoes||null, responsavel_id };
   const res  = id ? await API.put('/crm/leads/'+id, body) : await API.post('/crm/leads', body);
   if (res.erro) { toast('Erro: '+res.erro); return; }
   closeModal('formModal');
@@ -3884,9 +4268,13 @@ function openLeadDetail(id) {
   document.getElementById('formBody').innerHTML = `
     <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
       <div><strong>Telefone:</strong> ${lead.telefone}</div>
-      ${lead.email ? `<div><strong>E-mail:</strong> ${lead.email}</div>` : ''}
+      ${lead.instagram ? `<div><strong>Instagram:</strong> @${lead.instagram.replace(/^@/,'')}</div>` : ''}
+      ${lead.area_atuacao ? `<div><strong>Área de Atuação:</strong> ${lead.area_atuacao}</div>` : ''}
+      ${lead.cidade ? `<div><strong>Cidade:</strong> ${lead.cidade}</div>` : ''}
       ${lead.origem ? `<div><strong>Origem:</strong> ${CRM_ORIGENS[lead.origem]||lead.origem}</div>` : ''}
       <div><strong>Etapa:</strong> <span style="color:${etapaObj.color}">${etapaObj.label}</span></div>
+      ${lead.responsavel_id ? `<div><strong>Responsável:</strong> ${usuarios.find(u=>u.id===lead.responsavel_id)?.nome||'—'}</div>` : ''}
+      ${lead.informacoes ? `<div style="margin-top:4px"><strong>Informações:</strong><br><span style="white-space:pre-wrap">${lead.informacoes}</span></div>` : ''}
     </div>
     <div class="form-actions"><button class="btn btn-ghost" onclick="closeModal('formModal')">Fechar</button></div>
   `;
@@ -3895,7 +4283,7 @@ function openLeadDetail(id) {
 
 // ── FUNIL KANBAN ─────────────────────────
 async function renderFunil() {
-  if (crmEtapas.length <= 1) await loadCrmEtapas();
+  await loadCrmEtapas();
   if (!crmLeads.length) {
     const res = await API.get('/crm/leads');
     if (!res.erro) crmLeads = res;
@@ -3903,47 +4291,278 @@ async function renderFunil() {
   const board = document.getElementById('funilBoard');
   if (!board) return;
   const canEd = canEdit('crm_funil');
-  board.innerHTML = crmEtapas.map((etapa, currentIdx) => {
+  board.innerHTML = crmEtapas.map(etapa => {
     const leads = crmLeads.filter(l => l.etapa === etapa.key);
     const etapaColor = etapa.cor || etapa.color || '#999';
     const cards = leads.map(l => `
-      <div class="funil-card" onclick="openLeadDetail('${l.id}')">
+      <div class="funil-card"
+        ${canEd ? `onmousedown="funilPointerDown(event,'${l.id}')"` : `onclick="openLeadInfo('${l.id}')"`}>
         <div class="funil-card-name">${l.nome}</div>
         <div class="funil-card-phone">${l.telefone}</div>
-        <div class="funil-card-tags">
-          ${l.origem ? `<span class="funil-tag">${CRM_ORIGENS[l.origem]||l.origem}</span>` : ''}
-        </div>
-        ${canEd ? `<div style="display:flex;gap:5px;margin-top:10px;flex-wrap:wrap">
-          ${crmEtapas.filter(e => e.key !== etapa.key).map(e => {
-            const targetIdx = crmEtapas.findIndex(x => x.key === e.key);
-            const isBack    = targetIdx < currentIdx;
-            const arrow     = isBack ? '←' : '→';
-            const style     = isBack
-              ? 'font-size:10px;padding:3px 8px;color:#E74C3C;border-color:#FBCAC5'
-              : 'font-size:10px;padding:3px 8px';
-            return `<button class="btn btn-ghost btn-sm" style="${style}" onclick="event.stopPropagation();moveLeadEtapa('${l.id}','${e.key}')">${arrow} ${e.label}</button>`;
-          }).join('')}
-        </div>` : ''}
+        ${l.origem ? `<div class="funil-card-tags"><span class="funil-tag">${CRM_ORIGENS[l.origem]||l.origem}</span></div>` : ''}
       </div>`).join('');
     return `<div class="funil-col">
       <div class="funil-col-header">
-        <span class="funil-col-title" style="color:${etapaColor}">${etapa.label}</span>
+        <span class="funil-col-title">${etapa.label}</span>
         <span class="funil-col-count">${leads.length}</span>
       </div>
-      <div id="funilCol_${etapa.key}">
+      <div id="funilCol_${etapa.key}" style="min-height:60px">
         ${cards || `<div style="text-align:center;padding:20px 0;color:var(--muted);font-size:12px">Nenhum lead</div>`}
       </div>
     </div>`;
   }).join('');
 }
 
-async function moveLeadEtapa(id, etapa) {
-  const res = await API.put('/crm/leads/'+id, { etapa });
+async function moveLeadEtapa(id, etapa, motivo) {
+  const body = { etapa };
+  if (motivo) body.motivo_etapa = motivo;
+  const res = await API.put('/crm/leads/'+id, body);
   if (res.erro) { toast('Erro: '+res.erro); return; }
   const lead = crmLeads.find(l => l.id === id);
-  if (lead) lead.etapa = etapa;
+  if (lead) { lead.etapa = etapa; if (motivo) lead.motivo_etapa = motivo; }
   renderFunil();
   toast('Lead movido para ' + crmEtapa(etapa).label);
+}
+
+function openMotivoModal(etapaLabel, callback) {
+  document.getElementById('formTitle').textContent = 'Motivo da Movimentação';
+  document.getElementById('formBody').innerHTML = `
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px">
+      Por que este lead está indo para <strong>${etapaLabel}</strong>?
+    </div>
+    <div class="form-group">
+      <textarea class="form-textarea" id="motivoInput" rows="3" placeholder="Descreva o motivo..."></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="_confirmMotivo()">Confirmar</button>
+    </div>
+  `;
+  window._confirmMotivo = function() {
+    const motivo = document.getElementById('motivoInput')?.value.trim();
+    if (!motivo) { toast('Informe o motivo.'); return; }
+    closeModal('formModal');
+    callback(motivo);
+  };
+  openModal('formModal');
+}
+
+// ── FUNIL DRAG — Apple spring physics ───────────────────────────
+const FD = {
+  active:false, leadId:null, ghost:null, originEl:null,
+  mouseX:0, mouseY:0, ghostX:0, ghostY:0,
+  velX:0, velY:0, rotation:0, rotVel:0, scale:1,
+  raf:null, activeCol:null, didDrag:false,
+  startX:0, startY:0, offsetX:0, offsetY:0,
+  clientX:0,  // posição bruta do mouse para edge-scroll
+};
+const EDGE_ZONE = 120;  // px da borda que ativa o scroll
+const SCROLL_MAX = 20;  // velocidade máxima de scroll (px/frame)
+
+// ── Hover edge-scroll (sem drag) ─────────────────────────────────
+let _funilScrollRaf = null;
+let _funilScrollDelta = 0;
+
+function _funilEdgeScroll() {
+  const board = document.getElementById('funilBoard');
+  if (board && _funilScrollDelta !== 0) board.scrollLeft += _funilScrollDelta;
+  _funilScrollRaf = requestAnimationFrame(_funilEdgeScroll);
+}
+
+document.addEventListener('mousemove', function(e) {
+  const board = document.getElementById('funilBoard');
+  if (!board) return;
+  const br = board.getBoundingClientRect();
+  // só ativa quando o mouse está sobre o board
+  if (e.clientY < br.top || e.clientY > br.bottom) { _funilScrollDelta = 0; return; }
+  const distLeft  = e.clientX - br.left;
+  const distRight = br.right  - e.clientX;
+  if (distLeft < EDGE_ZONE)       _funilScrollDelta = -SCROLL_MAX * Math.pow(1 - distLeft  / EDGE_ZONE, 2);
+  else if (distRight < EDGE_ZONE) _funilScrollDelta =  SCROLL_MAX * Math.pow(1 - distRight / EDGE_ZONE, 2);
+  else                            _funilScrollDelta = 0;
+  if (_funilScrollDelta !== 0 && !_funilScrollRaf) _funilScrollRaf = requestAnimationFrame(_funilEdgeScroll);
+  if (_funilScrollDelta === 0 && _funilScrollRaf)  { cancelAnimationFrame(_funilScrollRaf); _funilScrollRaf = null; }
+});
+// ─────────────────────────────────────────────────────────────────
+
+let _funilClickBlock = false;
+
+function funilCardClick(leadId) {
+  if (_funilClickBlock) { _funilClickBlock = false; return; }
+  openLeadInfo(leadId);
+}
+
+function openLeadInfo(id) {
+  const lead = crmLeads.find(l => l.id === id);
+  if (!lead) return;
+  const etapaObj = crmEtapa(lead.etapa);
+  document.getElementById('formTitle').textContent = lead.nome;
+  document.getElementById('formBody').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+      <div><strong>Telefone:</strong> ${lead.telefone}</div>
+      ${lead.instagram ? `<div><strong>Instagram:</strong> @${(lead.instagram||'').replace(/^@/,'')}</div>` : ''}
+      ${lead.area_atuacao ? `<div><strong>Área de Atuação:</strong> ${lead.area_atuacao}</div>` : ''}
+      ${lead.cidade ? `<div><strong>Cidade:</strong> ${lead.cidade}</div>` : ''}
+      ${lead.origem ? `<div><strong>Origem:</strong> ${CRM_ORIGENS[lead.origem]||lead.origem}</div>` : ''}
+      <div><strong>Etapa:</strong> <span style="color:${etapaObj.color}">${etapaObj.label}</span></div>
+      ${lead.motivo_etapa ? `<div><strong>Motivo:</strong> ${lead.motivo_etapa}</div>` : ''}
+      ${lead.informacoes ? `<div style="margin-top:4px"><strong>Informações:</strong><br><span style="white-space:pre-wrap">${lead.informacoes}</span></div>` : ''}
+    </div>
+    <div class="form-actions">
+      ${canEdit('crm_leads') ? `<button class="btn btn-primary" onclick="closeModal('formModal');openLeadForm('${id}')">Editar</button>` : ''}
+      <button class="btn btn-ghost" onclick="closeModal('formModal')">Fechar</button>
+    </div>
+  `;
+  openModal('formModal');
+}
+
+function funilPointerDown(e, leadId) {
+  if (e.button !== 0) return;
+  e.preventDefault();
+  const card = e.currentTarget;
+  const rect = card.getBoundingClientRect();
+
+  // Ghost: clone visual do card
+  const ghost = card.cloneNode(true);
+  ghost.removeAttribute('onmousedown');
+  ghost.removeAttribute('onclick');
+  ghost.style.cssText = `
+    position:fixed;width:${rect.width}px;left:${rect.left}px;top:${rect.top}px;
+    z-index:9999;pointer-events:none;will-change:transform;transform-origin:center;
+    background:#fff;border:1px solid var(--border);border-radius:9px;padding:12px;
+    box-shadow:0 24px 64px rgba(0,0,0,0.18);opacity:0;
+  `;
+  document.body.appendChild(ghost);
+  card.classList.add('fd-placeholder');
+
+  Object.assign(FD, {
+    active:true, leadId, ghost, originEl:card, didDrag:false,
+    mouseX:rect.left, mouseY:rect.top, ghostX:rect.left, ghostY:rect.top,
+    velX:0, velY:0, rotation:0, rotVel:0, scale:1, activeCol:null,
+    startX:e.clientX, startY:e.clientY,
+    offsetX:e.clientX - rect.left, offsetY:e.clientY - rect.top,
+  });
+
+  document.addEventListener('mousemove', funilPointerMove);
+  document.addEventListener('mouseup',   funilPointerUp);
+  document.body.style.userSelect = 'none';
+  funilAnimateGhost();
+}
+
+function funilPointerMove(e) {
+  if (!FD.active) return;
+  FD.clientX = e.clientX;
+  FD.mouseX = e.clientX - FD.offsetX;
+  FD.mouseY = e.clientY - FD.offsetY;
+  if (Math.hypot(e.clientX - FD.startX, e.clientY - FD.startY) > 6) FD.didDrag = true;
+
+  let found = null;
+  document.querySelectorAll('.funil-col').forEach(col => {
+    const r = col.getBoundingClientRect();
+    if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom)
+      found = col;
+  });
+  if (found !== FD.activeCol) {
+    FD.activeCol?.classList.remove('drag-over');
+    found?.classList.add('drag-over');
+    FD.activeCol = found;
+  }
+}
+
+function funilAnimateGhost() {
+  if (!FD.active) return;
+  // Spring: stiffness / damping
+  FD.velX = (FD.velX + (FD.mouseX - FD.ghostX) * 0.20) * 0.74;
+  FD.velY = (FD.velY + (FD.mouseY - FD.ghostY) * 0.20) * 0.74;
+  FD.ghostX += FD.velX;
+  FD.ghostY += FD.velY;
+
+  // Rotação suave baseada na velocidade horizontal
+  FD.rotVel  = (FD.rotVel + (FD.velX * 0.9 - FD.rotation) * 0.14) * 0.72;
+  FD.rotation += FD.rotVel;
+
+  // Escala: sobe levemente com velocidade
+  const speed = Math.hypot(FD.velX, FD.velY);
+  FD.scale   += (1 + Math.min(speed * 0.004, 0.07) - FD.scale) * 0.12;
+
+  // Motion blur proporcional à velocidade
+  const blur  = Math.min(speed * 0.15, 4);
+
+  FD.ghost.style.left      = `${FD.ghostX}px`;
+  FD.ghost.style.top       = `${FD.ghostY}px`;
+  FD.ghost.style.transform = `scale(${FD.scale}) rotate(${FD.rotation}deg)`;
+  FD.ghost.style.filter    = blur > 0.5 ? `blur(${blur.toFixed(1)}px)` : '';
+  FD.ghost.style.opacity   = '0.93';
+
+  FD.raf = requestAnimationFrame(funilAnimateGhost);
+}
+
+async function funilPointerUp(e) {
+  if (!FD.active) return;
+  document.removeEventListener('mousemove', funilPointerMove);
+  document.removeEventListener('mouseup',   funilPointerUp);
+  document.body.style.userSelect = '';
+  cancelAnimationFrame(FD.raf);
+  FD.active = false;
+
+  const { ghost, originEl, leadId, activeCol, didDrag } = FD;
+  activeCol?.classList.remove('drag-over');
+
+  if (!didDrag) {
+    // e.preventDefault() no mousedown cancela o onclick nativo — chamamos direto
+    ghost.remove();
+    originEl.classList.remove('fd-placeholder');
+    openLeadInfo(leadId);
+    return;
+  }
+
+  _funilClickBlock = true;
+
+  if (activeCol) {
+    // Snap suave com spring bounce para a coluna alvo
+    const colBody = activeCol.querySelector('[id^="funilCol_"]');
+    const colRect = colBody.getBoundingClientRect();
+    ghost.style.transition = [
+      'left .45s cubic-bezier(.34,1.56,.64,1)',
+      'top .45s cubic-bezier(.34,1.56,.64,1)',
+      'transform .4s cubic-bezier(.34,1.56,.64,1)',
+      'opacity .25s ease',
+      'filter .2s',
+    ].join(',');
+    ghost.style.left      = `${colRect.left + 10}px`;
+    ghost.style.top       = `${colRect.top  + 10}px`;
+    ghost.style.transform = 'scale(1) rotate(0deg)';
+    ghost.style.filter    = '';
+    ghost.style.opacity   = '0';
+
+    await new Promise(r => setTimeout(r, 420));
+    ghost.remove();
+    originEl.classList.remove('fd-placeholder');
+    const etapaKey = colBody?.id.replace('funilCol_', '');
+    const lead = crmLeads.find(l => l.id === leadId);
+    if (etapaKey && lead && lead.etapa !== etapaKey) {
+      const etapaObj = crmEtapas.find(e => e.key === etapaKey);
+      if (etapaObj?.pedir_motivo) {
+        openMotivoModal(etapaObj.label, (motivo) => moveLeadEtapa(leadId, etapaKey, motivo));
+      } else {
+        await moveLeadEtapa(leadId, etapaKey);
+      }
+    } else {
+      renderFunil();
+    }
+  } else {
+    // Snap de volta ao original com spring
+    const origRect = originEl.getBoundingClientRect();
+    ghost.style.transition = 'all .4s cubic-bezier(.34,1.56,.64,1)';
+    ghost.style.left      = `${origRect.left}px`;
+    ghost.style.top       = `${origRect.top}px`;
+    ghost.style.transform = 'scale(1) rotate(0deg)';
+    ghost.style.filter    = '';
+    ghost.style.opacity   = '0';
+    await new Promise(r => setTimeout(r, 420));
+    ghost.remove();
+    originEl.classList.remove('fd-placeholder');
+  }
 }
 
 // ── ATIVIDADES ───────────────────────────
@@ -3969,7 +4588,7 @@ async function renderAtividades() {
   const respSel = document.getElementById('atividadeRespFilter');
   if (respSel) {
     const cur = respSel.value;
-    respSel.innerHTML = '<option value="all">Todos</option>' + crmUsuarios.map(u=>`<option value="${u.id}">${u.nome}</option>`).join('');
+    respSel.innerHTML = '<option value="all">Todos</option>' + crmUsuarios.filter(isRespUser).map(u=>`<option value="${u.id}">${u.nome}</option>`).join('');
     if (cur) respSel.value = cur;
   }
 
@@ -4011,8 +4630,8 @@ async function renderAtividades() {
     const dateStr = a.data ? `${d}/${m}/${y}` : '—';
     const leadNome = a.crm_leads?.nome || crmLeads.find(l=>l.id===a.lead_id)?.nome || '—';
     const respNome = a.responsavel?.nome || crmUsuarios.find(u=>u.id===a.responsavel_id)?.nome || null;
-    return `<div class="ativ-row" style="${a.concluida?'opacity:0.6':''}">
-      ${canEd ? `<div class="ativ-check ${a.concluida?'done':''}" onclick="toggleAtividade('${a.id}',${!a.concluida})">
+    return `<div class="ativ-row" style="${a.concluida?'opacity:0.6':''}" onclick="openAtividadeDetail('${a.id}')">
+      ${canEd ? `<div class="ativ-check ${a.concluida?'done':''}" onclick="event.stopPropagation();toggleAtividade('${a.id}',${!a.concluida})">
         ${a.concluida?'<svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}
       </div>` : `<div class="ativ-check ${a.concluida?'done':''}"></div>`}
       <div class="ativ-info">
@@ -4028,8 +4647,8 @@ async function renderAtividades() {
         ` : `<span style="font-size:11px;color:var(--muted)">—</span>`}
       </div>
       <span class="ativ-date-badge" style="background:${dateColor}22;color:${dateColor}">${dateStr}</span>
-      ${canEd ? `<button class="btn btn-ghost btn-sm" onclick="openAtividadeForm(null,'${a.id}')" style="padding:5px 8px"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>` : ''}
-      ${canEd ? `<button class="btn btn-danger btn-sm" onclick="deleteAtividade('${a.id}')"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>` : ''}
+      ${canEd ? `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openAtividadeForm(null,'${a.id}')" style="padding:5px 8px"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>` : ''}
+      ${canEd ? `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteAtividade('${a.id}')"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>` : ''}
     </div>`;
   }).join('');
 }
@@ -4042,7 +4661,7 @@ async function openAtividadeForm(leadIdPre, editId) {
   }
   const editing = editId ? crmAtividades.find(a => a.id === editId) : null;
   const leadsOpts = crmLeads.map(l=>`<option value="${l.id}" ${l.id===(editing?.lead_id||leadIdPre)?'selected':''}>${l.nome}</option>`).join('');
-  const respOpts  = crmUsuarios.map(u=>`<option value="${u.id}" ${u.id===(editing?.responsavel_id||'')?'selected':''}>${u.nome}</option>`).join('');
+  const respOpts  = crmUsuarios.filter(isRespUser).map(u=>`<option value="${u.id}" ${u.id===(editing?.responsavel_id||'')?'selected':''}>${u.nome}</option>`).join('');
   document.getElementById('formTitle').textContent = editing ? 'Editar Atividade' : 'Nova Atividade';
   document.getElementById('formBody').innerHTML = `
     <input type="hidden" id="atividadeEditId" value="${editId||''}">
@@ -4109,6 +4728,99 @@ async function deleteAtividade(id) {
   const res = await API.del('/crm/atividades/'+id);
   if (res.erro) { toast('Erro: '+res.erro); return; }
   logHistorico('excluido', 'atividade', id, `Atividade excluída: ${atv?.descricao?.slice(0,50) || id}`);
+  toast('Atividade removida.');
+  renderAtividades();
+}
+
+async function openAtividadeDetail(id) {
+  const a = crmAtividades.find(x => x.id === id);
+  if (!a) return;
+  if (!crmUsuarios.length) {
+    const u = await API.get('/usuarios');
+    if (!u.erro) crmUsuarios = u;
+  }
+  const today    = new Date().toISOString().slice(0,10);
+  const overdue  = !a.concluida && a.data < today;
+  const dateColor = a.concluida ? '#27AE60' : overdue ? '#E74C3C' : a.data === today ? '#F39C12' : 'var(--muted)';
+  const statusLb  = a.concluida ? 'Concluída' : overdue ? 'Vencida' : 'Pendente';
+  const statusBg  = a.concluida ? '#27AE6022' : overdue ? '#E74C3C22' : '#E6B80022';
+  const statusCl  = a.concluida ? '#27AE60'   : overdue ? '#E74C3C'   : '#B8860B';
+  const leadNome  = a.crm_leads?.nome || crmLeads.find(l => l.id === a.lead_id)?.nome || '—';
+  const [y,m,d]   = (a.data||'').split('-');
+  const dateStr   = a.data ? `${d}/${m}/${y}` : '—';
+  const editMode  = canEdit('crm_atividades');
+  const ro    = editMode ? '' : 'readonly disabled style="pointer-events:none;opacity:0.7"';
+  const roSel = editMode ? '' : 'disabled style="pointer-events:none;opacity:0.7"';
+
+  const leadsOpts = crmLeads.map(l => `<option value="${l.id}" ${l.id===a.lead_id?'selected':''}>${l.nome}</option>`).join('');
+  const respOpts  = crmUsuarios.filter(isRespUser).map(u => `<option value="${u.id}" ${u.id===a.responsavel_id?'selected':''}>${u.nome}</option>`).join('');
+
+  document.getElementById('detailBody').innerHTML = `
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:18px;padding-right:38px;flex-wrap:wrap">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:2px">${editMode?'Editando atividade':'Visualizando atividade'}</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${leadNome} · ${dateStr}</div>
+      </div>
+      <span class="badge" style="background:${statusBg};color:${statusCl};flex-shrink:0;margin-top:2px">${statusLb}</span>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Lead</label>
+        <select class="form-select" id="adLead" ${roSel}><option value="">—</option>${leadsOpts}</select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data</label>
+        <input class="form-input" type="date" id="adData" value="${a.data||''}" ${ro}>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Responsável</label>
+      <select class="form-select" id="adResp" ${roSel}><option value="">Sem responsável</option>${respOpts}</select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descrição</label>
+      <textarea class="form-textarea" id="adDesc" ${ro}>${a.descricao||''}</textarea>
+    </div>
+    ${editMode ? `
+    <div class="form-group">
+      <label class="form-label">Status</label>
+      <select class="form-select" id="adConcluida">
+        <option value="false" ${!a.concluida?'selected':''}>Pendente</option>
+        <option value="true"  ${a.concluida ?'selected':''}>Concluída</option>
+      </select>
+    </div>` : ''}
+    <div class="form-actions">
+      ${editMode ? `<button class="btn btn-danger btn-sm" onclick="deleteAtividadeFromDetail('${a.id}')">Excluir</button>` : ''}
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn btn-ghost" onclick="closeModal('detailModal')">Fechar</button>
+        ${editMode ? `<button class="btn btn-primary" onclick="saveAtividadeDetail('${a.id}')">Salvar alterações</button>` : ''}
+      </div>
+    </div>
+  `;
+  openModal('detailModal');
+}
+
+async function saveAtividadeDetail(id) {
+  const lead_id    = document.getElementById('adLead').value;
+  const data       = document.getElementById('adData').value;
+  const descricao  = document.getElementById('adDesc').value.trim();
+  const resp       = document.getElementById('adResp').value;
+  const concluida  = document.getElementById('adConcluida').value === 'true';
+  if (!lead_id || !data || !descricao) { toast('Preencha todos os campos obrigatórios.'); return; }
+  const res = await API.put('/crm/atividades/'+id, { lead_id, data, descricao, responsavel_id: resp||null, concluida });
+  if (res.erro) { toast('Erro: '+res.erro); return; }
+  logHistorico('atualizado', 'atividade', id, `Atividade atualizada: ${descricao.slice(0,50)}`);
+  closeModal('detailModal');
+  toast('Atividade atualizada!');
+  renderAtividades();
+}
+
+async function deleteAtividadeFromDetail(id) {
+  if (!confirm('Remover esta atividade?')) return;
+  const res = await API.del('/crm/atividades/'+id);
+  if (res.erro) { toast('Erro: '+res.erro); return; }
+  logHistorico('excluido', 'atividade', id, `Atividade excluída`);
+  closeModal('detailModal');
   toast('Atividade removida.');
   renderAtividades();
 }
@@ -4190,8 +4902,8 @@ async function renderCrmRelatorios() {
         const count = porEtapa[e.key]||0;
         const pct   = total > 0 ? Math.round((count/total)*100) : 0;
         return `<div class="crm-funil-bar-row">
-          <div class="crm-funil-bar-label" style="color:${cor}">${e.label}</div>
-          <div class="crm-funil-bar-track"><div class="crm-funil-bar-fill" style="width:${Math.round((count/maxEtapa)*100)}%;background:${cor}"></div></div>
+          <div class="crm-funil-bar-label">${e.label}</div>
+          <div class="crm-funil-bar-track"><div class="crm-funil-bar-fill" style="width:${Math.round((count/maxEtapa)*100)}%"></div></div>
           <div class="crm-funil-bar-count">${count}</div>
           <div style="font-size:10px;color:var(--muted);width:36px;text-align:right">${pct}%</div>
         </div>`;
@@ -4391,9 +5103,32 @@ async function exportCrmPDF() {
 }
 
 // ═══════════════════════════════════════
+//  DARK MODE
+// ═══════════════════════════════════════
+function initDarkMode() {
+  if (localStorage.getItem('sea_theme') === 'dark') document.body.classList.add('dark');
+  updateDarkToggle();
+}
+function toggleDarkMode() {
+  document.body.classList.toggle('dark');
+  localStorage.setItem('sea_theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+  updateDarkToggle();
+}
+function updateDarkToggle() {
+  const btn = document.getElementById('darkToggle');
+  if (!btn) return;
+  const isDark = document.body.classList.contains('dark');
+  btn.title = isDark ? 'Modo claro' : 'Modo escuro';
+  btn.innerHTML = isDark
+    ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`
+    : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+}
+
+// ═══════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════
 (async () => {
+  initDarkMode();
   const token = localStorage.getItem('sea_token');
   if (token) {
     try {
@@ -4412,7 +5147,865 @@ async function exportCrmPDF() {
   initDemandsFilters();
   buildHeaderActions('dashboard');
   renderDashboard();
+  showAlertToast();
+  updateAlertBadge();
 })();
+
+// ═══════════════════════════════════════
+//  SDR — Base de Conhecimento
+// ═══════════════════════════════════════
+
+let sdrTopicos = [];
+let sdrTopicoAtivo = null;
+let sdrExpandedTopics = new Set();
+let sdrConteudosCache = {};
+let sdrAnexosCache = {};
+let sdrPendingFiles = [];
+let sdrFormConteudoId = null;
+
+async function loadSdrTopicos() {
+  const res = await API.get('/sdr/topicos');
+  sdrTopicos = Array.isArray(res) ? res : [];
+}
+
+function renderMarkdown(text) {
+  if (!text) return '';
+  let s = text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>');
+  const lines = s.split('\n');
+  let html = '';
+  let inList = false;
+  for (const line of lines) {
+    if (/^- (.+)/.test(line)) {
+      if (!inList) { html += '<ul style="margin:6px 0 6px 18px;padding:0">'; inList = true; }
+      html += `<li style="margin-bottom:3px">${line.replace(/^- /, '')}</li>`;
+    } else {
+      if (inList) { html += '</ul>'; inList = false; }
+      html += line === '' ? '<br>' : `<span>${line}</span><br>`;
+    }
+  }
+  if (inList) html += '</ul>';
+  return html;
+}
+
+async function renderSDR() {
+  sdrConteudosCache = {};
+  sdrAnexosCache = {};
+  await loadSdrTopicos();
+  const roots = sdrTopicos.filter(t => !t.parent_id);
+  const first = roots.length > 0 ? roots[0] : sdrTopicos[0];
+  if (first) sdrTopicoAtivo = first.id;
+  renderSDRTopicos();
+  if (sdrTopicoAtivo) await selectSDRTopico(sdrTopicoAtivo);
+}
+
+function toggleSDRTopicExpand(id, e) {
+  e.stopPropagation();
+  const sid = String(id);
+  if (sdrExpandedTopics.has(sid)) { sdrExpandedTopics.delete(sid); } else { sdrExpandedTopics.add(sid); }
+  renderSDRTopicos();
+}
+function renderSDRTopicos() {
+  const el = document.getElementById('sdrTopicos');
+  if (!el) return;
+  if (!sdrTopicos.length) {
+    el.innerHTML = `<div style="padding:20px;color:var(--muted);font-size:13px;text-align:center">Nenhum tópico cadastrado.</div>`;
+    return;
+  }
+  const roots = sdrTopicos.filter(t => !t.parent_id);
+  const childrenOf = (pid) => sdrTopicos.filter(t => t.parent_id === pid);
+  const topicoHtml = (t, isChild) => {
+    const active = sdrTopicoAtivo === t.id;
+    const count = sdrConteudosCache[t.id]?.length ?? null;
+    const icone = t.icone ? `<span style="font-size:13px;flex-shrink:0">${t.icone}</span>` : '';
+    const children = isChild ? [] : childrenOf(t.id);
+    const hasChildren = children.length > 0;
+    const expanded = sdrExpandedTopics.has(String(t.id));
+    return `<div>
+      <div onclick="selectSDRTopico('${t.id}')" id="sdr-topico-${t.id}" style="padding:${isChild ? '8px 16px 8px 32px' : '11px 16px'};cursor:pointer;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:${isChild ? '12px' : '12.5px'};font-weight:${active ? '700' : '500'};background:${active ? 'var(--surface2)' : 'transparent'};color:${active ? 'var(--text)' : 'var(--muted)'};transition:background 0.12s;" onmouseover="if(sdrTopicoAtivo!=='${t.id}')this.style.background='var(--surface2)'" onmouseout="if(sdrTopicoAtivo!=='${t.id}')this.style.background='transparent'">
+        ${isChild ? '<span style="color:var(--muted);flex-shrink:0;font-size:10px;margin-right:2px">↳</span>' : ''}
+        ${icone}
+        <span style="flex:1;line-height:1.35">${t.label}</span>
+        ${count !== null && count > 0 ? `<span style="background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:1px 7px;font-size:10px;font-weight:700;flex-shrink:0">${count}</span>` : ''}
+        ${hasChildren ? `<span onclick="toggleSDRTopicExpand('${t.id}',event)" style="flex-shrink:0;padding:2px;cursor:pointer;display:flex;align-items:center;color:var(--muted);transform:${expanded ? 'rotate(90deg)' : 'rotate(0deg)'};transition:transform 0.2s"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg></span>` : ''}
+      </div>
+      ${hasChildren && expanded ? children.map(c => topicoHtml(c, true)).join('') : ''}
+    </div>`;
+  };
+  el.innerHTML = roots.map(t => topicoHtml(t, false)).join('');
+}
+
+async function selectSDRTopico(id) {
+  sdrTopicoAtivo = String(id);
+  renderSDRTopicos();
+  if (!sdrConteudosCache[id]) {
+    const res = await API.get('/sdr/conteudos?topico=' + id);
+    sdrConteudosCache[id] = Array.isArray(res) ? res : [];
+    renderSDRTopicos();
+  }
+  renderSDRConteudo();
+}
+
+function toggleSDRCard(id) {
+  const body = document.getElementById('sdr-body-' + id);
+  const arrow = document.getElementById('sdr-arrow-' + id);
+  if (!body) return;
+  const open = body.style.display === 'none';
+  body.style.display = open ? 'block' : 'none';
+  if (arrow) arrow.style.transform = open ? 'rotate(90deg)' : '';
+}
+
+let sdrDragId = null;
+
+function sdrCardDragStart(e, id) {
+  sdrDragId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => {
+    const el = document.querySelector('[data-sdr-card="' + id + '"]');
+    if (el) el.style.opacity = '0.4';
+  }, 0);
+}
+
+function sdrCardDragOver(e, id) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  if (sdrDragId && sdrDragId !== id) {
+    const el = document.querySelector('[data-sdr-card="' + id + '"]');
+    if (el) el.style.borderColor = 'var(--primary, #4f8ef7)';
+  }
+}
+
+function sdrCardDragLeave(e) {
+  if (e.currentTarget) e.currentTarget.style.borderColor = '';
+}
+
+function sdrCardDrop(e, id) {
+  e.preventDefault();
+  if (!sdrDragId || sdrDragId === id) return;
+  const el = document.querySelector('[data-sdr-card="' + id + '"]');
+  if (el) el.style.borderColor = '';
+  sdrReorderItems(sdrDragId, id);
+  sdrDragId = null;
+}
+
+function sdrCardDragEnd(e) {
+  document.querySelectorAll('[data-sdr-card]').forEach(el => {
+    el.style.opacity = '';
+    el.style.borderColor = '';
+  });
+  sdrDragId = null;
+}
+
+async function sdrReorderItems(fromId, toId) {
+  const items = sdrConteudosCache[sdrTopicoAtivo];
+  if (!items) return;
+  const fromIdx = items.findIndex(i => String(i.id) === String(fromId));
+  const toIdx   = items.findIndex(i => String(i.id) === String(toId));
+  if (fromIdx === -1 || toIdx === -1) return;
+  const newItems = [...items];
+  const [moved] = newItems.splice(fromIdx, 1);
+  newItems.splice(toIdx, 0, moved);
+  sdrConteudosCache[sdrTopicoAtivo] = newItems;
+  renderSDRConteudo();
+  for (let i = 0; i < newItems.length; i++) {
+    API.put('/sdr/conteudos/' + newItems[i].id, { ordem: i + 1 });
+  }
+}
+
+function renderSDRConteudo() {
+  const el = document.getElementById('sdrConteudo');
+  if (!el) return;
+  const topico = sdrTopicos.find(t => t.id === sdrTopicoAtivo);
+  const items = sdrConteudosCache[sdrTopicoAtivo] || [];
+  const canEd = canEdit('sdr');
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:18px;font-weight:700">${topico?.icone} ${topico?.label}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px">${items.length} conteúdo${items.length !== 1 ? 's' : ''}</div>
+      </div>
+      ${canEd ? `<button class="btn btn-primary btn-sm" onclick="openSDRConteudoForm()">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        Novo Conteúdo
+      </button>` : ''}
+    </div>
+    ${items.length === 0 ? `<div style="text-align:center;padding:60px 20px;color:var(--muted);font-size:14px">Nenhum conteúdo cadastrado para este tópico.${canEd?' Use o botão acima para adicionar.':''}</div>` : ''}
+    <div id="sdrConteudoList" style="display:flex;flex-direction:column;gap:14px">
+      ${items.map(item => `
+        <div data-sdr-card="${item.id}" ${canEd ? `draggable="true" ondragstart="sdrCardDragStart(event,'${item.id}')" ondragover="sdrCardDragOver(event,'${item.id}')" ondragleave="sdrCardDragLeave(event)" ondrop="sdrCardDrop(event,'${item.id}')" ondragend="sdrCardDragEnd(event)"` : ''} style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;transition:opacity 0.2s,border-color 0.15s">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+            <div style="display:flex;align-items:center;gap:10px;flex:1;cursor:pointer" onclick="toggleSDRCard('${item.id}')">
+              ${canEd ? `<svg onclick="event.stopPropagation()" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;color:var(--muted);cursor:grab;opacity:0.5;margin-right:2px" title="Arrastar para reorganizar"><circle cx="9" cy="5" r="1.5"/><circle cx="15" cy="5" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="19" r="1.5"/></svg>` : ''}
+              <svg id="sdr-arrow-${item.id}" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;transition:transform 0.2s"><path d="M9 18l6-6-6-6"/></svg>
+              <div style="font-size:14px;font-weight:700;line-height:1.4">${item.titulo}</div>
+            </div>
+            ${canEd ? `<div style="display:flex;gap:6px;flex-shrink:0">
+              <button class="btn btn-ghost btn-sm" onclick="openSDRConteudoForm('${item.id}')">Editar</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteSDRConteudo('${item.id}')">
+                <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+              </button>
+            </div>` : ''}
+          </div>
+          <div id="sdr-body-${item.id}" style="display:none">
+            ${item.conteudo ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:13px;color:var(--muted);line-height:1.75">${renderMarkdown(item.conteudo)}</div>` : ''}
+            <div id="sdr-anexos-${item.id}">
+              <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">Carregando anexos…</div>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  setTimeout(async () => {
+    const canEd = canEdit('sdr');
+    for (const item of items) {
+      await sdrLoadAnexos(item.id);
+      sdrRenderAnexos(item.id, canEd);
+    }
+  }, 0);
+}
+
+async function openSDRConteudoForm(id) {
+  const item = id ? (sdrConteudosCache[sdrTopicoAtivo] || []).find(c => c.id === id) : null;
+  const topico = sdrTopicos.find(t => t.id === sdrTopicoAtivo);
+  sdrPendingFiles = [];
+  sdrFormConteudoId = id || null;
+  if (id) {
+    await sdrLoadAnexos(id);
+  }
+  document.getElementById('formTitle').textContent = item ? 'Editar Conteúdo' : 'Novo Conteúdo';
+  document.getElementById('formBody').innerHTML = `
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;padding:8px 12px;background:var(--surface2);border-radius:6px">
+      Tópico: <strong>${topico?.icone} ${topico?.label}</strong>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Título <span style="color:#e74c3c">*</span></label>
+      <input class="form-input" id="sdrTitulo" value="${item?.titulo||''}" placeholder="Ex: Abordagem via DM fria">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Conteúdo
+        <span style="font-size:11px;font-weight:400;color:var(--muted)"> — suporta **negrito**, *itálico*, - listas</span>
+      </label>
+      <textarea class="form-textarea" id="sdrConteudoText" rows="8" placeholder="Digite o conteúdo aqui...">${item?.conteudo||''}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Anexos</label>
+      <div id="formAnexosList"></div>
+      <label for="formAnexoInput" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);padding:6px 12px;border:1px dashed var(--border);border-radius:6px;margin-top:8px;transition:all 0.15s" onmouseover="this.style.borderColor='var(--text)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+        Adicionar arquivo
+        <input type="file" id="formAnexoInput" multiple style="display:none" onchange="addFormAnexo(this)">
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveSDRConteudo('${id||''}')">Salvar</button>
+    </div>
+  `;
+  renderFormAnexos(id ? (sdrAnexosCache[id] || []) : []);
+  openModal('formModal');
+}
+
+async function saveSDRConteudo(id) {
+  const titulo   = document.getElementById('sdrTitulo')?.value.trim();
+  const conteudo = document.getElementById('sdrConteudoText')?.value.trim();
+  if (!titulo) { toast('Título é obrigatório.'); return; }
+  const res = id
+    ? await API.put('/sdr/conteudos/' + id, { titulo, conteudo: conteudo || null })
+    : await API.post('/sdr/conteudos', { topico_id: sdrTopicoAtivo, titulo, conteudo: conteudo || null });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  const conteudoId = res.id || id;
+  if (sdrPendingFiles.length > 0) {
+    toast(`Enviando ${sdrPendingFiles.length} arquivo(s)…`);
+    for (const { file } of sdrPendingFiles) {
+      await new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const r = await API.post('/sdr/anexos', {
+            conteudo_id: conteudoId, nome: file.name,
+            tipo: file.type, tamanho: file.size, data: e.target.result.split(',')[1]
+          });
+          if (r.erro) toast('Erro ao enviar ' + file.name + ': ' + r.erro);
+          resolve();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    sdrPendingFiles = [];
+  }
+  logHistorico(id ? 'atualizado' : 'criado', 'sdr_conteudo', conteudoId, `Conteúdo SDR ${id?'atualizado':'criado'}: ${titulo}`);
+  delete sdrConteudosCache[sdrTopicoAtivo];
+  delete sdrAnexosCache[conteudoId];
+  closeModal('formModal');
+  toast(id ? 'Conteúdo atualizado!' : 'Conteúdo criado!');
+  await selectSDRTopico(sdrTopicoAtivo);
+}
+
+async function deleteSDRConteudo(id) {
+  if (!confirm('Remover este conteúdo?')) return;
+  const item = (sdrConteudosCache[sdrTopicoAtivo] || []).find(c => c.id === id);
+  const res = await API.del('/sdr/conteudos/' + id);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  logHistorico('excluido', 'sdr_conteudo', id, `Conteúdo SDR excluído: ${item?.titulo || id}`);
+  delete sdrConteudosCache[sdrTopicoAtivo];
+  toast('Conteúdo removido.');
+  await selectSDRTopico(sdrTopicoAtivo);
+}
+
+// ── SDR TÓPICOS (Admin / Cadastro) ───────────────────────────────────
+
+async function renderSdrTopicosAdmin() {
+  await loadSdrTopicos();
+  const canEd = canEdit('sdr_topicos');
+  const el = document.getElementById('sdrTopicosAdminList');
+  if (!el) return;
+  if (!sdrTopicos.length) {
+    el.innerHTML = `<div style="text-align:center;padding:60px;color:var(--muted);font-size:14px">Nenhum tópico cadastrado.</div>`;
+    return;
+  }
+  const roots = sdrTopicos.filter(t => !t.parent_id).sort((a, b) => a.ordem - b.ordem);
+  const childrenOf = (pid) => sdrTopicos.filter(t => t.parent_id === pid);
+  const rowHtml = (t, isChild, idx) => `
+    <tr style="border-bottom:1px solid var(--border);${isChild ? 'background:var(--surface)' : ''}">
+      <td style="padding:12px 14px;font-size:18px">${t.icone || '—'}</td>
+      <td style="padding:12px ${isChild ? '14px 12px 32px' : '14px'};font-weight:${isChild ? '400' : '600'}">
+        ${isChild ? '<span style="color:var(--muted);margin-right:6px">↳</span>' : ''}${t.label}
+      </td>
+      ${canEd ? `<td style="padding:12px 14px;text-align:right">
+        <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center">
+          ${!isChild ? `
+          <button class="btn btn-ghost btn-sm" onclick="moveSdrTopico('${t.id}','up')" ${idx === 0 ? 'disabled style="opacity:0.3;cursor:default"' : ''} title="Mover para cima">
+            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="moveSdrTopico('${t.id}','down')" ${idx === roots.length - 1 ? 'disabled style="opacity:0.3;cursor:default"' : ''} title="Mover para baixo">
+            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>` : ''}
+          <button class="btn btn-ghost btn-sm" onclick="openSdrTopicoForm('${t.id}')">Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteSdrTopico('${t.id}','${t.label.replace(/'/g,"\\'")}')">
+            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          </button>
+        </div>
+      </td>` : ''}
+    </tr>
+    ${childrenOf(t.id).map(c => rowHtml(c, true, 0)).join('')}
+  `;
+  el.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead>
+        <tr style="border-bottom:2px solid var(--border)">
+          <th style="text-align:left;padding:10px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);width:60px">Ícone</th>
+          <th style="text-align:left;padding:10px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted)">Tópico</th>
+          ${canEd ? `<th style="padding:10px 14px;width:120px"></th>` : ''}
+        </tr>
+      </thead>
+      <tbody>
+        ${roots.map((t, i) => rowHtml(t, false, i)).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+async function moveSdrTopico(id, direction) {
+  const roots = sdrTopicos.filter(t => !t.parent_id).sort((a, b) => a.ordem - b.ordem);
+  const idx = roots.findIndex(t => t.id === id);
+  const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+  if (swapIdx < 0 || swapIdx >= roots.length) return;
+  const a = roots[idx];
+  const b = roots[swapIdx];
+  await Promise.all([
+    API.put('/sdr/topicos/' + a.id, { ordem: b.ordem }),
+    API.put('/sdr/topicos/' + b.id, { ordem: a.ordem })
+  ]);
+  sdrTopicos = [];
+  await renderSdrTopicosAdmin();
+}
+
+function openSdrTopicoForm(id) {
+  const t = id ? sdrTopicos.find(x => x.id === id) : null;
+  const rootTopicos = sdrTopicos.filter(x => !x.parent_id && x.id !== id);
+  document.getElementById('formTitle').textContent = t ? 'Editar Tópico SDR' : 'Novo Tópico SDR';
+  document.getElementById('formBody').innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Nome do Tópico <span style="color:#e74c3c">*</span></label>
+      <input class="form-input" id="sdrTopicoLabel" value="${t?.label||''}" placeholder="Ex: Scripts de Abordagem">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tópico pai <span style="font-size:11px;font-weight:400;color:var(--muted)">opcional — deixe em branco para tópico raiz</span></label>
+      <select class="form-input" id="sdrTopicoParent">
+        <option value="">— Nenhum (tópico raiz) —</option>
+        ${rootTopicos.map(x => `<option value="${x.id}" ${t?.parent_id === x.id ? 'selected' : ''}>${x.icone ? x.icone + ' ' : ''}${x.label}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ícone (emoji) <span style="font-size:11px;font-weight:400;color:var(--muted)">opcional</span></label>
+      <input class="form-input" id="sdrTopicoIcone" value="${t?.icone||''}" placeholder="Ex: 💬" maxlength="10">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveSdrTopico('${id||''}')">Salvar</button>
+    </div>
+  `;
+  openModal('formModal');
+}
+
+async function saveSdrTopico(id) {
+  const label = document.getElementById('sdrTopicoLabel')?.value.trim();
+  const icone = document.getElementById('sdrTopicoIcone')?.value.trim();
+  const parent_id = document.getElementById('sdrTopicoParent')?.value || null;
+  if (!label) { toast('Nome do tópico é obrigatório.'); return; }
+  const res = id
+    ? await API.put('/sdr/topicos/' + id, { label, icone, parent_id })
+    : await API.post('/sdr/topicos', { label, icone, parent_id });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  logHistorico(id ? 'atualizado' : 'criado', 'sdr_topico', res.id || id, `Tópico SDR ${id?'atualizado':'criado'}: ${label}`);
+  closeModal('formModal');
+  toast(id ? 'Tópico atualizado!' : 'Tópico criado!');
+  sdrTopicos = [];
+  await renderSdrTopicosAdmin();
+}
+
+async function deleteSdrTopico(id, label) {
+  if (!confirm(`Remover o tópico "${label}"?\nTodos os conteúdos deste tópico serão excluídos.`)) return;
+  const res = await API.del('/sdr/topicos/' + id);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  logHistorico('excluido', 'sdr_topico', id, `Tópico SDR excluído: ${label}`);
+  toast('Tópico removido.');
+  sdrTopicos = [];
+  sdrConteudosCache = {};
+  sdrAnexosCache = {};
+  await renderSdrTopicosAdmin();
+}
+
+// ── SDR ANEXOS — FORMULÁRIO ───────────────────────────────────────────
+
+function renderFormAnexos(existingAnexos) {
+  const el = document.getElementById('formAnexosList');
+  if (!el) return;
+  const existingHtml = existingAnexos.map(a => `
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:12px;margin-bottom:6px">
+      <span style="flex-shrink:0">${sdrFileIcon(a.tipo)}</span>
+      <a href="${a.url}" target="_blank" rel="noopener" style="flex:1;color:var(--text);text-decoration:none;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${a.nome}">${a.nome}</a>
+      ${a.tamanho ? `<span style="color:var(--muted);flex-shrink:0">${sdrFormatBytes(a.tamanho)}</span>` : ''}
+      <button onclick="removeExistingFormAnexo('${a.id}')" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:0;line-height:1;flex-shrink:0" title="Remover">×</button>
+    </div>
+  `).join('');
+  const pendingHtml = sdrPendingFiles.map((f, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface2);border:1px dashed var(--border);border-radius:6px;font-size:12px;margin-bottom:6px">
+      <span style="flex-shrink:0">${sdrFileIcon(f.file.type)}</span>
+      <span style="flex:1;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${f.file.name}">${f.file.name}</span>
+      <span style="color:var(--muted);flex-shrink:0">${sdrFormatBytes(f.file.size)}</span>
+      <span style="font-size:10px;font-weight:700;color:#E67E22;flex-shrink:0">PENDENTE</span>
+      <button onclick="removePendingFormAnexo(${i})" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:0;line-height:1;flex-shrink:0" title="Remover">×</button>
+    </div>
+  `).join('');
+  el.innerHTML = existingHtml + pendingHtml;
+}
+
+function addFormAnexo(input) {
+  const MAX = 20 * 1024 * 1024;
+  for (const file of Array.from(input.files)) {
+    if (file.size > MAX) { toast(`"${file.name}" não foi adicionado pois ultrapassa o limite máximo de 20 MB por arquivo.`); continue; }
+    sdrPendingFiles.push({ file });
+  }
+  input.value = '';
+  const existingAnexos = sdrFormConteudoId ? (sdrAnexosCache[sdrFormConteudoId] || []) : [];
+  renderFormAnexos(existingAnexos);
+}
+
+function removePendingFormAnexo(idx) {
+  sdrPendingFiles.splice(idx, 1);
+  const existingAnexos = sdrFormConteudoId ? (sdrAnexosCache[sdrFormConteudoId] || []) : [];
+  renderFormAnexos(existingAnexos);
+}
+
+async function removeExistingFormAnexo(id) {
+  if (!confirm('Remover este anexo?')) return;
+  const res = await API.del('/sdr/anexos/' + id);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  if (sdrFormConteudoId) {
+    delete sdrAnexosCache[sdrFormConteudoId];
+    await sdrLoadAnexos(sdrFormConteudoId);
+  }
+  renderFormAnexos(sdrFormConteudoId ? (sdrAnexosCache[sdrFormConteudoId] || []) : []);
+  toast('Anexo removido.');
+}
+
+// ── SDR ANEXOS ────────────────────────────────────────────────────────
+
+function sdrFileIcon(tipo) {
+  if (!tipo) return '📎';
+  if (tipo.includes('pdf'))                                      return '📄';
+  if (tipo.includes('image'))                                    return '🖼️';
+  if (tipo.includes('word') || tipo.includes('document'))        return '📝';
+  if (tipo.includes('sheet') || tipo.includes('excel'))          return '📊';
+  if (tipo.includes('presentation') || tipo.includes('powerpoint')) return '📋';
+  if (tipo.includes('video'))                                    return '🎥';
+  if (tipo.includes('audio'))                                    return '🎵';
+  if (tipo.includes('zip') || tipo.includes('archive') || tipo.includes('compressed')) return '📦';
+  return '📎';
+}
+
+function sdrFormatBytes(bytes) {
+  if (!bytes) return '';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+async function sdrLoadAnexos(conteudoId) {
+  if (sdrAnexosCache[conteudoId] !== undefined) return;
+  const res = await API.get('/sdr/anexos?conteudo_id=' + conteudoId);
+  sdrAnexosCache[conteudoId] = Array.isArray(res) ? res : [];
+}
+
+function sdrRenderAnexos(conteudoId, canEd) {
+  const el = document.getElementById('sdr-anexos-' + conteudoId);
+  if (!el) return;
+  const anexos = sdrAnexosCache[conteudoId] || [];
+  const hasContent = anexos.length > 0 || canEd;
+  if (!hasContent) { el.innerHTML = ''; return; }
+
+  el.innerHTML = `
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+      ${anexos.length > 0 ? `
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:8px">Anexos</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:${canEd?'8px':'0'}">
+          ${anexos.map(a => `
+            <div style="display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;max-width:280px">
+              <span style="flex-shrink:0">${sdrFileIcon(a.tipo)}</span>
+              <a href="${a.url}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px" title="${a.nome}">${a.nome}</a>
+              ${a.tamanho ? `<span style="color:var(--muted);flex-shrink:0">${sdrFormatBytes(a.tamanho)}</span>` : ''}
+              ${canEd ? `<button onclick="sdrDeleteAnexo('${a.id}','${conteudoId}')" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:0;line-height:1;font-size:14px;flex-shrink:0" title="Remover">×</button>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+      ${canEd ? `
+        <label for="sdr-file-${conteudoId}" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);padding:5px 10px;border:1px dashed var(--border);border-radius:6px;transition:all 0.15s" onmouseover="this.style.borderColor='var(--text)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+          Anexar arquivo
+          <input type="file" id="sdr-file-${conteudoId}" style="display:none" onchange="sdrUploadAnexo('${conteudoId}', this)">
+        </label>
+      ` : ''}
+    </div>
+  `;
+}
+
+async function sdrUploadAnexo(conteudoId, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const MAX = 20 * 1024 * 1024;
+  if (file.size > MAX) { toast(`"${file.name}" não pode ser enviado pois ultrapassa o limite máximo de 20 MB por arquivo.`); input.value = ''; return; }
+  toast('Enviando arquivo…');
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const base64 = e.target.result.split(',')[1];
+    const res = await API.post('/sdr/anexos', {
+      conteudo_id: conteudoId, nome: file.name,
+      tipo: file.type, tamanho: file.size, data: base64
+    });
+    input.value = '';
+    if (res.erro) { toast('Erro: ' + res.erro); return; }
+    delete sdrAnexosCache[conteudoId];
+    await sdrLoadAnexos(conteudoId);
+    sdrRenderAnexos(conteudoId, canEdit('sdr'));
+    toast('Arquivo anexado!');
+  };
+  reader.readAsDataURL(file);
+}
+
+async function sdrDeleteAnexo(id, conteudoId) {
+  if (!confirm('Remover este arquivo?')) return;
+  const res = await API.del('/sdr/anexos/' + id);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  delete sdrAnexosCache[conteudoId];
+  await sdrLoadAnexos(conteudoId);
+  sdrRenderAnexos(conteudoId, canEdit('sdr'));
+  toast('Arquivo removido.');
+}
+
+// ═══════════════════════════════════════
+//  CALENDÁRIO EDITORIAL
+// ═══════════════════════════════════════
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//  ALERTAS DE PRAZO
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+let alertDaysConfig = parseInt(localStorage.getItem('sea_alertDaysConfig') || '1');
+
+function getOverdueDemands() {
+  const today = new Date().toISOString().slice(0, 10);
+  const from  = new Date(); from.setDate(from.getDate() - alertDaysConfig);
+  const fromStr = from.toISOString().slice(0, 10);
+  return demands.filter(d => !d.postado && d.date && d.date >= fromStr && d.date < today)
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function updateAlertBadge() {
+  const badge = document.getElementById('alertBadge');
+  const btn   = document.getElementById('alertBtn');
+  if (!badge || !btn) return;
+  const count = getOverdueDemands().length;
+  if (count > 0) {
+    badge.textContent    = count > 9 ? '9+' : count;
+    badge.style.display  = 'flex';
+    btn.style.color      = '#ef4444';
+    btn.style.borderColor = '#ef444466';
+  } else {
+    badge.style.display  = 'none';
+    btn.style.color      = '';
+    btn.style.borderColor = '';
+  }
+}
+
+function toggleAlertDropdown() {
+  const drop = document.getElementById('alertDropdown');
+  if (!drop) return;
+  if (drop.style.display !== 'none') { drop.style.display = 'none'; return; }
+
+  const alerts = getOverdueDemands();
+  const btn    = document.getElementById('alertBtn');
+  const rect   = btn.getBoundingClientRect();
+  drop.style.top   = (rect.bottom + 6) + 'px';
+  drop.style.right = (window.innerWidth - rect.right) + 'px';
+
+  const label = alertDaysConfig === 1 ? 'de ontem' : `dos últimos ${alertDaysConfig} dias`;
+
+  if (!alerts.length) {
+    drop.innerHTML = `<div style="padding:14px 16px;font-size:13px;color:var(--muted);text-align:center">Nenhuma demanda atrasada ${label}.</div>`;
+  } else {
+    drop.innerHTML = `
+      <div style="padding:10px 14px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid var(--border)">
+        Atrasadas ${label} (${alerts.length})
+      </div>
+      ${alerts.map(d => {
+        const cl = getClient(d.clientId);
+        const st = getStatus(d.statusId);
+        return `<div onclick="openDetail('${d.id}');toggleAlertDropdown()" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+          <span style="width:8px;height:8px;border-radius:50%;background:${st.color};flex-shrink:0"></span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.desc || '—'}</div>
+            <div style="font-size:11px;color:var(--muted)">${cl.name} · ${fmtDateFull(d.date)}</div>
+          </div>
+        </div>`;
+      }).join('')}`;
+  }
+  drop.style.display = 'block';
+  setTimeout(() => document.addEventListener('click', _closeAlertDrop, { once: true }), 0);
+}
+
+function _closeAlertDrop(e) {
+  const drop = document.getElementById('alertDropdown');
+  const btn  = document.getElementById('alertBtn');
+  if (drop && !drop.contains(e.target) && !btn.contains(e.target)) drop.style.display = 'none';
+}
+
+function showAlertToast() {
+  const count = getOverdueDemands().length;
+  if (!count) return;
+  toast(`⚠️ ${count} demanda${count > 1 ? 's' : ''} atrasada${count > 1 ? 's' : ''}`, 4000);
+}
+
+function renderConfigSection() {
+  const sel = document.getElementById('configAlertDays');
+  if (sel) sel.value = String(alertDaysConfig);
+}
+
+function saveConfigAlertDays(val) {
+  alertDaysConfig = parseInt(val);
+  localStorage.setItem('sea_alertDaysConfig', alertDaysConfig);
+  updateAlertBadge();
+  toast('Configuracao salva!');
+}
+let calYear       = new Date().getFullYear();
+let calMonth      = new Date().getMonth() + 1;
+let calDragItemId = null;
+
+function renderCalendario() {
+  buildCalClientFilter();
+  buildCalFormatos();
+  buildCalStatusFilter();
+  renderCalGrid();
+}
+
+function buildCalClientFilter() {
+  const sel = document.getElementById('calFilterCliente');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Todos os clientes</option>' +
+    clients.map(c => `<option value="${c.id}" ${cur === c.id ? 'selected' : ''}>${c.name}</option>`).join('');
+}
+
+function buildCalFormatos() {
+  const sel = document.getElementById('calFilterFormato');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Todos os formatos</option>' +
+    formats.map(f => `<option value="${f.id}" ${cur === f.id ? 'selected' : ''}>${f.name}</option>`).join('');
+}
+
+function buildCalStatusFilter() {
+  const sel = document.getElementById('calFilterStatus');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Todos os status</option>' +
+    statuses.map(s => `<option value="${s.id}" ${cur === s.id ? 'selected' : ''}>${s.name}</option>`).join('');
+}
+
+function renderCalGrid() {
+  const label = document.getElementById('calMonthLabel');
+  const grid  = document.getElementById('calGrid');
+  if (!label || !grid) return;
+
+  const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  label.textContent = `${MESES[calMonth - 1]} ${calYear}`;
+
+  const fCliente = document.getElementById('calFilterCliente')?.value || '';
+  const fFormato = document.getElementById('calFilterFormato')?.value || '';
+  const fStatus  = document.getElementById('calFilterStatus')?.value  || '';
+
+  const filtered = demands.filter(d => {
+    if (!d.date) return false;
+    const [y, m] = d.date.split('-');
+    if (+y !== calYear || +m !== calMonth) return false;
+    if (fCliente && d.clientId  !== fCliente) return false;
+    if (fFormato && d.formatoId !== fFormato) return false;
+    if (fStatus  && d.statusId  !== fStatus)  return false;
+    return true;
+  });
+
+  const byDate = {};
+  filtered.forEach(d => {
+    if (!byDate[d.date]) byDate[d.date] = [];
+    byDate[d.date].push(d);
+  });
+
+  const firstDow   = new Date(calYear, calMonth - 1, 1).getDay();
+  const totalDays  = new Date(calYear, calMonth, 0).getDate();
+  const today      = new Date().toISOString().split('T')[0];
+  const canEd      = canEdit('calendario');
+  const DAYS       = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const totalCells = Math.ceil((firstDow + totalDays) / 7) * 7;
+
+  let html = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden">
+    ${DAYS.map(d => `<div style="padding:8px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;background:var(--surface2);color:var(--muted);border-bottom:1px solid var(--border)">${d}</div>`).join('')}`;
+
+  let day = 1;
+  for (let cell = 0; cell < totalCells; cell++) {
+    const dow     = cell % 7;
+    const borderR = dow < 6 ? 'border-right:1px solid var(--border);' : '';
+    if (cell < firstDow || day > totalDays) {
+      html += `<div style="min-height:110px;${borderR}border-bottom:1px solid var(--border);background:var(--surface2);opacity:0.35"></div>`;
+    } else {
+      const dateStr   = `${calYear}-${String(calMonth).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      const isToday   = dateStr === today;
+      const isWeekend = dow === 0 || dow === 6;
+      const dayItems  = byDate[dateStr] || [];
+
+      html += `<div data-cal-date="${dateStr}" style="min-height:110px;padding:5px;${borderR}border-bottom:1px solid var(--border);background:${isToday ? 'rgba(79,142,247,0.06)' : isWeekend ? 'var(--surface2)' : 'var(--bg)'};vertical-align:top"
+        ondragover="calDayDragOver(event,'${dateStr}')" ondragleave="calDayDragLeave(event)" ondrop="calDayDrop(event,'${dateStr}')">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:12px;font-weight:700;${isToday ? 'background:var(--primary,#4f8ef7);color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;' : 'color:var(--text)'}">${day}</span>
+          ${canEd ? `<button onclick="openDemandFormDate('${dateStr}')" style="width:18px;height:18px;border:none;background:var(--surface2);border-radius:4px;cursor:pointer;font-size:14px;line-height:1;color:var(--muted);opacity:0;transition:opacity 0.15s" class="cal-add-btn" title="Adicionar">+</button>` : ''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px">
+          ${dayItems.map(d => {
+            const st  = getStatus(d.statusId);
+            const cl  = getClient(d.clientId);
+            const fmt = formats.find(f => f.id === d.formatoId);
+            return `<div data-cal-id="${d.id}" draggable="${canEd}"
+              ${canEd ? `ondragstart="calCardDragStart(event,'${d.id}')" ondragend="calCardDragEnd(event)"` : ''}
+              onclick="openDetail('${d.id}')"
+              style="background:${st.color}18;border-left:3px solid ${st.color};border-radius:4px;padding:4px 6px;cursor:pointer;font-size:11px;transition:background 0.15s;overflow:hidden;min-width:0;white-space:nowrap;text-overflow:ellipsis"
+              onmouseover="this.style.background='${st.color}30'" onmouseout="this.style.background='${st.color}18'">
+              <div style="display:flex;align-items:center;gap:4px;margin-bottom:1px">
+                <span style="width:5px;height:5px;border-radius:50%;background:${st.color};flex-shrink:0"></span>
+                ${fmt ? `<span style="font-size:9px;font-weight:700;color:${st.color};text-transform:uppercase;letter-spacing:0.3px">${fmt.name}</span>` : ''}
+              </div>
+              <div style="font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${(d.desc||'').replace(/"/g,'&quot;')}">${d.desc || '—'}</div>
+              <div style="font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${cl.name}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+      day++;
+    }
+  }
+  html += '</div>';
+  html += `<style>.cal-add-btn{opacity:0!important} [data-cal-date]:hover .cal-add-btn{opacity:1!important}</style>`;
+  grid.innerHTML = html;
+}
+
+function calPrevMonth() {
+  calMonth--; if (calMonth < 1) { calMonth = 12; calYear--; }
+  renderCalGrid();
+}
+function calNextMonth() {
+  calMonth++; if (calMonth > 12) { calMonth = 1; calYear++; }
+  renderCalGrid();
+}
+
+function calCardDragStart(e, id) {
+  calDragItemId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => { const el = document.querySelector(`[data-cal-id="${id}"]`); if (el) el.style.opacity = '0.35'; }, 0);
+}
+function calCardDragEnd(e) {
+  document.querySelectorAll('[data-cal-id]').forEach(el => el.style.opacity = '');
+  calDragItemId = null;
+}
+function calDayDragOver(e, date) {
+  e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.style.outline = '2px solid var(--primary,#4f8ef7)';
+  e.currentTarget.style.outlineOffset = '-2px';
+}
+function calDayDragLeave(e) {
+  e.currentTarget.style.outline = '';
+}
+async function calDayDrop(e, date) {
+  e.preventDefault(); e.currentTarget.style.outline = '';
+  if (!calDragItemId) return;
+  const demand = demands.find(d => String(d.id) === String(calDragItemId));
+  if (!demand || demand.date === date) { calDragItemId = null; return; }
+  const res = await API.put('/demandas/' + calDragItemId, { data: date });
+  if (res && !res.erro) { demand.date = date; save(); }
+  calDragItemId = null;
+  renderCalGrid();
+}
+
+function openDemandFormDate(date) {
+  openDemandForm();
+  setTimeout(() => { const el = document.getElementById('fDDate'); if (el) el.value = date; }, 60);
+}
+
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

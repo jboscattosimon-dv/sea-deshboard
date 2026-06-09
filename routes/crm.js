@@ -25,22 +25,23 @@ router.get('/etapas', async (req, res) => {
 });
 
 router.post('/etapas', async (req, res) => {
-  const { key, label, cor, ordem } = req.body;
+  const { key, label, cor, ordem, pedir_motivo } = req.body;
   if (!key || !label) return res.status(400).json({ erro: 'key e label são obrigatórios' });
   const { data, error } = await supabase
     .from('crm_etapas')
-    .insert([{ key: key.toLowerCase().replace(/\s+/g,'_'), label, cor: cor||'#999999', ordem: ordem||0 }])
+    .insert([{ key: key.toLowerCase().replace(/\s+/g,'_'), label, cor: cor||'#999999', ordem: ordem||0, pedir_motivo: pedir_motivo||false }])
     .select().single();
   if (error) return res.status(400).json({ erro: error.message });
   res.status(201).json(data);
 });
 
 router.put('/etapas/:id', async (req, res) => {
-  const { label, cor, ordem } = req.body;
+  const { label, cor, ordem, pedir_motivo } = req.body;
   const updates = {};
-  if (label !== undefined) updates.label = label;
-  if (cor   !== undefined) updates.cor   = cor;
-  if (ordem !== undefined) updates.ordem = parseInt(ordem);
+  if (label         !== undefined) updates.label         = label;
+  if (cor           !== undefined) updates.cor           = cor;
+  if (ordem         !== undefined) updates.ordem         = parseInt(ordem);
+  if (pedir_motivo  !== undefined) updates.pedir_motivo  = pedir_motivo;
   const { data, error } = await supabase
     .from('crm_etapas').update(updates).eq('id', req.params.id).select().single();
   if (error) return res.status(400).json({ erro: error.message });
@@ -70,11 +71,11 @@ router.get('/leads', async (req, res) => {
 });
 
 router.post('/leads', async (req, res) => {
-  const { nome, telefone, email, origem, etapa } = req.body;
+  const { nome, telefone, instagram, area_atuacao, cidade, origem, etapa, informacoes, responsavel_id } = req.body;
   if (!nome || !telefone) return res.status(400).json({ erro: 'Nome e telefone são obrigatórios' });
   const { data, error } = await supabase
     .from('crm_leads')
-    .insert([{ nome, telefone, email: email || null, origem: origem || null, etapa: etapa || 'primeiro_contato', criado_por: req.usuario.id }])
+    .insert([{ nome, telefone, instagram: instagram || null, area_atuacao: area_atuacao || null, cidade: cidade || null, origem: origem || null, etapa: etapa || 'primeiro_contato', informacoes: informacoes || null, responsavel_id: responsavel_id || null, criado_por: req.usuario.id }])
     .select()
     .single();
   if (error) return res.status(400).json({ erro: error.message });
@@ -82,13 +83,18 @@ router.post('/leads', async (req, res) => {
 });
 
 router.put('/leads/:id', async (req, res) => {
-  const { nome, telefone, email, origem, etapa } = req.body;
+  const { nome, telefone, instagram, area_atuacao, cidade, origem, etapa, informacoes, motivo_etapa, responsavel_id } = req.body;
   const updates = {};
-  if (nome      !== undefined) updates.nome      = nome;
-  if (telefone  !== undefined) updates.telefone  = telefone;
-  if (email     !== undefined) updates.email     = email;
-  if (origem    !== undefined) updates.origem    = origem;
-  if (etapa     !== undefined) updates.etapa     = etapa;
+  if (nome           !== undefined) updates.nome           = nome;
+  if (telefone       !== undefined) updates.telefone       = telefone;
+  if (instagram      !== undefined) updates.instagram      = instagram;
+  if (area_atuacao   !== undefined) updates.area_atuacao   = area_atuacao;
+  if (cidade         !== undefined) updates.cidade         = cidade;
+  if (origem         !== undefined) updates.origem         = origem;
+  if (etapa          !== undefined) updates.etapa          = etapa;
+  if (informacoes    !== undefined) updates.informacoes    = informacoes;
+  if (motivo_etapa   !== undefined) updates.motivo_etapa   = motivo_etapa;
+  if (responsavel_id !== undefined) updates.responsavel_id = responsavel_id || null;
   updates.atualizado_em = new Date().toISOString();
   const { data, error } = await supabase
     .from('crm_leads')
