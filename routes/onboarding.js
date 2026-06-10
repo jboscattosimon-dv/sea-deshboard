@@ -132,6 +132,17 @@ router.get('/resumo', auth, async (req, res) => {
   }));
 });
 
+// GET /api/onboarding/categorias
+router.get('/categorias', auth, async (req, res) => {
+  const { data, error } = await supabase
+    .from('onboarding_itens_catalogo')
+    .select('categoria')
+    .order('categoria');
+  if (error) return res.status(400).json({ erro: error.message });
+  const unique = [...new Set((data || []).map(i => i.categoria).filter(Boolean))].sort();
+  res.json(unique);
+});
+
 // GET /api/onboarding/catalogo
 router.get('/catalogo', auth, async (req, res) => {
   let q = supabase.from('onboarding_itens_catalogo').select('*').order('ordem');

@@ -6148,21 +6148,35 @@ function onbCatNovoItemPage() { _onbCatFormPage(); }
 function onbCatEditarItemPage(id) { _onbCatFormPage(id); }
 
 async function _onbCatFormPage(editId) {
-  // fetch current catalog to find item if editing
   let item = null;
-  if (editId) {
-    const res = await API.get('/onboarding/catalogo');
-    if (!res.erro) item = (Array.isArray(res) ? res : []).find(i => i.id === editId);
-  }
+  const [catRes, catsRes] = await Promise.all([
+    editId ? API.get('/onboarding/catalogo') : Promise.resolve([]),
+    API.get('/onboarding/categorias')
+  ]);
+  if (editId && !catRes.erro) item = (Array.isArray(catRes) ? catRes : []).find(i => i.id === editId);
+  const categorias = Array.isArray(catsRes) ? catsRes : [];
+
   const tipos = ['upload','texto','link','checkbox'];
   const formEl = document.getElementById('onbCatPageForm');
   if (!formEl) return;
+  const catOpts = categorias.map(c =>
+    `<option value="${c}" ${item?.categoria === c ? 'selected' : ''}>${c}</option>`
+  ).join('');
+  const isNova = item && !categorias.includes(item.categoria);
+
   formEl.innerHTML = `
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:20px">
       <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:16px">${editId ? 'Editar item' : 'Novo item'}</div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Categoria</label>
-          <input class="form-input" id="onbCatPageCategoria" value="${item?.categoria||''}" placeholder="Ex: Identidade visual"></div>
+        <div class="form-group">
+          <label class="form-label">Categoria</label>
+          <select class="form-select" id="onbCatPageCategoriaSelect" onchange="onbCatToggleCategoriaInput(this)">
+            <option value="">Selecione...</option>
+            ${catOpts}
+            <option value="__nova__" ${isNova ? 'selected' : ''}>+ Nova categoria...</option>
+          </select>
+          <input class="form-input" id="onbCatPageCategoriaNova" style="margin-top:6px;${(categorias.length === 0 || isNova) ? '' : 'display:none'}" placeholder="Nome da nova categoria" value="${isNova ? (item?.categoria||'') : ''}">
+        </div>
         <div class="form-group"><label class="form-label">Label</label>
           <input class="form-input" id="onbCatPageLabel" value="${item?.label||''}" placeholder="Ex: Logo em alta resolução"></div>
       </div>
@@ -6184,9 +6198,20 @@ async function _onbCatFormPage(editId) {
   formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function onbCatToggleCategoriaInput(sel) {
+  const novaInput = document.getElementById('onbCatPageCategoriaNova');
+  if (!novaInput) return;
+  novaInput.style.display = sel.value === '__nova__' ? '' : 'none';
+  if (sel.value !== '__nova__') novaInput.value = '';
+}
+
 async function onbCatSalvarItemPage(editId) {
+  const sel = document.getElementById('onbCatPageCategoriaSelect');
+  const categoriaVal = sel?.value === '__nova__' || sel?.value === ''
+    ? document.getElementById('onbCatPageCategoriaNova')?.value?.trim()
+    : sel?.value;
   const body = {
-    categoria: document.getElementById('onbCatPageCategoria')?.value?.trim(),
+    categoria: categoriaVal,
     label: document.getElementById('onbCatPageLabel')?.value?.trim(),
     descricao: document.getElementById('onbCatPageDesc')?.value?.trim() || null,
     tipo: document.getElementById('onbCatPageTipo')?.value,
@@ -6399,15 +6424,28 @@ function renderOnbCatalogoTab() {
   `;
 }
 
-function onbNovoCatItem(editId) {
+async function onbNovoCatItem(editId) {
   const item = editId ? _onbCatalogo.find(i => i.id === editId) : null;
   const tipos = ['upload','texto','link','checkbox'];
+  const catsRes = await API.get('/onboarding/categorias');
+  const categorias = Array.isArray(catsRes) ? catsRes : [];
+  const catOpts = categorias.map(c =>
+    `<option value="${c}" ${item?.categoria === c ? 'selected' : ''}>${c}</option>`
+  ).join('');
+  const isNova = item && !categorias.includes(item.categoria);
   document.getElementById('onb-cat-form').innerHTML = `
     <div style="padding:14px;background:var(--surface2);border-radius:var(--r);border:1px solid var(--border);margin-bottom:12px">
       <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;margin-bottom:12px">${editId ? 'Editar item' : 'Novo item'}</div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Categoria</label>
-          <input class="form-input" id="onbCatCategoria" value="${item?.categoria||''}" placeholder="Ex: Identidade visual"></div>
+        <div class="form-group">
+          <label class="form-label">Categoria</label>
+          <select class="form-select" id="onbCatCategoriaSelect" onchange="onbCatToggleModalCatInput(this)">
+            <option value="">Selecione...</option>
+            ${catOpts}
+            <option value="__nova__" ${isNova ? 'selected' : ''}>+ Nova categoria...</option>
+          </select>
+          <input class="form-input" id="onbCatCategoriaNova" style="margin-top:6px;${(categorias.length === 0 || isNova) ? '' : 'display:none'}" placeholder="Nome da nova categoria" value="${isNova ? (item?.categoria||'') : ''}">
+        </div>
         <div class="form-group"><label class="form-label">Label</label>
           <input class="form-input" id="onbCatLabel" value="${item?.label||''}" placeholder="Ex: Logo em alta resolução"></div>
       </div>
@@ -6428,11 +6466,22 @@ function onbNovoCatItem(editId) {
     </div>`;
 }
 
+function onbCatToggleModalCatInput(sel) {
+  const novaInput = document.getElementById('onbCatCategoriaNova');
+  if (!novaInput) return;
+  novaInput.style.display = sel.value === '__nova__' ? '' : 'none';
+  if (sel.value !== '__nova__') novaInput.value = '';
+}
+
 function onbEditCatItem(id) { onbNovoCatItem(id); }
 
 async function onbSalvarCatItem(editId) {
+  const sel = document.getElementById('onbCatCategoriaSelect');
+  const categoriaVal = sel?.value === '__nova__' || sel?.value === ''
+    ? document.getElementById('onbCatCategoriaNova')?.value?.trim()
+    : sel?.value;
   const body = {
-    categoria: document.getElementById('onbCatCategoria')?.value?.trim(),
+    categoria: categoriaVal,
     label: document.getElementById('onbCatLabel')?.value?.trim(),
     descricao: document.getElementById('onbCatDesc')?.value?.trim() || null,
     tipo: document.getElementById('onbCatTipo')?.value,
