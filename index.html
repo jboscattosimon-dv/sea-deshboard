@@ -1157,6 +1157,10 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
           Tópicos SDR
         </div>
+        <div class="nav-sub-item" data-page="onboarding_catalogo" onclick="goTo('onboarding_catalogo')" id="navOnboardingCatalogo">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          Itens Onboarding
+        </div>
       </div>
     </div>
 
@@ -1642,6 +1646,17 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     </div>
   </div>
 
+  <!-- ── ONBOARDING: CATÁLOGO DE ITENS ── -->
+  <div class="page" id="page-onboarding_catalogo">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Itens de Onboarding</div>
+        <div class="page-sub">Catálogo de itens disponíveis para coleta no onboarding de clientes</div>
+      </div>
+    </div>
+    <div id="onbCatalogoPageContent"></div>
+  </div>
+
   <!-- ── SDR: TÓPICOS (Cadastro) ── -->
   <div class="page" id="page-sdr_topicos">
     <div class="page-header">
@@ -2050,7 +2065,7 @@ function goTo(page) {
     clients:'Clientes', statuses:'Status', formats:'Formatos', users:'Usuários', history:'Histórico',
     crm_leads:'Leads', crm_funil:'Funil de Vendas', crm_atividades:'Atividades', crm_relatorios:'Relatórios CRM',
     crm_etapas:'Etapas do Funil', sdr:'SDR', sdr_topicos:'Tópicos SDR', calendario:'Calendário Editorial',
-    onboarding:'Onboarding'
+    onboarding:'Onboarding', onboarding_catalogo:'Itens de Onboarding'
   };
   document.getElementById('headerTitle').textContent = titles[page] || page;
   buildHeaderActions(page);
@@ -2070,10 +2085,11 @@ function goTo(page) {
   if (page === 'crm_atividades') renderAtividades();
   if (page === 'crm_relatorios') renderCrmRelatorios();
   if (page === 'crm_etapas')     renderEtapas();
-  if (page === 'sdr')            renderSDR();
-  if (page === 'sdr_topicos')    renderSdrTopicosAdmin();
-  if (page === 'calendario')     renderCalendario();
-  if (page === 'onboarding')     carregarPainelOnboarding();
+  if (page === 'sdr')                  renderSDR();
+  if (page === 'sdr_topicos')          renderSdrTopicosAdmin();
+  if (page === 'calendario')           renderCalendario();
+  if (page === 'onboarding')           carregarPainelOnboarding();
+  if (page === 'onboarding_catalogo')  renderOnboardingCatalogoPage();
 }
 
 function buildHeaderActions(page) {
@@ -2090,9 +2106,10 @@ function buildHeaderActions(page) {
     crm_leads:      canEdit('crm_leads')       ? btnNew('Novo lead',        'openLeadForm')      : '',
     crm_atividades: canEdit('crm_atividades')  ? btnNew('Nova atividade',   'openAtividadeForm') : '',
     crm_etapas:     canEdit('crm_etapas')      ? btnNew('Nova etapa',       'openEtapaForm')     : '',
-    sdr_topicos:    canEdit('sdr_topicos')     ? btnNew('Novo tópico',      'openSdrTopicoForm') : '',
-    calendario:     canEdit('calendario')      ? btnNew('Nova demanda',      'openDemandForm')       : '',
-    onboarding:     '',
+    sdr_topicos:         canEdit('sdr_topicos')          ? btnNew('Novo tópico',   'openSdrTopicoForm')         : '',
+    calendario:          canEdit('calendario')           ? btnNew('Nova demanda',  'openDemandForm')             : '',
+    onboarding:          '',
+    onboarding_catalogo: canEdit('onboarding_catalogo')  ? btnNew('Novo item',     'onbCatNovoItemPage')         : '',
     dashboard: `<button class="btn btn-ghost btn-sm" onclick="openExportModal()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M12 4v12m0 0l-4-4m4 4l4-4"/><path d="M4 20h16"/></svg> Exportar PDF</button>
                 ${canEdit('demands') ? btnNew('Nova demanda', 'openDemandForm') : ''}`,
   };
@@ -3101,7 +3118,8 @@ function openPermissoes(userId) {
         { key: 'formats',    label: 'Formatos' },
         { key: 'users',      label: 'Usuários' },
         { key: 'crm_etapas',  label: 'Etapas do Funil' },
-        { key: 'sdr_topicos', label: 'Tópicos SDR' },
+        { key: 'sdr_topicos',         label: 'Tópicos SDR' },
+        { key: 'onboarding_catalogo', label: 'Itens Onboarding', sub: true },
       ]
     },
     {
@@ -3121,9 +3139,11 @@ function openPermissoes(userId) {
     },
   ];
 
+  const PERM_OFF_BY_DEFAULT = ['financeiro','onboarding','onboarding_catalogo'];
   function chk(page, perm) {
     const val = perms[page]?.[perm];
-    return val === undefined ? true : val;
+    if (val === undefined) return !PERM_OFF_BY_DEFAULT.includes(page);
+    return val;
   }
 
   const thStyle = `padding:8px 14px;background:var(--surface2);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);text-align:center`;
@@ -3178,7 +3198,7 @@ function onPermEditarChange(page, el) {
 }
 
 async function savePermissoes(userId) {
-  const pages = ['dashboard','demands','internal','clients','financeiro','statuses','formats','users','crm_leads','crm_funil','crm_atividades','crm_relatorios','crm_etapas','sdr','sdr_topicos','calendario','onboarding'];
+  const pages = ['dashboard','demands','internal','clients','financeiro','statuses','formats','users','crm_leads','crm_funil','crm_atividades','crm_relatorios','crm_etapas','sdr','sdr_topicos','onboarding_catalogo','calendario','onboarding'];
   const permissoes = {};
   pages.forEach(page => {
     const visualizar = document.getElementById(`perm_${page}_visualizar`)?.checked ?? true;
@@ -3194,12 +3214,15 @@ async function savePermissoes(userId) {
   renderUsers();
 }
 
+const _PERM_OFF_DEFAULT = ['financeiro','onboarding','onboarding_catalogo'];
+
 function canView(page) {
   const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
   if (!u) return false;
   if (u.papel === 'admin') return true;
   const p = (u.permissoes || {})[page];
-  if (!p) return true;
+  const def = !_PERM_OFF_DEFAULT.includes(page);
+  if (!p) return def;
   return p.visualizar !== false;
 }
 
@@ -3208,7 +3231,8 @@ function canEdit(page) {
   if (!u) return false;
   if (u.papel === 'admin') return true;
   const p = (u.permissoes || {})[page];
-  if (!p) return true;
+  const def = !_PERM_OFF_DEFAULT.includes(page);
+  if (!p) return def;
   return p.editar !== false;
 }
 
@@ -3246,7 +3270,7 @@ function applyPermissions() {
     if (el) el.style.display = canView(page) ? '' : 'none';
   });
   // Cadastro sub-items (inclui crm_etapas)
-  const cadastroPages = ['clients','statuses','formats','users','crm_etapas','sdr_topicos'];
+  const cadastroPages = ['clients','statuses','formats','users','crm_etapas','sdr_topicos','onboarding_catalogo'];
   cadastroPages.forEach(page => {
     const el = document.querySelector(`.nav-sub-item[data-page="${page}"]`);
     if (el) el.style.display = canView(page) ? '' : 'none';
@@ -6075,6 +6099,119 @@ async function calDayDrop(e, date) {
 function openDemandFormDate(date) {
   openDemandForm();
   setTimeout(() => { const el = document.getElementById('fDDate'); if (el) el.value = date; }, 60);
+}
+
+// ═══════════════════════════════════════
+//  ONBOARDING — PÁGINA DE CATÁLOGO
+// ═══════════════════════════════════════
+async function renderOnboardingCatalogoPage() {
+  const el = document.getElementById('onbCatalogoPageContent');
+  if (!el) return;
+  el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Carregando...</div>';
+  const res = await API.get('/onboarding/catalogo');
+  if (res.erro) { el.innerHTML = `<p style="color:#E74C3C;font-size:13px">Erro: ${res.erro}</p>`; return; }
+  const catalogo = Array.isArray(res) ? res : [];
+
+  const tipos = ['upload','texto','link','checkbox'];
+  const grouped = {};
+  catalogo.forEach(i => { if (!grouped[i.categoria]) grouped[i.categoria] = []; grouped[i.categoria].push(i); });
+
+  const rows = catalogo.length ? catalogo.map(i => `
+    <tr style="${i.ativo ? '' : 'opacity:0.45'}">
+      <td style="color:var(--muted);font-size:11px">${i.categoria}</td>
+      <td><strong>${i.label}</strong>${i.descricao ? `<div style="font-size:11px;color:var(--muted)">${i.descricao}</div>` : ''}</td>
+      <td style="color:var(--muted);font-size:12px">${i.tipo}</td>
+      <td style="text-align:center;font-size:12px">${i.ordem}</td>
+      <td style="text-align:center">${i.ativo ? '<span style="color:#27AE60;font-weight:700">✓</span>' : '<span style="color:var(--muted)">—</span>'}</td>
+      <td><div class="row-actions">
+        ${canEdit('onboarding_catalogo') ? `
+          <button class="btn btn-ghost btn-sm" onclick="onbCatEditarItemPage('${i.id}')">Editar</button>
+          ${i.ativo
+            ? `<button class="btn btn-danger btn-sm" onclick="onbCatDesativarItemPage('${i.id}')">Desativar</button>`
+            : `<button class="btn btn-ghost btn-sm" onclick="onbCatAtivarItemPage('${i.id}')">Ativar</button>`}
+        ` : ''}
+      </div></td>
+    </tr>`).join('')
+    : `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">Nenhum item no catálogo.</td></tr>`;
+
+  el.innerHTML = `
+    <div id="onbCatPageForm"></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Categoria</th><th>Item</th><th>Tipo</th><th style="text-align:center">Ordem</th><th style="text-align:center">Ativo</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+function onbCatNovoItemPage() { _onbCatFormPage(); }
+function onbCatEditarItemPage(id) { _onbCatFormPage(id); }
+
+async function _onbCatFormPage(editId) {
+  // fetch current catalog to find item if editing
+  let item = null;
+  if (editId) {
+    const res = await API.get('/onboarding/catalogo');
+    if (!res.erro) item = (Array.isArray(res) ? res : []).find(i => i.id === editId);
+  }
+  const tipos = ['upload','texto','link','checkbox'];
+  const formEl = document.getElementById('onbCatPageForm');
+  if (!formEl) return;
+  formEl.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:20px">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:16px">${editId ? 'Editar item' : 'Novo item'}</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Categoria</label>
+          <input class="form-input" id="onbCatPageCategoria" value="${item?.categoria||''}" placeholder="Ex: Identidade visual"></div>
+        <div class="form-group"><label class="form-label">Label</label>
+          <input class="form-input" id="onbCatPageLabel" value="${item?.label||''}" placeholder="Ex: Logo em alta resolução"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Descrição (instrução ao cliente)</label>
+        <textarea class="form-textarea" id="onbCatPageDesc" rows="2">${item?.descricao||''}</textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Tipo</label>
+          <select class="form-select" id="onbCatPageTipo">
+            ${tipos.map(t => `<option value="${t}" ${(item?.tipo||'upload')===t?'selected':''}>${t}</option>`).join('')}
+          </select></div>
+        <div class="form-group"><label class="form-label">Ordem</label>
+          <input class="form-input" type="number" id="onbCatPageOrdem" value="${item?.ordem??0}"></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="document.getElementById('onbCatPageForm').innerHTML='';buildHeaderActions('onboarding_catalogo')">Cancelar</button>
+        <button class="btn btn-primary" onclick="onbCatSalvarItemPage('${editId||''}')">${editId ? 'Salvar alterações' : 'Criar item'}</button>
+      </div>
+    </div>`;
+  formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function onbCatSalvarItemPage(editId) {
+  const body = {
+    categoria: document.getElementById('onbCatPageCategoria')?.value?.trim(),
+    label: document.getElementById('onbCatPageLabel')?.value?.trim(),
+    descricao: document.getElementById('onbCatPageDesc')?.value?.trim() || null,
+    tipo: document.getElementById('onbCatPageTipo')?.value,
+    ordem: parseInt(document.getElementById('onbCatPageOrdem')?.value) || 0
+  };
+  if (!body.categoria || !body.label) { toast('Preencha categoria e label.'); return; }
+  const res = editId ? await API.patch('/onboarding/catalogo/' + editId, body) : await API.post('/onboarding/catalogo', body);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast(editId ? 'Item atualizado!' : 'Item criado!');
+  renderOnboardingCatalogoPage();
+}
+
+async function onbCatDesativarItemPage(id) {
+  if (!confirm('Desativar este item?')) return;
+  const res = await API.del('/onboarding/catalogo/' + id);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast('Item desativado.');
+  renderOnboardingCatalogoPage();
+}
+
+async function onbCatAtivarItemPage(id) {
+  const res = await API.patch('/onboarding/catalogo/' + id, { ativo: true });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast('Item ativado.');
+  renderOnboardingCatalogoPage();
 }
 
 // ═══════════════════════════════════════
