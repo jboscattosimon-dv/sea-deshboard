@@ -202,12 +202,49 @@ router.patch('/catalogo/:itemId', auth, async (req, res) => {
   res.json(data);
 });
 
-// DELETE /api/onboarding/catalogo/:itemId (desativa, não remove)
+// DELETE /api/onboarding/catalogo/:itemId (exclusão permanente)
 router.delete('/catalogo/:itemId', auth, async (req, res) => {
   if (req.usuario.papel !== 'admin') return res.status(403).json({ erro: 'Apenas admin' });
-  const { error } = await supabase.from('onboarding_itens_catalogo')
-    .update({ ativo: false }).eq('id', req.params.itemId);
+  const { itemId } = req.params;
+  // Remove respostas e itens de clientes que referenciam este catálogo
+  const { data: clienteItens } = await supabase
+    .from('onboarding_itens_cliente').select('id').eq('catalogo_id', itemId);
+  for (const ci of (clienteItens || [])) {
+    await supabase.from('onboarding_respostas').delete().eq('item_id', ci.id);
+    await supabase.from('onboarding_itens_cliente').delete().eq('id', ci.id);
+  }
+  const { error } = await supabase.from('onboarding_itens_catalogo').delete().eq('id', itemId);
   if (error) return res.status(400).json({ erro: error.message });
+  res.json({ ok: true });
+});
+
+// PATCH /api/onboarding/categorias/:categoria (renomeia categoria)
+router.patch('/categorias/:categoria', auth, async (req, res) => {
+  if (req.usuario.papel !== 'admin') return res.status(403).json({ erro: 'Apenas admin' });
+  const categoria = decodeURIComponent(req.params.categoria);
+  const { novo_nome } = req.body;
+  if (!novo_nome?.trim()) return res.status(400).json({ erro: 'Novo nome é obrigatório' });
+  const { error } = await supabase.from('onboarding_itens_catalogo')
+    .update({ categoria: novo_nome.trim() }).eq('categoria', categoria);
+  if (error) return res.status(400).json({ erro: error.message });
+  res.json({ ok: true });
+});
+
+// DELETE /api/onboarding/categorias/:categoria (exclui todos itens da categoria)
+router.delete('/categorias/:categoria', auth, async (req, res) => {
+  if (req.usuario.papel !== 'admin') return res.status(403).json({ erro: 'Apenas admin' });
+  const categoria = decodeURIComponent(req.params.categoria);
+  const { data: itensCat } = await supabase
+    .from('onboarding_itens_catalogo').select('id').eq('categoria', categoria);
+  for (const item of (itensCat || [])) {
+    const { data: clienteItens } = await supabase
+      .from('onboarding_itens_cliente').select('id').eq('catalogo_id', item.id);
+    for (const ci of (clienteItens || [])) {
+      await supabase.from('onboarding_respostas').delete().eq('item_id', ci.id);
+      await supabase.from('onboarding_itens_cliente').delete().eq('id', ci.id);
+    }
+    await supabase.from('onboarding_itens_catalogo').delete().eq('id', item.id);
+  }
   res.json({ ok: true });
 });
 

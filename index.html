@@ -6108,37 +6108,59 @@ async function renderOnboardingCatalogoPage() {
   const el = document.getElementById('onbCatalogoPageContent');
   if (!el) return;
   el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Carregando...</div>';
-  const res = await API.get('/onboarding/catalogo');
-  if (res.erro) { el.innerHTML = `<p style="color:#E74C3C;font-size:13px">Erro: ${res.erro}</p>`; return; }
-  const catalogo = Array.isArray(res) ? res : [];
+  const [catRes, catsRes] = await Promise.all([API.get('/onboarding/catalogo'), API.get('/onboarding/categorias')]);
+  if (catRes.erro) { el.innerHTML = `<p style="color:#E74C3C;font-size:13px">Erro: ${catRes.erro}</p>`; return; }
+  const catalogo = Array.isArray(catRes) ? catRes : [];
+  const categorias = Array.isArray(catsRes) ? catsRes : [];
 
-  const tipos = ['upload','texto','link','checkbox'];
-  const grouped = {};
-  catalogo.forEach(i => { if (!grouped[i.categoria]) grouped[i.categoria] = []; grouped[i.categoria].push(i); });
+  // Seção de categorias
+  const catCount = {};
+  catalogo.forEach(i => { catCount[i.categoria] = (catCount[i.categoria] || 0) + 1; });
+  const categoriasHtml = categorias.length ? `
+    <div style="margin-bottom:24px">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:10px">Categorias</div>
+      <div id="onbCatCatForm"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Categoria</th><th style="text-align:center">Itens</th><th></th></tr></thead>
+          <tbody>
+            ${categorias.map(c => `<tr>
+              <td><strong>${c}</strong></td>
+              <td style="text-align:center;color:var(--muted)">${catCount[c] || 0}</td>
+              <td><div class="row-actions">
+                ${canEdit('onboarding_catalogo') ? `
+                  <button class="btn btn-ghost btn-sm" onclick="onbRenomearCategoria('${c.replace(/'/g,"\\'")}')">Renomear</button>
+                  <button class="btn btn-danger btn-sm" onclick="onbExcluirCategoria('${c.replace(/'/g,"\\'")}',${catCount[c]||0})">Excluir</button>
+                ` : ''}
+              </div></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>` : '';
 
   const rows = catalogo.length ? catalogo.map(i => `
-    <tr style="${i.ativo ? '' : 'opacity:0.45'}">
+    <tr>
       <td style="color:var(--muted);font-size:11px">${i.categoria}</td>
       <td><strong>${i.label}</strong>${i.descricao ? `<div style="font-size:11px;color:var(--muted)">${i.descricao}</div>` : ''}</td>
       <td style="color:var(--muted);font-size:12px">${i.tipo}</td>
       <td style="text-align:center;font-size:12px">${i.ordem}</td>
-      <td style="text-align:center">${i.ativo ? '<span style="color:#27AE60;font-weight:700">✓</span>' : '<span style="color:var(--muted)">—</span>'}</td>
       <td><div class="row-actions">
         ${canEdit('onboarding_catalogo') ? `
           <button class="btn btn-ghost btn-sm" onclick="onbCatEditarItemPage('${i.id}')">Editar</button>
-          ${i.ativo
-            ? `<button class="btn btn-danger btn-sm" onclick="onbCatDesativarItemPage('${i.id}')">Desativar</button>`
-            : `<button class="btn btn-ghost btn-sm" onclick="onbCatAtivarItemPage('${i.id}')">Ativar</button>`}
+          <button class="btn btn-danger btn-sm" onclick="onbCatExcluirItemPage('${i.id}','${i.label.replace(/'/g,"\\'")}')">Excluir</button>
         ` : ''}
       </div></td>
     </tr>`).join('')
-    : `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">Nenhum item no catálogo.</td></tr>`;
+    : `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted)">Nenhum item no catálogo.</td></tr>`;
 
   el.innerHTML = `
     <div id="onbCatPageForm"></div>
+    ${categoriasHtml}
+    <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:10px">Itens</div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Categoria</th><th>Item</th><th>Tipo</th><th style="text-align:center">Ordem</th><th style="text-align:center">Ativo</th><th></th></tr></thead>
+        <thead><tr><th>Categoria</th><th>Item</th><th>Tipo</th><th style="text-align:center">Ordem</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
@@ -6224,18 +6246,49 @@ async function onbCatSalvarItemPage(editId) {
   renderOnboardingCatalogoPage();
 }
 
-async function onbCatDesativarItemPage(id) {
-  if (!confirm('Desativar este item?')) return;
+async function onbCatExcluirItemPage(id, label) {
+  if (!confirm(`Excluir permanentemente "${label}"?\nIsso também remove este item de todos os onboardings de clientes.`)) return;
   const res = await API.del('/onboarding/catalogo/' + id);
   if (res.erro) { toast('Erro: ' + res.erro); return; }
-  toast('Item desativado.');
+  toast('Item excluído.');
   renderOnboardingCatalogoPage();
 }
 
-async function onbCatAtivarItemPage(id) {
-  const res = await API.patch('/onboarding/catalogo/' + id, { ativo: true });
+function onbRenomearCategoria(nome) {
+  const formEl = document.getElementById('onbCatCatForm');
+  if (!formEl) return;
+  formEl.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+      <div class="form-group" style="margin:0;flex:1;min-width:200px">
+        <label class="form-label">Renomear "${nome}"</label>
+        <input class="form-input" id="onbCatNovoNome" value="${nome}" placeholder="Novo nome da categoria">
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('onbCatCatForm').innerHTML=''">Cancelar</button>
+        <button class="btn btn-primary btn-sm" onclick="onbConfirmarRenomear('${nome.replace(/'/g,"\\'")}')">Renomear</button>
+      </div>
+    </div>`;
+  document.getElementById('onbCatNovoNome')?.focus();
+}
+
+async function onbConfirmarRenomear(nomeAtual) {
+  const novoNome = document.getElementById('onbCatNovoNome')?.value?.trim();
+  if (!novoNome) { toast('Informe o novo nome.'); return; }
+  if (novoNome === nomeAtual) { document.getElementById('onbCatCatForm').innerHTML = ''; return; }
+  const res = await API.patch('/onboarding/categorias/' + encodeURIComponent(nomeAtual), { novo_nome: novoNome });
   if (res.erro) { toast('Erro: ' + res.erro); return; }
-  toast('Item ativado.');
+  toast('Categoria renomeada!');
+  renderOnboardingCatalogoPage();
+}
+
+async function onbExcluirCategoria(nome, count) {
+  const msg = count > 0
+    ? `Excluir a categoria "${nome}" e seus ${count} item(ns)?\nIsso também remove esses itens de todos os onboardings de clientes.`
+    : `Excluir a categoria "${nome}"?`;
+  if (!confirm(msg)) return;
+  const res = await API.del('/onboarding/categorias/' + encodeURIComponent(nome));
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast('Categoria excluída.');
   renderOnboardingCatalogoPage();
 }
 
@@ -6411,7 +6464,7 @@ function renderOnbCatalogoTab() {
       <td style="text-align:center">${i.ativo ? '✓' : '—'}</td>
       <td><div class="row-actions">
         <button class="btn btn-ghost btn-sm" onclick="onbEditCatItem('${i.id}')">Editar</button>
-        ${i.ativo ? `<button class="btn btn-danger btn-sm" onclick="onbDesativarCatItem('${i.id}')">Desativar</button>` : `<button class="btn btn-ghost btn-sm" onclick="onbAtivarCatItem('${i.id}')">Ativar</button>`}
+        <button class="btn btn-danger btn-sm" onclick="onbExcluirCatItem('${i.id}','${i.label.replace(/'/g,"\\'").replace(/`/g,"\\`")}')">Excluir</button>
       </div></td>
     </tr>`).join('') || `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">Nenhum item.</td></tr>`;
 
@@ -6502,22 +6555,12 @@ async function onbSalvarCatItem(editId) {
   renderOnbCatalogoTab();
 }
 
-async function onbDesativarCatItem(id) {
-  if (!confirm('Desativar este item do catálogo?')) return;
+async function onbExcluirCatItem(id, label) {
+  if (!confirm(`Excluir permanentemente "${label}"?`)) return;
   const res = await API.del('/onboarding/catalogo/' + id);
   if (res.erro) { toast('Erro: ' + res.erro); return; }
-  const i = _onbCatalogo.findIndex(x => x.id === id);
-  if (i >= 0) _onbCatalogo[i].ativo = false;
-  toast('Item desativado.');
-  renderOnbCatalogoTab();
-}
-
-async function onbAtivarCatItem(id) {
-  const res = await API.patch('/onboarding/catalogo/' + id, { ativo: true });
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  const i = _onbCatalogo.findIndex(x => x.id === id);
-  if (i >= 0) _onbCatalogo[i].ativo = true;
-  toast('Item ativado.');
+  _onbCatalogo = _onbCatalogo.filter(x => x.id !== id);
+  toast('Item excluído.');
   renderOnbCatalogoTab();
 }
 
