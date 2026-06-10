@@ -6106,7 +6106,7 @@ async function abrirModalOnboarding(clienteId) {
     API.get('/onboarding/cliente/' + clienteId)
   ]);
   if (!catRes.erro) _onbCatalogo = Array.isArray(catRes) ? catRes : [];
-  if (!onbRes.erro) _onbData = onbRes;
+  _onbData = (onbRes && !onbRes.erro) ? onbRes : null;
 
   const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
   document.getElementById('ctab-onb-acomp').style.display = _onbData ? '' : 'none';
