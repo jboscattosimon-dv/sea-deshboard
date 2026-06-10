@@ -6113,9 +6113,6 @@ async function renderOnboardingCatalogoPage() {
   const catalogo = Array.isArray(catRes) ? catRes : [];
   const categorias = Array.isArray(catsRes) ? catsRes : [];
 
-  // Seção de categorias
-  const catCount = {};
-  catalogo.forEach(i => { catCount[i.categoria] = (catCount[i.categoria] || 0) + 1; });
   const canEd = canEdit('onboarding_catalogo');
   const categoriasHtml = `
     <div style="margin-bottom:24px">
@@ -6126,18 +6123,19 @@ async function renderOnboardingCatalogoPage() {
       <div id="onbCatCatForm"></div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Categoria</th><th style="text-align:center">Itens</th><th></th></tr></thead>
+          <thead><tr><th>Categoria</th><th>Descrição</th><th style="text-align:center">Itens</th><th></th></tr></thead>
           <tbody>
-            ${categorias.map(c => `<tr>
-              <td><strong>${c}</strong></td>
-              <td style="text-align:center;color:var(--muted)">${catCount[c] || 0}</td>
+            ${categorias.length ? categorias.map(c => `<tr>
+              <td><strong>${c.nome}</strong></td>
+              <td style="font-size:12px;color:var(--muted)">${c.descricao || '—'}</td>
+              <td style="text-align:center;color:var(--muted)">${c.item_count}</td>
               <td><div class="row-actions">
-                ${canEdit('onboarding_catalogo') ? `
-                  <button class="btn btn-ghost btn-sm" onclick="onbRenomearCategoria('${c.replace(/'/g,"\\'")}')">Renomear</button>
-                  <button class="btn btn-danger btn-sm" onclick="onbExcluirCategoria('${c.replace(/'/g,"\\'")}',${catCount[c]||0})">Excluir</button>
+                ${canEd ? `
+                  <button class="btn btn-ghost btn-sm" onclick='onbNovaCategoriaForm(${JSON.stringify(c)})'>Editar</button>
+                  <button class="btn btn-danger btn-sm" onclick="onbExcluirCategoria('${c.id}','${c.nome.replace(/'/g,"\\'")}',${c.item_count})">Excluir</button>
                 ` : ''}
               </div></td>
-            </tr>`).join('')}
+            </tr>`).join('') : `<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted)">Nenhuma categoria cadastrada.</td></tr>`}
           </tbody>
         </table>
       </div>
@@ -6173,28 +6171,47 @@ async function renderOnboardingCatalogoPage() {
 function onbCatNovoItemPage() { _onbCatFormPage(); }
 function onbCatEditarItemPage(id) { _onbCatFormPage(id); }
 
-function onbNovaCategoriaForm() {
+function onbNovaCategoriaForm(editCat) {
   const formEl = document.getElementById('onbCatCatForm');
   if (!formEl) return;
+  const isEdit = !!editCat;
   formEl.innerHTML = `
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
-      <div class="form-group" style="margin:0;flex:1;min-width:200px">
-        <label class="form-label">Nome da nova categoria</label>
-        <input class="form-input" id="onbNovaCatNome" placeholder="Ex: Jurídico" onkeydown="if(event.key==='Enter')onbCriarCategoriaEItem()">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:14px">${isEdit ? 'Editar categoria' : 'Nova categoria'}</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nome</label>
+          <input class="form-input" id="onbNovaCatNome" value="${editCat?.nome || ''}" placeholder="Ex: Jurídico" onkeydown="if(event.key==='Enter')onbSalvarCategoria('${editCat?.id || ''}')">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ordem</label>
+          <input class="form-input" type="number" id="onbNovaCatOrdem" value="${editCat?.ordem ?? 0}" min="0">
+        </div>
       </div>
-      <div style="display:flex;gap:8px">
+      <div class="form-group">
+        <label class="form-label">Descrição (opcional)</label>
+        <textarea class="form-textarea" id="onbNovaCatDesc" rows="2" placeholder="Descrição interna desta categoria">${editCat?.descricao || ''}</textarea>
+      </div>
+      <div class="form-actions">
         <button class="btn btn-ghost btn-sm" onclick="document.getElementById('onbCatCatForm').innerHTML=''">Cancelar</button>
-        <button class="btn btn-primary btn-sm" onclick="onbCriarCategoriaEItem()">Criar e adicionar item</button>
+        <button class="btn btn-primary btn-sm" onclick="onbSalvarCategoria('${editCat?.id || ''}')">${isEdit ? 'Salvar' : 'Criar categoria'}</button>
       </div>
     </div>`;
   document.getElementById('onbNovaCatNome')?.focus();
 }
 
-function onbCriarCategoriaEItem() {
+async function onbSalvarCategoria(editId) {
   const nome = document.getElementById('onbNovaCatNome')?.value?.trim();
+  const descricao = document.getElementById('onbNovaCatDesc')?.value?.trim() || null;
+  const ordem = parseInt(document.getElementById('onbNovaCatOrdem')?.value) || 0;
   if (!nome) { toast('Informe o nome da categoria.'); return; }
+  const res = editId
+    ? await API.patch('/onboarding/categorias/' + editId, { nome, descricao, ordem })
+    : await API.post('/onboarding/categorias', { nome, descricao, ordem });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast(editId ? 'Categoria atualizada!' : 'Categoria criada!');
   document.getElementById('onbCatCatForm').innerHTML = '';
-  _onbCatFormPage(null, nome);
+  renderOnboardingCatalogoPage();
 }
 
 async function _onbCatFormPage(editId, presetCategoria) {
@@ -6204,13 +6221,12 @@ async function _onbCatFormPage(editId, presetCategoria) {
     API.get('/onboarding/categorias')
   ]);
   if (editId && !catRes.erro) item = (Array.isArray(catRes) ? catRes : []).find(i => i.id === editId);
-  const categorias = Array.isArray(catsRes) ? catsRes : [];
+  const categorias = (Array.isArray(catsRes) ? catsRes : []).map(c => typeof c === 'object' ? c.nome : c);
 
   const tipos = ['upload','texto','link','checkbox'];
   const formEl = document.getElementById('onbCatPageForm');
   if (!formEl) return;
 
-  // presetCategoria: nova categoria vinda do form de categorias
   const categoriaAtual = presetCategoria || item?.categoria || '';
   const isNova = !!presetCategoria || (item && !categorias.includes(item.categoria));
   const catOpts = categorias.map(c =>
@@ -6285,39 +6301,12 @@ async function onbCatExcluirItemPage(id, label) {
   renderOnboardingCatalogoPage();
 }
 
-function onbRenomearCategoria(nome) {
-  const formEl = document.getElementById('onbCatCatForm');
-  if (!formEl) return;
-  formEl.innerHTML = `
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
-      <div class="form-group" style="margin:0;flex:1;min-width:200px">
-        <label class="form-label">Renomear "${nome}"</label>
-        <input class="form-input" id="onbCatNovoNome" value="${nome}" placeholder="Novo nome da categoria">
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('onbCatCatForm').innerHTML=''">Cancelar</button>
-        <button class="btn btn-primary btn-sm" onclick="onbConfirmarRenomear('${nome.replace(/'/g,"\\'")}')">Renomear</button>
-      </div>
-    </div>`;
-  document.getElementById('onbCatNovoNome')?.focus();
-}
-
-async function onbConfirmarRenomear(nomeAtual) {
-  const novoNome = document.getElementById('onbCatNovoNome')?.value?.trim();
-  if (!novoNome) { toast('Informe o novo nome.'); return; }
-  if (novoNome === nomeAtual) { document.getElementById('onbCatCatForm').innerHTML = ''; return; }
-  const res = await API.patch('/onboarding/categorias/' + encodeURIComponent(nomeAtual), { novo_nome: novoNome });
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  toast('Categoria renomeada!');
-  renderOnboardingCatalogoPage();
-}
-
-async function onbExcluirCategoria(nome, count) {
+async function onbExcluirCategoria(id, nome, count) {
   const msg = count > 0
     ? `Excluir a categoria "${nome}" e seus ${count} item(ns)?\nIsso também remove esses itens de todos os onboardings de clientes.`
     : `Excluir a categoria "${nome}"?`;
   if (!confirm(msg)) return;
-  const res = await API.del('/onboarding/categorias/' + encodeURIComponent(nome));
+  const res = await API.del('/onboarding/categorias/' + id);
   if (res.erro) { toast('Erro: ' + res.erro); return; }
   toast('Categoria excluída.');
   renderOnboardingCatalogoPage();
@@ -6513,7 +6502,7 @@ async function onbNovoCatItem(editId) {
   const item = editId ? _onbCatalogo.find(i => i.id === editId) : null;
   const tipos = ['upload','texto','link','checkbox'];
   const catsRes = await API.get('/onboarding/categorias');
-  const categorias = Array.isArray(catsRes) ? catsRes : [];
+  const categorias = (Array.isArray(catsRes) ? catsRes : []).map(c => typeof c === 'object' ? c.nome : c);
   const catOpts = categorias.map(c =>
     `<option value="${c}" ${item?.categoria === c ? 'selected' : ''}>${c}</option>`
   ).join('');

@@ -134,13 +134,26 @@ router.get('/resumo', auth, async (req, res) => {
 
 // GET /api/onboarding/categorias
 router.get('/categorias', auth, async (req, res) => {
-  const { data, error } = await supabase
-    .from('onboarding_itens_catalogo')
-    .select('categoria')
-    .order('categoria');
+  const { data: cats, error } = await supabase
+    .from('onboarding_categorias').select('*').order('ordem').order('nome');
   if (error) return res.status(400).json({ erro: error.message });
-  const unique = [...new Set((data || []).map(i => i.categoria).filter(Boolean))].sort();
-  res.json(unique);
+  const { data: itens } = await supabase
+    .from('onboarding_itens_catalogo').select('categoria');
+  const counts = {};
+  (itens || []).forEach(i => { counts[i.categoria] = (counts[i.categoria] || 0) + 1; });
+  res.json((cats || []).map(c => ({ ...c, item_count: counts[c.nome] || 0 })));
+});
+
+// POST /api/onboarding/categorias
+router.post('/categorias', auth, async (req, res) => {
+  if (req.usuario.papel !== 'admin') return res.status(403).json({ erro: 'Apenas admin' });
+  const { nome, descricao, ordem } = req.body;
+  if (!nome?.trim()) return res.status(400).json({ erro: 'Nome é obrigatório' });
+  const { data, error } = await supabase.from('onboarding_categorias')
+    .insert([{ nome: nome.trim(), descricao: descricao || null, ordem: ordem || 0 }])
+    .select().single();
+  if (error) return res.status(400).json({ erro: error.message });
+  res.status(201).json(data);
 });
 
 // GET /api/onboarding/catalogo
@@ -218,33 +231,46 @@ router.delete('/catalogo/:itemId', auth, async (req, res) => {
   res.json({ ok: true });
 });
 
-// PATCH /api/onboarding/categorias/:categoria (renomeia categoria)
-router.patch('/categorias/:categoria', auth, async (req, res) => {
+// PATCH /api/onboarding/categorias/:id
+router.patch('/categorias/:id', auth, async (req, res) => {
   if (req.usuario.papel !== 'admin') return res.status(403).json({ erro: 'Apenas admin' });
-  const categoria = decodeURIComponent(req.params.categoria);
-  const { novo_nome } = req.body;
-  if (!novo_nome?.trim()) return res.status(400).json({ erro: 'Novo nome é obrigatório' });
-  const { error } = await supabase.from('onboarding_itens_catalogo')
-    .update({ categoria: novo_nome.trim() }).eq('categoria', categoria);
+  const { nome, descricao, ordem } = req.body;
+  const { data: atual } = await supabase.from('onboarding_categorias')
+    .select('nome').eq('id', req.params.id).single();
+  const updates = {};
+  if (nome !== undefined) updates.nome = nome.trim();
+  if (descricao !== undefined) updates.descricao = descricao;
+  if (ordem !== undefined) updates.ordem = ordem;
+  const { data, error } = await supabase.from('onboarding_categorias')
+    .update(updates).eq('id', req.params.id).select().single();
   if (error) return res.status(400).json({ erro: error.message });
-  res.json({ ok: true });
+  if (nome && atual && nome.trim() !== atual.nome) {
+    await supabase.from('onboarding_itens_catalogo')
+      .update({ categoria: nome.trim() }).eq('categoria', atual.nome);
+  }
+  res.json(data);
 });
 
-// DELETE /api/onboarding/categorias/:categoria (exclui todos itens da categoria)
-router.delete('/categorias/:categoria', auth, async (req, res) => {
+// DELETE /api/onboarding/categorias/:id
+router.delete('/categorias/:id', auth, async (req, res) => {
   if (req.usuario.papel !== 'admin') return res.status(403).json({ erro: 'Apenas admin' });
-  const categoria = decodeURIComponent(req.params.categoria);
-  const { data: itensCat } = await supabase
-    .from('onboarding_itens_catalogo').select('id').eq('categoria', categoria);
-  for (const item of (itensCat || [])) {
-    const { data: clienteItens } = await supabase
-      .from('onboarding_itens_cliente').select('id').eq('catalogo_id', item.id);
-    for (const ci of (clienteItens || [])) {
-      await supabase.from('onboarding_respostas').delete().eq('item_id', ci.id);
-      await supabase.from('onboarding_itens_cliente').delete().eq('id', ci.id);
+  const { data: cat } = await supabase.from('onboarding_categorias')
+    .select('nome').eq('id', req.params.id).single();
+  if (cat?.nome) {
+    const { data: itensCat } = await supabase
+      .from('onboarding_itens_catalogo').select('id').eq('categoria', cat.nome);
+    for (const item of (itensCat || [])) {
+      const { data: clienteItens } = await supabase
+        .from('onboarding_itens_cliente').select('id').eq('catalogo_id', item.id);
+      for (const ci of (clienteItens || [])) {
+        await supabase.from('onboarding_respostas').delete().eq('item_id', ci.id);
+        await supabase.from('onboarding_itens_cliente').delete().eq('id', ci.id);
+      }
+      await supabase.from('onboarding_itens_catalogo').delete().eq('id', item.id);
     }
-    await supabase.from('onboarding_itens_catalogo').delete().eq('id', item.id);
   }
+  const { error } = await supabase.from('onboarding_categorias').delete().eq('id', req.params.id);
+  if (error) return res.status(400).json({ erro: error.message });
   res.json({ ok: true });
 });
 
