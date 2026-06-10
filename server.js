@@ -15,6 +15,7 @@ const sdrRoutes = require('./routes/sdr');
 const calendarioRoutes = require('./routes/calendario');
 const contratosRoutes  = require('./routes/contratos');
 const briefingRoutes   = require('./routes/briefing');
+const financeiroRoutes = require('./routes/financeiro');
 
 const app = express();
 app.use(cors());
@@ -34,6 +35,7 @@ app.use('/api/sdr', sdrRoutes);
 app.use('/api/calendario', calendarioRoutes);
 app.use('/api/contratos',  contratosRoutes);
 app.use('/api/briefing',   briefingRoutes);
+app.use('/api/financeiro', financeiroRoutes);
 
 // Serve briefing page at /briefing/:id
 app.get('/briefing/:id', (req, res) => res.sendFile('briefing.html', { root: './' }));
