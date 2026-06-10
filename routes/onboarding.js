@@ -141,15 +141,32 @@ router.get('/catalogo', auth, async (req, res) => {
   res.json(data || []);
 });
 
+// Desloca para cima todos os itens com ordem >= novaOrdem (exceto o próprio item)
+async function shiftOrdem(novaOrdem, excludeId = null) {
+  let q = supabase.from('onboarding_itens_catalogo').select('id, ordem').gte('ordem', novaOrdem);
+  if (excludeId) q = q.neq('id', excludeId);
+  const { data: toShift } = await q;
+  for (const item of (toShift || [])) {
+    await supabase.from('onboarding_itens_catalogo')
+      .update({ ordem: item.ordem + 1 })
+      .eq('id', item.id);
+  }
+}
+
 // POST /api/onboarding/catalogo
 router.post('/catalogo', auth, async (req, res) => {
   if (req.usuario.papel !== 'admin') return res.status(403).json({ erro: 'Apenas admin' });
   const { categoria, label, descricao, tipo, obrigatorio_por_padrao, ordem } = req.body;
   if (!categoria || !label) return res.status(400).json({ erro: 'categoria e label são obrigatórios' });
+  const novaOrdem = ordem ?? 0;
+  // Verifica conflito de ordem
+  const { data: conflict } = await supabase.from('onboarding_itens_catalogo')
+    .select('id').eq('ordem', novaOrdem).limit(1);
+  if (conflict?.length) await shiftOrdem(novaOrdem);
   const { data, error } = await supabase.from('onboarding_itens_catalogo')
     .insert([{ categoria, label, descricao, tipo: tipo || 'upload',
       obrigatorio_por_padrao: obrigatorio_por_padrao ?? false,
-      ordem: ordem || 0, criado_por: req.usuario.id }])
+      ordem: novaOrdem, criado_por: req.usuario.id }])
     .select().single();
   if (error) return res.status(400).json({ erro: error.message });
   res.status(201).json(data);
@@ -158,11 +175,18 @@ router.post('/catalogo', auth, async (req, res) => {
 // PATCH /api/onboarding/catalogo/:itemId
 router.patch('/catalogo/:itemId', auth, async (req, res) => {
   if (req.usuario.papel !== 'admin') return res.status(403).json({ erro: 'Apenas admin' });
+  const { itemId } = req.params;
   const cols = ['categoria','label','descricao','tipo','obrigatorio_por_padrao','ordem','ativo'];
   const updates = {};
   cols.forEach(c => { if (req.body[c] !== undefined) updates[c] = req.body[c]; });
+  // Se a ordem está sendo alterada, verifica conflito
+  if (updates.ordem !== undefined) {
+    const { data: conflict } = await supabase.from('onboarding_itens_catalogo')
+      .select('id').eq('ordem', updates.ordem).neq('id', itemId).limit(1);
+    if (conflict?.length) await shiftOrdem(updates.ordem, itemId);
+  }
   const { data, error } = await supabase.from('onboarding_itens_catalogo')
-    .update(updates).eq('id', req.params.itemId).select().single();
+    .update(updates).eq('id', itemId).select().single();
   if (error) return res.status(400).json({ erro: error.message });
   res.json(data);
 });
