@@ -295,6 +295,31 @@ router.get('/cliente/:clienteId', auth, async (req, res) => {
   res.json({ ...ob, itens, progresso: total > 0 ? Math.round(resp / total * 100) : 0, total_itens: total, itens_respondidos: resp });
 });
 
+// DELETE /api/onboarding/cliente/:clienteId
+router.delete('/cliente/:clienteId', auth, async (req, res) => {
+  const { clienteId } = req.params;
+  const { data: ob, error: getErr } = await supabase
+    .from('onboarding_clientes')
+    .select('id, token_publico')
+    .eq('cliente_id', clienteId)
+    .single();
+  if (getErr) return res.status(400).json({ erro: getErr.message });
+  if (!ob) return res.status(404).json({ erro: 'Onboarding não encontrado' });
+
+  // Remove arquivos do Storage
+  const { data: respostas } = await supabase
+    .from('onboarding_respostas')
+    .select('arquivo_storage_path')
+    .not('arquivo_storage_path', 'is', null);
+  const paths = (respostas || []).map(r => r.arquivo_storage_path).filter(Boolean);
+  if (paths.length) await supabase.storage.from('onboarding').remove(paths);
+
+  // Cascade deleta itens e respostas via FK
+  const { error } = await supabase.from('onboarding_clientes').delete().eq('id', ob.id);
+  if (error) return res.status(400).json({ erro: error.message });
+  res.json({ ok: true });
+});
+
 // POST /api/onboarding/cliente/:clienteId
 router.post('/cliente/:clienteId', auth, async (req, res) => {
   const { clienteId } = req.params;

@@ -6392,6 +6392,7 @@ function renderOnbAcompTab() {
     </div>` : `<div style="margin-bottom:12px"><button class="btn btn-primary btn-sm" onclick="enviarLinkOnboarding()">Gerar e enviar link ao cliente</button></div>`}
     <div style="max-height:380px;overflow-y:auto;margin-bottom:16px">${itensHtml}</div>
     <div class="form-actions">
+      <button class="btn btn-danger btn-sm" onclick="excluirOnboardingCliente()" style="margin-right:auto">Excluir onboarding</button>
       <button class="btn btn-ghost" onclick="closeModal('modal-onboarding')">Fechar</button>
       ${allObrigOk && _onbData.status !== 'concluido' ? `<button class="btn btn-primary" style="background:#27AE60;border-color:#27AE60" onclick="concluirOnboarding()">✓ Concluir onboarding</button>` : ''}
     </div>
@@ -6583,6 +6584,25 @@ async function onbSalvarObs(itemId) {
   toast('Observação salva.');
 }
 
+async function excluirOnboardingCliente() {
+  if (!confirm('Excluir este onboarding e todos os dados enviados pelo cliente?')) return;
+  const res = await API.del('/onboarding/cliente/' + _onbClienteId);
+  if (res.erro) { toast('Erro ao excluir: ' + res.erro); return; }
+  _onbData = null;
+  toast('Onboarding excluído.');
+  closeModal('modal-onboarding');
+  if (currentPage === 'onboarding') carregarPainelOnboarding();
+}
+
+async function excluirOnboardingPainel(clienteId, clienteNome) {
+  if (!confirm(`Excluir o onboarding de "${clienteNome}"?`)) return;
+  const res = await API.del('/onboarding/cliente/' + clienteId);
+  if (res.erro) { toast('Erro ao excluir: ' + res.erro); return; }
+  _onbPainel = _onbPainel.filter(o => o.cliente_id !== clienteId);
+  toast('Onboarding excluído.');
+  renderPainelOnboarding();
+}
+
 async function concluirOnboarding() {
   if (!confirm('Marcar este onboarding como concluído?')) return;
   const res = await API.patch('/onboarding/cliente/' + _onbClienteId + '/status', { status: 'concluido' });
@@ -6641,7 +6661,10 @@ function renderPainelOnboarding() {
       </td>
       <td><span style="padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;${stColor}">${ONB_STATUS_LABELS[o.status]||o.status}</span></td>
       <td style="color:var(--muted);font-size:12px">${envio}</td>
-      <td><button class="btn btn-ghost btn-sm" onclick="abrirModalOnboarding('${o.cliente_id}')">Ver</button></td>
+      <td><div class="row-actions">
+        <button class="btn btn-ghost btn-sm" onclick="abrirModalOnboarding('${o.cliente_id}')">Ver</button>
+        <button class="btn btn-danger btn-sm" onclick="excluirOnboardingPainel('${o.cliente_id}','${o.cliente_nome}')">Excluir</button>
+      </div></td>
     </tr>`;
   }).join('');
 }
