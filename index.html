@@ -6116,9 +6116,13 @@ async function renderOnboardingCatalogoPage() {
   // Seção de categorias
   const catCount = {};
   catalogo.forEach(i => { catCount[i.categoria] = (catCount[i.categoria] || 0) + 1; });
-  const categoriasHtml = categorias.length ? `
+  const canEd = canEdit('onboarding_catalogo');
+  const categoriasHtml = `
     <div style="margin-bottom:24px">
-      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:10px">Categorias</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px">Categorias</span>
+        ${canEd ? `<button class="btn btn-ghost btn-sm" onclick="onbNovaCategoriaForm()" style="padding:3px 10px;font-size:12px">+ Nova categoria</button>` : ''}
+      </div>
       <div id="onbCatCatForm"></div>
       <div class="table-wrap">
         <table>
@@ -6169,7 +6173,31 @@ async function renderOnboardingCatalogoPage() {
 function onbCatNovoItemPage() { _onbCatFormPage(); }
 function onbCatEditarItemPage(id) { _onbCatFormPage(id); }
 
-async function _onbCatFormPage(editId) {
+function onbNovaCategoriaForm() {
+  const formEl = document.getElementById('onbCatCatForm');
+  if (!formEl) return;
+  formEl.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+      <div class="form-group" style="margin:0;flex:1;min-width:200px">
+        <label class="form-label">Nome da nova categoria</label>
+        <input class="form-input" id="onbNovaCatNome" placeholder="Ex: Jurídico" onkeydown="if(event.key==='Enter')onbCriarCategoriaEItem()">
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('onbCatCatForm').innerHTML=''">Cancelar</button>
+        <button class="btn btn-primary btn-sm" onclick="onbCriarCategoriaEItem()">Criar e adicionar item</button>
+      </div>
+    </div>`;
+  document.getElementById('onbNovaCatNome')?.focus();
+}
+
+function onbCriarCategoriaEItem() {
+  const nome = document.getElementById('onbNovaCatNome')?.value?.trim();
+  if (!nome) { toast('Informe o nome da categoria.'); return; }
+  document.getElementById('onbCatCatForm').innerHTML = '';
+  _onbCatFormPage(null, nome);
+}
+
+async function _onbCatFormPage(editId, presetCategoria) {
   let item = null;
   const [catRes, catsRes] = await Promise.all([
     editId ? API.get('/onboarding/catalogo') : Promise.resolve([]),
@@ -6181,10 +6209,13 @@ async function _onbCatFormPage(editId) {
   const tipos = ['upload','texto','link','checkbox'];
   const formEl = document.getElementById('onbCatPageForm');
   if (!formEl) return;
+
+  // presetCategoria: nova categoria vinda do form de categorias
+  const categoriaAtual = presetCategoria || item?.categoria || '';
+  const isNova = !!presetCategoria || (item && !categorias.includes(item.categoria));
   const catOpts = categorias.map(c =>
-    `<option value="${c}" ${item?.categoria === c ? 'selected' : ''}>${c}</option>`
+    `<option value="${c}" ${!isNova && categoriaAtual === c ? 'selected' : ''}>${c}</option>`
   ).join('');
-  const isNova = item && !categorias.includes(item.categoria);
 
   formEl.innerHTML = `
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:20px">
@@ -6197,7 +6228,7 @@ async function _onbCatFormPage(editId) {
             ${catOpts}
             <option value="__nova__" ${isNova ? 'selected' : ''}>+ Nova categoria...</option>
           </select>
-          <input class="form-input" id="onbCatPageCategoriaNova" style="margin-top:6px;${(categorias.length === 0 || isNova) ? '' : 'display:none'}" placeholder="Nome da nova categoria" value="${isNova ? (item?.categoria||'') : ''}">
+          <input class="form-input" id="onbCatPageCategoriaNova" style="margin-top:6px;${(categorias.length === 0 || isNova) ? '' : 'display:none'}" placeholder="Nome da nova categoria" value="${isNova ? categoriaAtual : ''}">
         </div>
         <div class="form-group"><label class="form-label">Label</label>
           <input class="form-input" id="onbCatPageLabel" value="${item?.label||''}" placeholder="Ex: Logo em alta resolução"></div>
