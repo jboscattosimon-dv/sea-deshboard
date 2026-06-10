@@ -2653,7 +2653,7 @@ function renderClients() {
       <td><strong>${c.name}</strong></td>
       <td style="color:var(--muted)">${total} demanda${total!==1?'s':''}</td>
       <td><div class="row-actions">
-        <button class="btn btn-ghost btn-sm" onclick="abrirModalFinanceiro('${c.id}')">Financeiro</button>
+        ${canView('financeiro') ? `<button class="btn btn-ghost btn-sm" onclick="abrirModalFinanceiro('${c.id}')">Financeiro</button>` : ''}
         ${editClients ? `<button class="btn btn-ghost btn-sm" onclick="openClientForm('${c.id}')">Editar</button>
         <button class="btn btn-danger btn-sm" onclick="deleteClient('${c.id}')">Excluir</button>` : ''}
       </div></td>
@@ -3033,15 +3033,17 @@ function openPermissoes(userId) {
     {
       label: 'Geral',
       pages: [
-        { key: 'dashboard', label: 'Dashboard' },
-        { key: 'demands',   label: 'Demandas' },
-        { key: 'internal',  label: 'Demandas Internas' },
+        { key: 'dashboard',  label: 'Dashboard' },
+        { key: 'demands',    label: 'Demandas' },
+        { key: 'internal',   label: 'Demandas Internas' },
+        { key: 'calendario', label: 'Calendário Editorial' },
       ]
     },
     {
       label: 'Cadastro',
       pages: [
         { key: 'clients',    label: 'Clientes' },
+        { key: 'financeiro', label: 'Financeiro', sub: true },
         { key: 'statuses',   label: 'Status' },
         { key: 'formats',    label: 'Formatos' },
         { key: 'users',      label: 'Usuários' },
@@ -3062,12 +3064,6 @@ function openPermissoes(userId) {
       label: 'SDR',
       pages: [
         { key: 'sdr', label: 'SDR' },
-      ]
-    },
-    {
-      label: 'Conteúdo',
-      pages: [
-        { key: 'calendario', label: 'Calendário Editorial' },
       ]
     },
   ];
@@ -3097,7 +3093,7 @@ function openPermissoes(userId) {
             <tr><td colspan="3" style="${groupHeaderStyle}">${g.label}</td></tr>
             ${g.pages.map(p => `
               <tr style="border-bottom:1px solid var(--border)">
-                <td style="padding:11px 14px 11px 22px;font-weight:500">${p.label}</td>
+                <td style="padding:11px 14px 11px ${p.sub ? '36px' : '22px'};font-weight:${p.sub ? '400' : '500'};${p.sub ? 'color:var(--muted)' : ''}">${p.sub ? '└ ' : ''}${p.label}</td>
                 <td style="padding:11px 14px;text-align:center"><input type="checkbox" id="perm_${p.key}_visualizar" ${chk(p.key,'visualizar')?'checked':''} onchange="onPermVisualizarChange('${p.key}', this)"></td>
                 <td style="padding:11px 14px;text-align:center"><input type="checkbox" id="perm_${p.key}_editar" ${chk(p.key,'editar')?'checked':''} onchange="onPermEditarChange('${p.key}', this)"></td>
               </tr>
@@ -3129,7 +3125,7 @@ function onPermEditarChange(page, el) {
 }
 
 async function savePermissoes(userId) {
-  const pages = ['dashboard','demands','internal','clients','statuses','formats','users','crm_leads','crm_funil','crm_atividades','crm_relatorios','crm_etapas','sdr','sdr_topicos','calendario'];
+  const pages = ['dashboard','demands','internal','clients','financeiro','statuses','formats','users','crm_leads','crm_funil','crm_atividades','crm_relatorios','crm_etapas','sdr','sdr_topicos','calendario'];
   const permissoes = {};
   pages.forEach(page => {
     const visualizar = document.getElementById(`perm_${page}_visualizar`)?.checked ?? true;
