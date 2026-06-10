@@ -131,7 +131,7 @@ body {
 
 /* ─── HEADER ─── */
 header {
-  position: sticky; top: 0; z-index: 100;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
   height: var(--header-h);
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -209,7 +209,7 @@ header {
 .btn-danger:hover { background: #FDD; border-color: #E74C3C; transform: translateY(-1px); }
 
 /* ─── MAIN ─── */
-main { padding: 28px 24px 40px; max-width: 1200px; margin: 0 auto; min-height: calc(100vh - var(--header-h) - 38px); }
+main { padding: 28px 24px 40px; max-width: 1200px; margin: var(--header-h) auto 0; min-height: calc(100vh - var(--header-h) - 38px); }
 
 /* ─── PAGE SYSTEM ─── */
 .page { display: none; }
