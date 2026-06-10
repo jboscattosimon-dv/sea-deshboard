@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 const authRoutes = require('./routes/auth');
 const demandaRoutes = require('./routes/demandas');
@@ -36,6 +37,9 @@ app.use('/api/calendario', calendarioRoutes);
 app.use('/api/contratos',  contratosRoutes);
 app.use('/api/briefing',   briefingRoutes);
 app.use('/api/financeiro', financeiroRoutes);
+const onboardingRoutes = require('./routes/onboarding');
+app.use('/api/onboarding', onboardingRoutes);
+app.get('/onboarding/:token', (req, res) => res.sendFile(path.join(__dirname, 'onboarding.html')));
 
 // Serve briefing page at /briefing/:id
 app.get('/briefing/:id', (req, res) => res.sendFile('briefing.html', { root: './' }));

@@ -1194,6 +1194,12 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
       SDR
     </div>
 
+    <!-- Onboarding -->
+    <div class="nav-item" data-page="onboarding" onclick="goTo('onboarding')" id="navOnboarding">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      Onboarding
+    </div>
+
 
     <!-- Auditoria -->
     <div class="sidebar-section">Auditoria</div>
@@ -1690,6 +1696,32 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     <div id="calGrid" style="overflow-y:auto;flex:1"></div>
   </div>
 
+  <!-- ── ONBOARDING (painel) ── -->
+  <div class="page" id="page-onboarding">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Onboarding</div>
+        <div class="page-sub" id="onboardingPainelSub">Acompanhe o onboarding de todos os clientes</div>
+      </div>
+    </div>
+    <div id="onboardingPainelMetrics" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:24px"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <select class="form-select" id="onbFiltroStatus" style="width:auto;padding:6px 10px;font-size:12px" onchange="renderPainelOnboarding()">
+        <option value="">Todos os status</option>
+        <option value="em_andamento">Em andamento</option>
+        <option value="aguardando_cliente">Aguardando cliente</option>
+        <option value="em_revisao">Em revisão</option>
+        <option value="concluido">Concluído</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Cliente</th><th>Progresso</th><th>Status</th><th>Envio</th><th></th></tr></thead>
+        <tbody id="onboardingPainelTable"></tbody>
+      </table>
+    </div>
+  </div>
+
 </main>
 
 <footer style="text-align:center;padding:10px 24px;font-size:11px;color:var(--muted);border-top:1px solid var(--border);background:var(--bg);letter-spacing:0.02em">
@@ -1736,6 +1768,22 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     </div>
     <div id="fin-tab-contrato"></div>
     <div id="fin-tab-pagamentos" style="display:none"></div>
+  </div>
+</div>
+
+<!-- MODAL ONBOARDING -->
+<div class="modal-overlay" id="modal-onboarding">
+  <div class="modal" style="max-width:740px">
+    <div class="modal-title" id="onb-modal-title">Onboarding</div>
+    <button class="modal-close" onclick="closeModal('modal-onboarding')">×</button>
+    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+      <button class="ctab ctab-active" id="ctab-onb-checklist" onclick="onbSwitchTab('checklist')">Checklist</button>
+      <button class="ctab" id="ctab-onb-acomp" onclick="onbSwitchTab('acomp')" style="display:none">Acompanhamento</button>
+      <button class="ctab" id="ctab-onb-catalogo" onclick="onbSwitchTab('catalogo')" style="display:none">Catálogo (Admin)</button>
+    </div>
+    <div id="onb-tab-checklist"></div>
+    <div id="onb-tab-acomp" style="display:none"></div>
+    <div id="onb-tab-catalogo" style="display:none"></div>
   </div>
 </div>
 
@@ -2001,7 +2049,8 @@ function goTo(page) {
     dashboard:'Dashboard', demands:'Demandas', internal:'Demandas Internas',
     clients:'Clientes', statuses:'Status', formats:'Formatos', users:'Usuários', history:'Histórico',
     crm_leads:'Leads', crm_funil:'Funil de Vendas', crm_atividades:'Atividades', crm_relatorios:'Relatórios CRM',
-    crm_etapas:'Etapas do Funil', sdr:'SDR', sdr_topicos:'Tópicos SDR', calendario:'Calendário Editorial'
+    crm_etapas:'Etapas do Funil', sdr:'SDR', sdr_topicos:'Tópicos SDR', calendario:'Calendário Editorial',
+    onboarding:'Onboarding'
   };
   document.getElementById('headerTitle').textContent = titles[page] || page;
   buildHeaderActions(page);
@@ -2024,6 +2073,7 @@ function goTo(page) {
   if (page === 'sdr')            renderSDR();
   if (page === 'sdr_topicos')    renderSdrTopicosAdmin();
   if (page === 'calendario')     renderCalendario();
+  if (page === 'onboarding')     carregarPainelOnboarding();
 }
 
 function buildHeaderActions(page) {
@@ -2042,6 +2092,7 @@ function buildHeaderActions(page) {
     crm_etapas:     canEdit('crm_etapas')      ? btnNew('Nova etapa',       'openEtapaForm')     : '',
     sdr_topicos:    canEdit('sdr_topicos')     ? btnNew('Novo tópico',      'openSdrTopicoForm') : '',
     calendario:     canEdit('calendario')      ? btnNew('Nova demanda',      'openDemandForm')       : '',
+    onboarding:     '',
     dashboard: `<button class="btn btn-ghost btn-sm" onclick="openExportModal()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M12 4v12m0 0l-4-4m4 4l4-4"/><path d="M4 20h16"/></svg> Exportar PDF</button>
                 ${canEdit('demands') ? btnNew('Nova demanda', 'openDemandForm') : ''}`,
   };
@@ -2653,6 +2704,7 @@ function renderClients() {
       <td><strong>${c.name}</strong></td>
       <td style="color:var(--muted)">${total} demanda${total!==1?'s':''}</td>
       <td><div class="row-actions">
+        ${canView('onboarding') ? `<button class="btn btn-ghost btn-sm" onclick="abrirModalOnboarding('${c.id}')">Onboarding</button>` : ''}
         ${canView('financeiro') ? `<button class="btn btn-ghost btn-sm" onclick="abrirModalFinanceiro('${c.id}')">Financeiro</button>` : ''}
         ${editClients ? `<button class="btn btn-ghost btn-sm" onclick="openClientForm('${c.id}')">Editar</button>
         <button class="btn btn-danger btn-sm" onclick="deleteClient('${c.id}')">Excluir</button>` : ''}
@@ -3033,10 +3085,11 @@ function openPermissoes(userId) {
     {
       label: 'Geral',
       pages: [
-        { key: 'dashboard',  label: 'Dashboard' },
-        { key: 'demands',    label: 'Demandas' },
-        { key: 'internal',   label: 'Demandas Internas' },
-        { key: 'calendario', label: 'Calendário Editorial' },
+        { key: 'dashboard',   label: 'Dashboard' },
+        { key: 'demands',     label: 'Demandas' },
+        { key: 'internal',    label: 'Demandas Internas' },
+        { key: 'calendario',  label: 'Calendário Editorial' },
+        { key: 'onboarding',  label: 'Onboarding' },
       ]
     },
     {
@@ -3125,7 +3178,7 @@ function onPermEditarChange(page, el) {
 }
 
 async function savePermissoes(userId) {
-  const pages = ['dashboard','demands','internal','clients','financeiro','statuses','formats','users','crm_leads','crm_funil','crm_atividades','crm_relatorios','crm_etapas','sdr','sdr_topicos','calendario'];
+  const pages = ['dashboard','demands','internal','clients','financeiro','statuses','formats','users','crm_leads','crm_funil','crm_atividades','crm_relatorios','crm_etapas','sdr','sdr_topicos','calendario','onboarding'];
   const permissoes = {};
   pages.forEach(page => {
     const visualizar = document.getElementById(`perm_${page}_visualizar`)?.checked ?? true;
@@ -3179,6 +3232,9 @@ function applyPermissions() {
   // Calendário Editorial
   const calNav = document.getElementById('navCalendario');
   if (calNav) calNav.style.display = canView('calendario') ? '' : 'none';
+  // Onboarding
+  const onbNav = document.getElementById('navOnboarding');
+  if (onbNav) onbNav.style.display = canView('onboarding') ? '' : 'none';
 
   // CRM pages
   const crmPages = ['crm_leads','crm_funil','crm_atividades','crm_relatorios'];
@@ -6019,6 +6075,389 @@ async function calDayDrop(e, date) {
 function openDemandFormDate(date) {
   openDemandForm();
   setTimeout(() => { const el = document.getElementById('fDDate'); if (el) el.value = date; }, 60);
+}
+
+// ═══════════════════════════════════════
+//  MÓDULO ONBOARDING
+// ═══════════════════════════════════════
+let _onbClienteId = null;
+let _onbCatalogo = [];
+let _onbData = null;
+let _onbPainel = [];
+
+const ONB_STATUS_LABELS = { em_andamento:'Em andamento', aguardando_cliente:'Aguardando cliente', em_revisao:'Em revisão', concluido:'Concluído' };
+const ONB_STATUS_COLORS = { em_andamento:'background:#DBEAFE;color:#1E40AF', aguardando_cliente:'background:#FEF3C7;color:#92400E', em_revisao:'background:#EDE9FE;color:#5B21B6', concluido:'background:#D1FAE5;color:#065F46' };
+const ONB_ITEM_STATUS_LABELS = { pendente:'Pendente', recebido:'Recebido', aprovado:'Aprovado', reprovado:'Reprovado' };
+const ONB_ITEM_STATUS_COLORS = { pendente:'background:#F3F4F6;color:#6B7280', recebido:'background:#DBEAFE;color:#1E40AF', aprovado:'background:#D1FAE5;color:#065F46', reprovado:'background:#FEE2E2;color:#991B1B' };
+
+async function abrirModalOnboarding(clienteId) {
+  const cliente = clients.find(c => c.id === clienteId);
+  _onbClienteId = clienteId;
+  _onbCatalogo = [];
+  _onbData = null;
+  document.getElementById('onb-modal-title').textContent = 'Onboarding — ' + (cliente?.name || clienteId);
+  document.getElementById('onb-tab-checklist').innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Carregando...</div>';
+  document.getElementById('onb-tab-acomp').innerHTML = '';
+  document.getElementById('onb-tab-catalogo').innerHTML = '';
+  openModal('modal-onboarding');
+
+  const [catRes, onbRes] = await Promise.all([
+    API.get('/onboarding/catalogo'),
+    API.get('/onboarding/cliente/' + clienteId)
+  ]);
+  if (!catRes.erro) _onbCatalogo = Array.isArray(catRes) ? catRes : [];
+  if (!onbRes.erro) _onbData = onbRes;
+
+  const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
+  document.getElementById('ctab-onb-acomp').style.display = _onbData ? '' : 'none';
+  document.getElementById('ctab-onb-catalogo').style.display = u.papel === 'admin' ? '' : 'none';
+  onbSwitchTab(_onbData ? 'acomp' : 'checklist');
+}
+
+function onbSwitchTab(tab) {
+  ['checklist','acomp','catalogo'].forEach(t => {
+    document.getElementById('onb-tab-' + t).style.display = t === tab ? '' : 'none';
+    const btn = document.getElementById('ctab-onb-' + t);
+    if (btn) btn.classList.toggle('ctab-active', t === tab);
+  });
+  if (tab === 'checklist') renderOnbChecklistTab();
+  if (tab === 'acomp') renderOnbAcompTab();
+  if (tab === 'catalogo') renderOnbCatalogoTab();
+}
+
+function renderOnbChecklistTab() {
+  const grouped = {};
+  _onbCatalogo.forEach(i => { if (!grouped[i.categoria]) grouped[i.categoria] = []; grouped[i.categoria].push(i); });
+  const selectedIds = new Set((_onbData?.itens || []).map(i => i.catalogo?.id).filter(Boolean));
+  const obrigMap = {};
+  (_onbData?.itens || []).forEach(i => { if (i.catalogo?.id) obrigMap[i.catalogo.id] = i.obrigatorio; });
+
+  const cats = Object.entries(grouped).map(([cat, itens]) => `
+    <div style="margin-bottom:14px">
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);padding:8px 0 4px;border-bottom:1px solid var(--border);margin-bottom:6px">${cat}</div>
+      ${itens.map(item => {
+        const ck = _onbData ? selectedIds.has(item.id) : (item.obrigatorio_por_padrao ?? false);
+        const ob = obrigMap[item.id] ?? true;
+        return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
+          <input type="checkbox" id="onb-ck-${item.id}" ${ck ? 'checked' : ''} onchange="onbToggleItemRow('${item.id}')">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:500">${item.label}</div>
+            ${item.descricao ? `<div style="font-size:11px;color:var(--muted)">${item.descricao}</div>` : ''}
+          </div>
+          <div id="onb-obrig-wrap-${item.id}" style="${ck ? '' : 'display:none'}">
+            <label style="font-size:11px;display:flex;align-items:center;gap:4px;cursor:pointer;white-space:nowrap">
+              <input type="checkbox" id="onb-obrig-${item.id}" ${ob ? 'checked' : ''}> Obrigatório
+            </label>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
+
+  const jaEnviado = !!_onbData?.data_envio;
+  document.getElementById('onb-tab-checklist').innerHTML = `
+    <div style="max-height:420px;overflow-y:auto;margin-bottom:16px">${cats || '<p style="color:var(--muted);font-size:13px">Nenhum item no catálogo.</p>'}</div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-onboarding')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarSelecaoItens()">${_onbData ? 'Atualizar seleção' : 'Criar onboarding'}</button>
+      ${!_onbData ? '' : `<button class="btn btn-primary" style="background:#27AE60;border-color:#27AE60" onclick="enviarLinkOnboarding()">${jaEnviado ? 'Reenviar link' : 'Enviar link ao cliente'}</button>`}
+    </div>
+  `;
+}
+
+function onbToggleItemRow(itemId) {
+  const ck = document.getElementById('onb-ck-' + itemId);
+  const wrap = document.getElementById('onb-obrig-wrap-' + itemId);
+  if (wrap) wrap.style.display = ck?.checked ? '' : 'none';
+}
+
+function renderOnbAcompTab() {
+  if (!_onbData) { document.getElementById('onb-tab-acomp').innerHTML = '<p style="color:var(--muted);font-size:13px;padding:8px 0">Onboarding não iniciado.</p>'; return; }
+  const prog = _onbData.progresso || 0;
+  const grouped = {};
+  (_onbData.itens || []).forEach(i => {
+    const cat = i.catalogo?.categoria || 'Outros';
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(i);
+  });
+
+  const linkUrl = _onbData.data_envio ? (window.location.origin + '/onboarding/' + _onbData.token_publico) : null;
+
+  const itensHtml = Object.entries(grouped).map(([cat, itens]) => `
+    <div style="margin-bottom:14px">
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);padding:6px 0 4px;border-bottom:1px solid var(--border);margin-bottom:6px">${cat}</div>
+      ${itens.map(i => {
+        const r = i.respostas?.[0];
+        const stColor = ONB_ITEM_STATUS_COLORS[i.status] || '';
+        const respostaHtml = r ? (
+          r.tipo_resposta === 'arquivo' ? `<a href="${r.arquivo_url}" target="_blank" style="font-size:11px;color:var(--primary);font-weight:600">📎 ${r.arquivo_nome || 'Arquivo'}</a>` :
+          r.tipo_resposta === 'checkbox' ? `<span style="font-size:11px">${r.valor_checkbox ? '✓ Confirmado' : 'Não confirmado'}</span>` :
+          `<span style="font-size:11px;white-space:pre-wrap">${r.valor_texto || ''}</span>`
+        ) : '<span style="font-size:11px;color:var(--muted)">Sem resposta</span>';
+        return `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span style="font-size:12px;font-weight:600;flex:1">${i.catalogo?.label || ''}${i.obrigatorio ? '' : ' <span style="font-size:10px;color:var(--muted)">(opcional)</span>'}</span>
+            <span style="padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;${stColor}">${ONB_ITEM_STATUS_LABELS[i.status]||i.status}</span>
+          </div>
+          <div style="margin-bottom:8px">${respostaHtml}</div>
+          ${i.status === 'recebido' ? `<div style="display:flex;gap:6px;margin-bottom:8px">
+            <button class="btn btn-ghost btn-sm" style="color:#065F46;border-color:#6EE7B7" onclick="onbAprovarItem('${i.id}')">Aprovar</button>
+            <button class="btn btn-ghost btn-sm" style="color:#991B1B;border-color:#FECACA" onclick="onbReprovarItem('${i.id}')">Reprovar</button>
+          </div>` : ''}
+          <div style="display:flex;gap:6px">
+            <input class="form-input" type="text" id="onb-obs-${i.id}" value="${(i.observacao_interna||'').replace(/"/g,'&quot;')}" placeholder="Obs. interna..." style="font-size:11px;padding:5px 8px">
+            <button class="btn btn-ghost btn-sm" onclick="onbSalvarObs('${i.id}')">OK</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
+
+  const allObrigOk = (_onbData.itens || []).filter(i => i.obrigatorio).every(i => ['recebido','aprovado'].includes(i.status));
+
+  document.getElementById('onb-tab-acomp').innerHTML = `
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:12px;font-weight:600">${_onbData.itens_respondidos || 0} de ${_onbData.total_itens || 0} respondidos</span>
+        <span style="font-size:11px;color:var(--muted)">${prog}%</span>
+      </div>
+      <div style="height:8px;background:var(--surface2);border-radius:100px;overflow:hidden">
+        <div style="height:100%;width:${prog}%;background:#27AE60;border-radius:100px"></div>
+      </div>
+    </div>
+    ${linkUrl ? `<div style="margin-bottom:12px;padding:10px 12px;background:var(--surface2);border-radius:var(--r-sm);border:1px solid var(--border);font-size:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span style="font-weight:600">Link:</span>
+      <a href="${linkUrl}" target="_blank" style="color:var(--primary);flex:1;word-break:break-all;font-size:11px">${linkUrl}</a>
+      <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText('${linkUrl}');toast('Link copiado!')">Copiar</button>
+    </div>` : `<div style="margin-bottom:12px"><button class="btn btn-primary btn-sm" onclick="enviarLinkOnboarding()">Gerar e enviar link ao cliente</button></div>`}
+    <div style="max-height:380px;overflow-y:auto;margin-bottom:16px">${itensHtml}</div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-onboarding')">Fechar</button>
+      ${allObrigOk && _onbData.status !== 'concluido' ? `<button class="btn btn-primary" style="background:#27AE60;border-color:#27AE60" onclick="concluirOnboarding()">✓ Concluir onboarding</button>` : ''}
+    </div>
+  `;
+}
+
+function renderOnbCatalogoTab() {
+  const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
+  if (u.papel !== 'admin') { document.getElementById('onb-tab-catalogo').innerHTML = ''; return; }
+  const tipos = ['upload','texto','link','checkbox'];
+  const rows = _onbCatalogo.map(i => `
+    <tr style="${i.ativo ? '' : 'opacity:0.45'}">
+      <td>${i.categoria}</td>
+      <td>${i.label}</td>
+      <td style="color:var(--muted)">${i.tipo}</td>
+      <td style="text-align:center">${i.ativo ? '✓' : '—'}</td>
+      <td><div class="row-actions">
+        <button class="btn btn-ghost btn-sm" onclick="onbEditCatItem('${i.id}')">Editar</button>
+        ${i.ativo ? `<button class="btn btn-danger btn-sm" onclick="onbDesativarCatItem('${i.id}')">Desativar</button>` : `<button class="btn btn-ghost btn-sm" onclick="onbAtivarCatItem('${i.id}')">Ativar</button>`}
+      </div></td>
+    </tr>`).join('') || `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">Nenhum item.</td></tr>`;
+
+  document.getElementById('onb-tab-catalogo').innerHTML = `
+    <div style="margin-bottom:12px"><button class="btn btn-primary btn-sm" onclick="onbNovoCatItem()">+ Novo item</button></div>
+    <div id="onb-cat-form"></div>
+    <div class="table-wrap" style="overflow-x:auto">
+      <table><thead><tr><th>Categoria</th><th>Label</th><th>Tipo</th><th>Ativo</th><th></th></tr></thead>
+      <tbody>${rows}</tbody></table>
+    </div>
+  `;
+}
+
+function onbNovoCatItem(editId) {
+  const item = editId ? _onbCatalogo.find(i => i.id === editId) : null;
+  const tipos = ['upload','texto','link','checkbox'];
+  document.getElementById('onb-cat-form').innerHTML = `
+    <div style="padding:14px;background:var(--surface2);border-radius:var(--r);border:1px solid var(--border);margin-bottom:12px">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;margin-bottom:12px">${editId ? 'Editar item' : 'Novo item'}</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Categoria</label>
+          <input class="form-input" id="onbCatCategoria" value="${item?.categoria||''}" placeholder="Ex: Identidade visual"></div>
+        <div class="form-group"><label class="form-label">Label</label>
+          <input class="form-input" id="onbCatLabel" value="${item?.label||''}" placeholder="Ex: Logo em alta resolução"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Descrição (instrução ao cliente)</label>
+        <textarea class="form-textarea" id="onbCatDesc" rows="2">${item?.descricao||''}</textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Tipo</label>
+          <select class="form-select" id="onbCatTipo">
+            ${tipos.map(t => `<option value="${t}" ${(item?.tipo||'upload')===t?'selected':''}>${t}</option>`).join('')}
+          </select></div>
+        <div class="form-group"><label class="form-label">Ordem</label>
+          <input class="form-input" type="number" id="onbCatOrdem" value="${item?.ordem||0}"></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('onb-cat-form').innerHTML=''">Cancelar</button>
+        <button class="btn btn-primary btn-sm" onclick="onbSalvarCatItem('${editId||''}')">${editId ? 'Salvar' : 'Criar'}</button>
+      </div>
+    </div>`;
+}
+
+function onbEditCatItem(id) { onbNovoCatItem(id); }
+
+async function onbSalvarCatItem(editId) {
+  const body = {
+    categoria: document.getElementById('onbCatCategoria')?.value?.trim(),
+    label: document.getElementById('onbCatLabel')?.value?.trim(),
+    descricao: document.getElementById('onbCatDesc')?.value?.trim() || null,
+    tipo: document.getElementById('onbCatTipo')?.value,
+    ordem: parseInt(document.getElementById('onbCatOrdem')?.value) || 0
+  };
+  if (!body.categoria || !body.label) { toast('Preencha categoria e label.'); return; }
+  let res;
+  if (editId) {
+    res = await API.patch('/onboarding/catalogo/' + editId, body);
+    if (!res.erro) { const i = _onbCatalogo.findIndex(x => x.id === editId); if (i >= 0) _onbCatalogo[i] = { ..._onbCatalogo[i], ...res }; }
+  } else {
+    res = await API.post('/onboarding/catalogo', body);
+    if (!res.erro) _onbCatalogo.push(res);
+  }
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast(editId ? 'Item atualizado!' : 'Item criado!');
+  renderOnbCatalogoTab();
+}
+
+async function onbDesativarCatItem(id) {
+  if (!confirm('Desativar este item do catálogo?')) return;
+  const res = await API.del('/onboarding/catalogo/' + id);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  const i = _onbCatalogo.findIndex(x => x.id === id);
+  if (i >= 0) _onbCatalogo[i].ativo = false;
+  toast('Item desativado.');
+  renderOnbCatalogoTab();
+}
+
+async function onbAtivarCatItem(id) {
+  const res = await API.patch('/onboarding/catalogo/' + id, { ativo: true });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  const i = _onbCatalogo.findIndex(x => x.id === id);
+  if (i >= 0) _onbCatalogo[i].ativo = true;
+  toast('Item ativado.');
+  renderOnbCatalogoTab();
+}
+
+async function salvarSelecaoItens() {
+  const itens = _onbCatalogo
+    .filter(item => document.getElementById('onb-ck-' + item.id)?.checked)
+    .map(item => ({
+      catalogo_id: item.id,
+      obrigatorio: document.getElementById('onb-obrig-' + item.id)?.checked ?? true
+    }));
+  if (!itens.length) { toast('Selecione ao menos um item.'); return; }
+
+  let res;
+  if (_onbData) {
+    const todosItens = _onbCatalogo.map(item => ({
+      catalogo_id: item.id,
+      obrigatorio: document.getElementById('onb-obrig-' + item.id)?.checked ?? true,
+      ativo: document.getElementById('onb-ck-' + item.id)?.checked ?? false
+    }));
+    res = await API.patch('/onboarding/cliente/' + _onbClienteId + '/itens', { itens: todosItens });
+  } else {
+    res = await API.post('/onboarding/cliente/' + _onbClienteId, { itens });
+  }
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast(_onbData ? 'Seleção atualizada!' : 'Onboarding criado!');
+  const onbRes = await API.get('/onboarding/cliente/' + _onbClienteId);
+  if (!onbRes.erro) _onbData = onbRes;
+  document.getElementById('ctab-onb-acomp').style.display = '';
+  onbSwitchTab('acomp');
+}
+
+async function enviarLinkOnboarding() {
+  const res = await API.post('/onboarding/cliente/' + _onbClienteId + '/enviar', {});
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast('Link gerado!');
+  navigator.clipboard.writeText(res.url).catch(() => {});
+  const onbRes = await API.get('/onboarding/cliente/' + _onbClienteId);
+  if (!onbRes.erro) _onbData = onbRes;
+  renderOnbAcompTab();
+}
+
+async function onbAprovarItem(itemId) {
+  const res = await API.patch('/onboarding/itens/' + itemId, { status: 'aprovado' });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  const i = (_onbData?.itens || []).findIndex(x => x.id === itemId);
+  if (i >= 0) _onbData.itens[i].status = 'aprovado';
+  toast('Item aprovado!');
+  renderOnbAcompTab();
+}
+
+async function onbReprovarItem(itemId) {
+  const res = await API.patch('/onboarding/itens/' + itemId, { status: 'reprovado' });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  const i = (_onbData?.itens || []).findIndex(x => x.id === itemId);
+  if (i >= 0) _onbData.itens[i].status = 'reprovado';
+  toast('Item reprovado.');
+  renderOnbAcompTab();
+}
+
+async function onbSalvarObs(itemId) {
+  const obs = document.getElementById('onb-obs-' + itemId)?.value?.trim() || null;
+  const res = await API.patch('/onboarding/itens/' + itemId, { observacao_interna: obs });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast('Observação salva.');
+}
+
+async function concluirOnboarding() {
+  if (!confirm('Marcar este onboarding como concluído?')) return;
+  const res = await API.patch('/onboarding/cliente/' + _onbClienteId + '/status', { status: 'concluido' });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  if (_onbData) _onbData.status = 'concluido';
+  toast('Onboarding concluído!');
+  renderOnbAcompTab();
+}
+
+async function carregarPainelOnboarding() {
+  document.getElementById('onboardingPainelTable').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">Carregando...</td></tr>';
+  const res = await API.get('/onboarding/resumo');
+  if (res.erro) { toast('Erro ao carregar painel: ' + res.erro); return; }
+  _onbPainel = Array.isArray(res) ? res : [];
+  renderPainelOnboarding();
+}
+
+function renderPainelOnboarding() {
+  const filtro = document.getElementById('onbFiltroStatus')?.value || '';
+  const lista = filtro ? _onbPainel.filter(o => o.status === filtro) : _onbPainel;
+
+  // Metrics
+  const ativos = _onbPainel.filter(o => o.status !== 'concluido').length;
+  const aguardando = _onbPainel.filter(o => o.status === 'aguardando_cliente').length;
+  const mesAtual = new Date().toISOString().slice(0, 7);
+  const concluidos = _onbPainel.filter(o => o.status === 'concluido' && o.data_conclusao?.slice(0, 7) === mesAtual).length;
+  document.getElementById('onboardingPainelMetrics').innerHTML = [
+    ['Ativos', ativos, '#DBEAFE','#1E40AF'],
+    ['Aguardando cliente', aguardando, '#FEF3C7','#92400E'],
+    ['Concluídos no mês', concluidos, '#D1FAE5','#065F46']
+  ].map(([lbl, val, bg, color]) => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px">
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;color:${color}">${val}</div>
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-top:2px">${lbl}</div>
+    </div>`).join('');
+
+  document.getElementById('onboardingPainelSub').textContent = `${_onbPainel.length} onboarding${_onbPainel.length !== 1 ? 's' : ''} cadastrado${_onbPainel.length !== 1 ? 's' : ''}`;
+
+  if (!lista.length) {
+    document.getElementById('onboardingPainelTable').innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">Nenhum onboarding encontrado.</td></tr>`;
+    return;
+  }
+
+  document.getElementById('onboardingPainelTable').innerHTML = lista.map(o => {
+    const stColor = ONB_STATUS_COLORS[o.status] || '';
+    const envio = o.data_envio ? new Date(o.data_envio).toLocaleDateString('pt-BR') : '—';
+    return `<tr>
+      <td><strong>${o.cliente_nome}</strong></td>
+      <td style="min-width:120px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;height:6px;background:var(--surface2);border-radius:100px;overflow:hidden">
+            <div style="height:100%;width:${o.progresso}%;background:#27AE60;border-radius:100px"></div>
+          </div>
+          <span style="font-size:11px;color:var(--muted);white-space:nowrap">${o.progresso}%</span>
+        </div>
+      </td>
+      <td><span style="padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;${stColor}">${ONB_STATUS_LABELS[o.status]||o.status}</span></td>
+      <td style="color:var(--muted);font-size:12px">${envio}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="abrirModalOnboarding('${o.cliente_id}')">Ver</button></td>
+    </tr>`;
+  }).join('');
 }
 
 // ═══════════════════════════════════════
