@@ -4203,8 +4203,7 @@ async function deleteEtapa(id, label) {
 
 // ── LEADS ────────────────────────────────
 async function renderLeads() {
-  if (crmEtapas.length <= 1) await loadCrmEtapas();
-  else _populateEtapaFilters();
+  await loadCrmEtapas();
   const res = await API.get('/crm/leads');
   if (res.erro) {
     toast('Erro ao carregar leads: ' + res.erro);
@@ -4958,7 +4957,7 @@ async function renderCrmRelatorios() {
   const res = await API.get('/crm/relatorios');
   if (res.erro) { el.innerHTML = `<div style="text-align:center;padding:40px;color:#E74C3C">Erro: ${res.erro}</div>`; return; }
   const { porEtapa, porOrigem, porMes, total, fechados, conversao, atividadesPendentes } = res;
-  if (crmEtapas.length <= 1) await loadCrmEtapas();
+  await loadCrmEtapas();
   const maxEtapa = Math.max(...crmEtapas.map(e => porEtapa[e.key]||0), 1);
 
   el.innerHTML = `
@@ -5080,7 +5079,7 @@ async function renderCrmRelatorios() {
 //  PDF CRM
 // ═══════════════════════════════════════
 async function exportCrmPDF() {
-  if (crmEtapas.length <= 1) await loadCrmEtapas();
+  await loadCrmEtapas();
   const res = await API.get('/crm/relatorios');
   if (res.erro) { toast('Erro ao carregar dados: ' + res.erro); return; }
   const { porEtapa, porOrigem, porMes, total, fechados, conversao, atividadesPendentes } = res;
