@@ -93,12 +93,12 @@ router.post('/demandas/:id/artes', async (req, res) => {
   const buffer = Buffer.from(base64, 'base64');
 
   const { error: upErr } = await supabase.storage
-    .from('portal')
+    .from('Portal')
     .upload(storagePath, buffer, { contentType: tipo || 'application/octet-stream' });
 
   if (upErr) return res.status(500).json({ erro: 'Erro ao fazer upload da arte' });
 
-  const { data: urlData } = supabase.storage.from('portal').getPublicUrl(storagePath);
+  const { data: urlData } = supabase.storage.from('Portal').getPublicUrl(storagePath);
 
   const { data: ultimaArte } = await supabase
     .from('portal_artes')
@@ -164,7 +164,7 @@ router.delete('/demandas/:id/artes/:artId', async (req, res) => {
 
   if (!arte) return res.status(404).json({ erro: 'Arte não encontrada' });
 
-  await supabase.storage.from('portal').remove([arte.storage_path]);
+  await supabase.storage.from('Portal').remove([arte.storage_path]);
   await supabase.from('portal_artes').delete().eq('id', artId);
 
   const { count } = await supabase
