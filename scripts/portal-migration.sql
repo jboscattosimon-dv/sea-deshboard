@@ -27,13 +27,30 @@ ALTER TABLE demandas
   ADD COLUMN IF NOT EXISTS arte_pronta BOOLEAN DEFAULT false;
 
 -- ============================================================
--- 3. ALTERAÇÕES NA TABELA cal_conteudos (campos para o portal)
+-- 3. TABELA cal_conteudos (cria se não existir, adiciona colunas do portal)
 -- ============================================================
-ALTER TABLE cal_conteudos
-  ADD COLUMN IF NOT EXISTS legenda TEXT,
-  ADD COLUMN IF NOT EXISTS hashtags TEXT,
-  ADD COLUMN IF NOT EXISTS arte_url TEXT,
-  ADD COLUMN IF NOT EXISTS arte_path TEXT;
+CREATE TABLE IF NOT EXISTS cal_conteudos (
+  id TEXT PRIMARY KEY DEFAULT 'cal_' || substr(md5(random()::text), 1, 8),
+  titulo VARCHAR(200) NOT NULL,
+  data_publicacao DATE NOT NULL,
+  cliente_id TEXT REFERENCES clientes(id),
+  canal VARCHAR(100),
+  status VARCHAR(30) DEFAULT 'rascunho',
+  responsavel_id UUID REFERENCES usuarios(id),
+  descricao TEXT,
+  criado_por UUID REFERENCES usuarios(id),
+  criado_em TIMESTAMPTZ DEFAULT NOW(),
+  legenda TEXT,
+  hashtags TEXT,
+  arte_url TEXT,
+  arte_path TEXT
+);
+
+-- Se a tabela já existia, garante que as colunas do portal estão presentes
+ALTER TABLE cal_conteudos ADD COLUMN IF NOT EXISTS legenda TEXT;
+ALTER TABLE cal_conteudos ADD COLUMN IF NOT EXISTS hashtags TEXT;
+ALTER TABLE cal_conteudos ADD COLUMN IF NOT EXISTS arte_url TEXT;
+ALTER TABLE cal_conteudos ADD COLUMN IF NOT EXISTS arte_path TEXT;
 
 -- ============================================================
 -- 4. COMENTÁRIOS DO PORTAL (chat entre cliente e equipe)
