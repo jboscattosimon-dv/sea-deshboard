@@ -270,11 +270,11 @@ router.post('/demandas/:id/comentarios', async (req, res) => {
     const buffer = Buffer.from(base64, 'base64');
 
     const { error: upErr } = await supabase.storage
-      .from('portal')
+      .from('Portal')
       .upload(storagePath, buffer, { contentType: arquivo_tipo || 'application/octet-stream' });
 
     if (!upErr) {
-      const { data: urlData } = supabase.storage.from('portal').getPublicUrl(storagePath);
+      const { data: urlData } = supabase.storage.from('Portal').getPublicUrl(storagePath);
       publicUrl = urlData.publicUrl;
       temAnexo = true;
     }
@@ -359,12 +359,12 @@ router.post('/demandas/:id/arquivos', async (req, res) => {
   const buffer = Buffer.from(base64, 'base64');
 
   const { error: upErr } = await supabase.storage
-    .from('portal')
+    .from('Portal')
     .upload(storagePath, buffer, { contentType: tipo || 'application/octet-stream' });
 
   if (upErr) return res.status(500).json({ erro: 'Erro ao fazer upload do arquivo' });
 
-  const { data: urlData } = supabase.storage.from('portal').getPublicUrl(storagePath);
+  const { data: urlData } = supabase.storage.from('Portal').getPublicUrl(storagePath);
 
   const { data, error } = await supabase
     .from('portal_arquivos')
@@ -406,7 +406,7 @@ router.delete('/demandas/:id/arquivos/:arqId', async (req, res) => {
 
   if (!arquivo) return res.status(404).json({ erro: 'Arquivo não encontrado ou sem permissão' });
 
-  await supabase.storage.from('portal').remove([arquivo.storage_path]);
+  await supabase.storage.from('Portal').remove([arquivo.storage_path]);
 
   const { error } = await supabase.from('portal_arquivos').delete().eq('id', arqId);
   if (error) return res.status(400).json({ erro: 'Erro ao excluir arquivo' });
@@ -597,12 +597,12 @@ router.put('/perfil', async (req, res) => {
     const base64 = foto_b64.includes('base64,') ? foto_b64.split('base64,')[1] : foto_b64;
     const buffer = Buffer.from(base64, 'base64');
 
-    await supabase.storage.from('portal').upload(storagePath, buffer, {
+    await supabase.storage.from('Portal').upload(storagePath, buffer, {
       contentType: 'image/jpeg',
       upsert: true
     });
 
-    const { data: urlData } = supabase.storage.from('portal').getPublicUrl(storagePath);
+    const { data: urlData } = supabase.storage.from('Portal').getPublicUrl(storagePath);
     updates.foto_url = urlData.publicUrl + '?t=' + Date.now();
   }
 
