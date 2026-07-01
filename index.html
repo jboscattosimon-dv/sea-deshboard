@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1746,6 +1746,33 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<!-- MODAL PORTAL DO CLIENTE -->
+<div class="modal-overlay" id="portalModal">
+  <div class="modal">
+    <div class="modal-title" id="portalModalTitle">🔐 Portal do Cliente</div>
+    <button class="modal-close" onclick="closeModal('portalModal')">×</button>
+    <div style="margin-bottom:14px">
+      <label class="form-label">E-mail de acesso</label>
+      <input class="form-input" type="email" id="portalEmail" placeholder="email@cliente.com" />
+    </div>
+    <div style="margin-bottom:14px">
+      <label class="form-label">Senha <span style="font-weight:400;text-transform:none;letter-spacing:0">(deixe em branco para não alterar)</span></label>
+      <input class="form-input" type="password" id="portalSenha" placeholder="Nova senha (mín. 6 caracteres)" />
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <input type="checkbox" id="portalAcesso" style="width:16px;height:16px;cursor:pointer" />
+      <label for="portalAcesso" style="font-size:13.5px;cursor:pointer;font-weight:500;text-transform:none;letter-spacing:0;color:var(--text);margin:0">
+        Habilitar acesso ao Portal do Cliente
+      </label>
+    </div>
+    <div id="portalUltimoAcesso" style="font-size:12px;color:var(--muted);margin-bottom:16px"></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('portalModal')">Cancelar</button>
+      <button class="btn btn-primary" id="portalSalvarBtn">Salvar acesso</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL FORM -->
 <div class="modal-overlay" id="formModal">
   <div class="modal">
@@ -2724,6 +2751,7 @@ function renderClients() {
         ${canView('onboarding') ? `<button class="btn btn-ghost btn-sm" onclick="abrirModalOnboarding('${c.id}')">Onboarding</button>` : ''}
         ${canView('financeiro') ? `<button class="btn btn-ghost btn-sm" onclick="abrirModalFinanceiro('${c.id}')">Financeiro</button>` : ''}
         ${editClients ? `<button class="btn btn-ghost btn-sm" onclick="openClientForm('${c.id}')">Editar</button>
+        <button class="btn btn-ghost btn-sm" onclick="openPortalModal('${c.id}','${c.name}')">🔐 Portal</button>
         <button class="btn btn-danger btn-sm" onclick="deleteClient('${c.id}')">Excluir</button>` : ''}
       </div></td>
     </tr>`;
@@ -2785,6 +2813,51 @@ async function deleteClient(id) {
     toast('Cliente excluído.');
     renderClients();
   } catch(e) { toast('Erro inesperado: ' + e.message); }
+}
+
+// ═══════════════════════════════════════
+//  PORTAL DO CLIENTE
+// ═══════════════════════════════════════
+async function openPortalModal(clienteId, clienteNome) {
+  document.getElementById('portalModalTitle').textContent = '🔐 Portal — ' + clienteNome;
+  document.getElementById('portalEmail').value = '';
+  document.getElementById('portalSenha').value = '';
+  document.getElementById('portalAcesso').checked = false;
+  document.getElementById('portalUltimoAcesso').textContent = '';
+
+  const data = await API.get('/portal-admin/clientes/' + clienteId);
+  if (!data.erro) {
+    document.getElementById('portalEmail').value = data.email || '';
+    document.getElementById('portalAcesso').checked = !!data.acesso_portal;
+    if (data.ultimo_acesso) {
+      const d = new Date(data.ultimo_acesso);
+      document.getElementById('portalUltimoAcesso').textContent =
+        'Último acesso: ' + d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+  }
+
+  document.getElementById('portalSalvarBtn').onclick = () => savePortalAccess(clienteId);
+  openModal('portalModal');
+}
+
+async function savePortalAccess(clienteId) {
+  const email       = document.getElementById('portalEmail').value.trim();
+  const senha       = document.getElementById('portalSenha').value.trim();
+  const acesso      = document.getElementById('portalAcesso').checked;
+
+  if (!email) { toast('Informe o e-mail do cliente.'); return; }
+
+  const body = { email, acesso_portal: acesso };
+  if (senha) {
+    if (senha.length < 6) { toast('A senha deve ter pelo menos 6 caracteres.'); return; }
+    body.senha = senha;
+  }
+
+  const res = await API.put('/portal-admin/clientes/' + clienteId + '/portal', body);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+
+  closeModal('portalModal');
+  toast('Acesso ao portal atualizado!');
 }
 
 // ═══════════════════════════════════════
