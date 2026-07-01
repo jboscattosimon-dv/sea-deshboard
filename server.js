@@ -17,6 +17,10 @@ const calendarioRoutes = require('./routes/calendario');
 const contratosRoutes  = require('./routes/contratos');
 const briefingRoutes   = require('./routes/briefing');
 const financeiroRoutes = require('./routes/financeiro');
+const onboardingRoutes = require('./routes/onboarding');
+const portalAuthRoutes  = require('./routes/portal-auth');
+const portalRoutes      = require('./routes/portal');
+const portalAdminRoutes = require('./routes/portal-admin');
 
 const app = express();
 app.use(cors());
@@ -37,12 +41,14 @@ app.use('/api/calendario', calendarioRoutes);
 app.use('/api/contratos',  contratosRoutes);
 app.use('/api/briefing',   briefingRoutes);
 app.use('/api/financeiro', financeiroRoutes);
-const onboardingRoutes = require('./routes/onboarding');
 app.use('/api/onboarding', onboardingRoutes);
-app.get('/onboarding/:token', (req, res) => res.sendFile(path.join(__dirname, 'onboarding.html')));
+app.use('/api/portal/auth', portalAuthRoutes);
+app.use('/api/portal',      portalRoutes);
+app.use('/api/portal-admin', portalAdminRoutes);
 
-// Serve briefing page at /briefing/:id
+app.get('/onboarding/:token', (req, res) => res.sendFile(path.join(__dirname, 'onboarding.html')));
 app.get('/briefing/:id', (req, res) => res.sendFile('briefing.html', { root: './' }));
+app.get('/portal', (req, res) => res.sendFile(path.join(__dirname, 'portal.html')));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
