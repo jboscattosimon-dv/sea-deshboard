@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
 const supabase = require('../supabase');
 const bcrypt = require('bcryptjs');
@@ -17,7 +17,7 @@ function gerarId(prefix) {
 async function verificarDemandaDoCliente(demandaId, clienteId) {
   const { data } = await supabase
     .from('demandas')
-    .select('id, arte_pronta, titulo, descricao, cliente_id')
+    .select('id, arte_pronta, titulo, descricao, cliente_id, status_id, trello_card_id')
     .eq('id', demandaId)
     .eq('cliente_id', clienteId)
     .single();
@@ -219,7 +219,7 @@ router.get('/demandas/:id/historico', async (req, res) => {
     .select('*')
     .eq('entidade', 'demanda')
     .eq('entidade_id', id)
-    .in('tipo', ['arte_enviada', 'aprovado', 'alteracao_solicitada', 'rejeitado', 'comentario', 'upload', 'criado'])
+    .in('tipo', ['arte_enviada', 'aprovado', 'alteracao_solicitada', 'rejeitado', 'comentario', 'upload', 'criado', 'atualizado'])
     .order('criado_em', { ascending: false });
 
   if (error) return res.status(500).json({ erro: 'Erro ao buscar histórico' });
@@ -664,6 +664,202 @@ router.put('/notificacoes/:id/lida', async (req, res) => {
 
   if (error) return res.status(400).json({ erro: 'Erro ao marcar notificação' });
   res.json({ mensagem: 'Notificação marcada como lida' });
+});
+
+// ============================================================
+// PASTAS (cliente vê pastas e envia arquivos)
+// ============================================================
+
+router.get('/demandas/:id/pastas', async (req, res) => {
+  const clienteId = req.cliente.cliente_id;
+  const { id } = req.params;
+
+  const demanda = await verificarDemandaDoCliente(id, clienteId);
+  if (!demanda) return res.status(404).json({ erro: 'Demanda não encontrada' });
+
+  const { data: pastas } = await supabase
+    .from('portal_pastas')
+    .select('*')
+    .eq('demanda_id', id)
+    .order('ordem');
+
+  const { data: arquivos } = await supabase
+    .from('portal_arquivos')
+    .select('*')
+    .eq('demanda_id', id)
+    .eq('enviado_por_tipo', 'cliente')
+    .order('criado_em', { ascending: false });
+
+  res.json({ pastas: pastas || [], arquivos: arquivos || [] });
+});
+
+router.post('/demandas/:id/pastas/:pastaId/arquivos', async (req, res) => {
+  const clienteId = req.cliente.cliente_id;
+  const { id, pastaId } = req.params;
+  const { nome, arquivo_b64, tipo, tamanho } = req.body;
+
+  if (!nome || !arquivo_b64) return res.status(400).json({ erro: 'Arquivo e nome são obrigatórios' });
+
+  const demanda = await verificarDemandaDoCliente(id, clienteId);
+  if (!demanda) return res.status(404).json({ erro: 'Demanda não encontrada' });
+
+  const { data: pasta } = await supabase
+    .from('portal_pastas')
+    .select('id, nome')
+    .eq('id', pastaId)
+    .eq('demanda_id', id)
+    .single();
+
+  if (!pasta) return res.status(404).json({ erro: 'Pasta não encontrada' });
+
+  const sanitized = nome.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const storagePath = `portal/${clienteId}/${id}/pasta_${pastaId}/${Date.now()}_${sanitized}`;
+  const base64 = arquivo_b64.includes('base64,') ? arquivo_b64.split('base64,')[1] : arquivo_b64;
+  const buffer = Buffer.from(base64, 'base64');
+
+  const { error: upErr } = await supabase.storage
+    .from('Portal')
+    .upload(storagePath, buffer, { contentType: tipo || 'application/octet-stream' });
+
+  if (upErr) return res.status(500).json({ erro: 'Erro ao fazer upload do arquivo' });
+
+  const { data: urlData } = supabase.storage.from('Portal').getPublicUrl(storagePath);
+
+  const { data, error } = await supabase
+    .from('portal_arquivos')
+    .insert([{
+      id: gerarId('arq_'),
+      demanda_id: id,
+      cliente_id: clienteId,
+      pasta_id: pastaId,
+      nome,
+      url: urlData.publicUrl,
+      storage_path: storagePath,
+      tipo: tipo || null,
+      tamanho: tamanho || null,
+      enviado_por_tipo: 'cliente',
+      enviado_por_id: clienteId,
+      enviado_por_nome: req.cliente.nome
+    }])
+    .select()
+    .single();
+
+  if (error) return res.status(400).json({ erro: 'Erro ao salvar arquivo' });
+
+  await registrarHistorico(
+    'upload', id,
+    `Cliente ${req.cliente.nome} enviou "${nome}" na pasta "${pasta.nome}"`,
+    req.cliente.nome
+  );
+
+  if (demanda.trello_card_id) {
+    const trello = require('../trello');
+    trello.postComment(
+      demanda.trello_card_id,
+      `📎 O cliente enviou arquivos na pasta "${pasta.nome}".`
+    ).catch(e => console.error('[Trello]', e.message));
+  }
+
+  res.status(201).json(data);
+});
+
+// ============================================================
+// ENTREGÁVEIS (arquivos entregues pela equipe ao cliente)
+// ============================================================
+
+router.get('/demandas/:id/entregaveis', async (req, res) => {
+  const clienteId = req.cliente.cliente_id;
+  const { id } = req.params;
+
+  const demanda = await verificarDemandaDoCliente(id, clienteId);
+  if (!demanda) return res.status(404).json({ erro: 'Demanda não encontrada' });
+
+  const [{ data: arquivos }, { data: artes }] = await Promise.all([
+    supabase.from('portal_arquivos').select('*').eq('demanda_id', id).eq('enviado_por_tipo', 'equipe').order('criado_em', { ascending: false }),
+    supabase.from('portal_artes').select('*').eq('demanda_id', id).order('versao', { ascending: false })
+  ]);
+
+  res.json({ arquivos: arquivos || [], artes: artes || [] });
+});
+
+// ============================================================
+// APROVAÇÃO DA DEMANDA (fluxo novo — nível demanda, não arte)
+// ============================================================
+
+router.get('/aprovacoes-pendentes', async (req, res) => {
+  const clienteId = req.cliente.cliente_id;
+
+  const { data, error } = await supabase
+    .from('demandas')
+    .select(`
+      id, titulo, descricao, data, prazo, prioridade, criado_em,
+      status:status_id(id, nome, cor)
+    `)
+    .eq('cliente_id', clienteId)
+    .eq('status_id', 's_awcli')
+    .order('criado_em', { ascending: false });
+
+  if (error) return res.status(500).json({ erro: 'Erro ao buscar aprovações pendentes' });
+  res.json(data || []);
+});
+
+router.post('/demandas/:id/aprovacao-demanda', async (req, res) => {
+  const clienteId = req.cliente.cliente_id;
+  const { id } = req.params;
+  const { acao, motivo } = req.body;
+
+  if (!['aprovado', 'alteracao_solicitada'].includes(acao)) {
+    return res.status(400).json({ erro: 'Ação inválida. Use "aprovado" ou "alteracao_solicitada"' });
+  }
+  if (acao === 'alteracao_solicitada' && !motivo?.trim()) {
+    return res.status(400).json({ erro: 'O motivo é obrigatório ao solicitar alterações' });
+  }
+
+  const { data: demanda } = await supabase
+    .from('demandas')
+    .select('id, titulo, descricao, status_id, trello_card_id, cliente_id')
+    .eq('id', id)
+    .eq('cliente_id', clienteId)
+    .eq('status_id', 's_awcli')
+    .single();
+
+  if (!demanda) return res.status(404).json({ erro: 'Demanda não encontrada ou não está aguardando aprovação' });
+
+  await supabase.from('portal_aprovacoes_demanda').insert([{
+    id: gerarId('apd_'),
+    demanda_id: id,
+    cliente_id: clienteId,
+    cliente_nome: req.cliente.nome,
+    acao,
+    motivo: motivo?.trim() || null
+  }]);
+
+  const novoStatusId = acao === 'aprovado' ? 's_concl' : 's_altso';
+  const updates = { status_id: novoStatusId };
+  if (acao === 'aprovado') updates.data_conclusao = new Date().toISOString().split('T')[0];
+
+  await supabase.from('demandas').update(updates).eq('id', id);
+
+  const demandaTitulo = demanda.titulo || demanda.descricao?.slice(0, 60) || 'demanda';
+  const descHist = acao === 'aprovado'
+    ? `Cliente ${req.cliente.nome} aprovou a demanda`
+    : `Cliente ${req.cliente.nome} solicitou alterações: ${motivo}`;
+
+  await registrarHistorico(acao, id, descHist, req.cliente.nome);
+
+  if (demanda.trello_card_id) {
+    const trello = require('../trello');
+    const texto = acao === 'aprovado'
+      ? `✅ Cliente aprovou a demanda.`
+      : `✏️ Cliente solicitou alterações.\n\nMotivo:\n${motivo}`;
+    trello.postComment(demanda.trello_card_id, texto).catch(e => console.error('[Trello]', e.message));
+  }
+
+  const msgCliente = acao === 'aprovado'
+    ? `Você aprovou a demanda "${demandaTitulo}". Obrigado!`
+    : `Sua solicitação de alteração foi registrada para "${demandaTitulo}".`;
+
+  res.json({ mensagem: msgCliente });
 });
 
 module.exports = router;
