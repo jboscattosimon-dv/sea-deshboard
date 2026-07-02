@@ -1785,25 +1785,6 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
   </div>
 </div>
 
-<!-- MODAL PASTAS DA DEMANDA -->
-<div class="modal-overlay" id="pastasModal">
-  <div class="modal" style="max-width:540px">
-    <div class="modal-title">📁 Pastas da Demanda</div>
-    <button class="modal-close" onclick="closeModal('pastasModal')">×</button>
-    <div id="pastasModalBody">
-      <div style="color:var(--muted);font-size:13px">Carregando...</div>
-    </div>
-    <div style="border-top:1px solid var(--border);margin-top:16px;padding-top:16px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:10px">Nova pasta</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <input class="form-input" type="text" id="novaPastaNome" placeholder="Nome da pasta" style="flex:1;min-width:140px" />
-        <input class="form-input" type="text" id="novaPastaDesc" placeholder="Descrição (opcional)" style="flex:1;min-width:140px" />
-        <button class="btn btn-primary btn-sm" onclick="criarPasta()" style="white-space:nowrap">+ Criar</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- MODAL FORM -->
 <div class="modal-overlay" id="formModal">
   <div class="modal">
@@ -2663,7 +2644,6 @@ function renderDemandsTable(filtered) {
           onclick="togglePostado('${d.id}', ${!d.postado})">
           ${d.postado ? '✓ Postado' : 'Marcar postado'}
         </button>`}
-        ${editDemands ? `<button class="btn btn-ghost btn-sm" onclick="openPastasModal('${d.id}')">📁 Pastas</button>` : ''}
         ${editDemands ? `<button class="btn btn-danger btn-sm" onclick="deleteDemand('${d.id}')">Excluir</button>` : ''}
       </div></td>
     </tr>`;
@@ -2896,61 +2876,6 @@ async function savePortalAccess(clienteId) {
 
   closeModal('portalModal');
   toast('Acesso ao portal atualizado!');
-}
-
-// ═══════════════════════════════════════
-//  PASTAS DA DEMANDA (admin)
-// ═══════════════════════════════════════
-let currentPastasDemandaId = null;
-
-async function openPastasModal(demandaId) {
-  currentPastasDemandaId = demandaId;
-  document.getElementById('novaPastaNome').value = '';
-  document.getElementById('novaPastaDesc').value = '';
-  openModal('pastasModal');
-  await renderPastasAdmin(demandaId);
-}
-
-async function renderPastasAdmin(demandaId) {
-  const body = document.getElementById('pastasModalBody');
-  body.innerHTML = '<div style="color:var(--muted);font-size:13px">Carregando...</div>';
-  const pastas = await API.get('/portal-admin/demandas/' + demandaId + '/pastas');
-  if (!pastas || pastas.erro) { body.innerHTML = '<div style="color:#c00;font-size:13px">Erro ao carregar pastas.</div>'; return; }
-  if (!pastas.length) {
-    body.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0">Nenhuma pasta criada ainda.</div>';
-    return;
-  }
-  body.innerHTML = pastas.map((p, i) => `
-    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
-      <span style="font-size:18px">📁</span>
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:600;font-size:13.5px">${p.nome}</div>
-        ${p.descricao ? `<div style="font-size:11px;color:var(--muted)">${p.descricao}</div>` : ''}
-        <div style="font-size:11px;color:var(--muted);margin-top:1px">${p.total_arquivos} arquivo${p.total_arquivos !== 1 ? 's' : ''}</div>
-      </div>
-      <button class="btn btn-danger btn-sm" onclick="excluirPasta('${p.id}')">Excluir</button>
-    </div>`).join('');
-}
-
-async function criarPasta() {
-  const nome = document.getElementById('novaPastaNome').value.trim();
-  const desc = document.getElementById('novaPastaDesc').value.trim();
-  if (!nome) { toast('Informe o nome da pasta.'); return; }
-  if (!currentPastasDemandaId) return;
-  const res = await API.post('/portal-admin/demandas/' + currentPastasDemandaId + '/pastas', { nome, descricao: desc });
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  document.getElementById('novaPastaNome').value = '';
-  document.getElementById('novaPastaDesc').value = '';
-  toast('Pasta criada!', 'success');
-  await renderPastasAdmin(currentPastasDemandaId);
-}
-
-async function excluirPasta(pastaId) {
-  if (!confirm('Excluir esta pasta? Os arquivos dentro dela não serão apagados.')) return;
-  const res = await API.del('/portal-admin/pastas/' + pastaId);
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  toast('Pasta excluída.');
-  await renderPastasAdmin(currentPastasDemandaId);
 }
 
 // ═══════════════════════════════════════
