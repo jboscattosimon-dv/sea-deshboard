@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
 const supabase = require('../supabase');
 const bcrypt = require('bcryptjs');
@@ -241,7 +241,7 @@ router.post('/demandas/:id/comentarios', async (req, res) => {
 });
 
 // ============================================================
-// APROVAÇÕES (visão da equipe — somente leitura)
+// APROVAÇÕES — arte (legado) e demanda
 // ============================================================
 
 router.get('/demandas/:id/aprovacoes', async (req, res) => {
@@ -255,6 +255,101 @@ router.get('/demandas/:id/aprovacoes', async (req, res) => {
 
   if (error) return res.status(500).json({ erro: 'Erro ao buscar aprovações' });
   res.json(data || []);
+});
+
+router.get('/demandas/:id/aprovacoes-demanda', async (req, res) => {
+  const { id } = req.params;
+
+  const { data, error } = await supabase
+    .from('portal_aprovacoes_demanda')
+    .select('*')
+    .eq('demanda_id', id)
+    .order('criado_em', { ascending: false });
+
+  if (error) return res.status(500).json({ erro: 'Erro ao buscar aprovações da demanda' });
+  res.json(data || []);
+});
+
+// ============================================================
+// PASTAS (equipe cria e gerencia pastas por demanda)
+// ============================================================
+
+router.get('/demandas/:id/pastas', async (req, res) => {
+  const { id } = req.params;
+
+  const { data: pastas, error } = await supabase
+    .from('portal_pastas')
+    .select('*')
+    .eq('demanda_id', id)
+    .order('ordem');
+
+  if (error) return res.status(500).json({ erro: 'Erro ao buscar pastas' });
+
+  const ids = (pastas || []).map(p => p.id);
+  const counts = {};
+  if (ids.length > 0) {
+    const { data: arqs } = await supabase
+      .from('portal_arquivos')
+      .select('pasta_id')
+      .in('pasta_id', ids);
+    (arqs || []).forEach(a => { counts[a.pasta_id] = (counts[a.pasta_id] || 0) + 1; });
+  }
+
+  res.json((pastas || []).map(p => ({ ...p, total_arquivos: counts[p.id] || 0 })));
+});
+
+router.post('/demandas/:id/pastas', async (req, res) => {
+  const { id } = req.params;
+  const { nome, descricao, ordem } = req.body;
+
+  if (!nome?.trim()) return res.status(400).json({ erro: 'Nome é obrigatório' });
+
+  const { data, error } = await supabase
+    .from('portal_pastas')
+    .insert([{
+      id: gerarId('pst_'),
+      demanda_id: id,
+      nome: nome.trim(),
+      descricao: descricao?.trim() || null,
+      ordem: ordem ?? 0,
+      criado_por: req.usuario.id,
+      criado_por_nome: req.usuario.nome
+    }])
+    .select()
+    .single();
+
+  if (error) return res.status(400).json({ erro: 'Erro ao criar pasta' });
+  res.status(201).json(data);
+});
+
+router.put('/pastas/:pastaId', async (req, res) => {
+  const { pastaId } = req.params;
+  const { nome, descricao, ordem } = req.body;
+
+  const updates = { atualizado_em: new Date().toISOString() };
+  if (nome) updates.nome = nome.trim();
+  if (descricao !== undefined) updates.descricao = descricao?.trim() || null;
+  if (ordem !== undefined) updates.ordem = ordem;
+
+  const { data, error } = await supabase
+    .from('portal_pastas')
+    .update(updates)
+    .eq('id', pastaId)
+    .select()
+    .single();
+
+  if (error || !data) return res.status(404).json({ erro: 'Pasta não encontrada' });
+  res.json(data);
+});
+
+router.delete('/pastas/:pastaId', async (req, res) => {
+  const { pastaId } = req.params;
+
+  await supabase.from('portal_arquivos').update({ pasta_id: null }).eq('pasta_id', pastaId);
+
+  const { error } = await supabase.from('portal_pastas').delete().eq('id', pastaId);
+  if (error) return res.status(400).json({ erro: 'Erro ao excluir pasta' });
+  res.json({ mensagem: 'Pasta excluída' });
 });
 
 module.exports = router;
