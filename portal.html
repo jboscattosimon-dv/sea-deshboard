@@ -710,7 +710,7 @@
         <button class="tab active" onclick="switchTab('info')">Informações</button>
         <button class="tab" onclick="switchTab('historico')">Histórico</button>
         <button class="tab" onclick="switchTab('comentarios')">Comentários</button>
-        <button class="tab" onclick="switchTab('arquivos')">Pastas & Arquivos</button>
+        <button class="tab" onclick="switchTab('arquivos')">Arquivos</button>
         <button class="tab" onclick="switchTab('entregaveis')">Entregáveis</button>
         <button class="tab" id="tabAprovacao" style="display:none" onclick="switchTab('aprovacao')">✅ Aprovação</button>
       </div>
@@ -735,14 +735,49 @@
 
     <!-- ── BIBLIOTECA ─────────────────────────── -->
     <div class="page" id="page-biblioteca">
-      <h1 style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:20px">Biblioteca de Arquivos</h1>
-      <div class="lib-tabs">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+        <h1 style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800">Biblioteca de Arquivos</h1>
+        <button class="btn btn-primary btn-sm" onclick="abrirFormPastaPortal()">+ Nova Pasta</button>
+      </div>
+
+      <!-- Form inline para criar pasta -->
+      <div id="formNovaPastaPortal" style="display:none;background:var(--surface2);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input type="text" id="novaPastaPortalNome" placeholder="Nome da pasta"
+            style="flex:1;min-width:160px;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);background:var(--surface);color:var(--text);font-family:inherit;font-size:13px;outline:none"
+            onkeydown="if(event.key==='Enter')criarPastaPortal()" />
+          <button class="btn btn-primary btn-sm" onclick="criarPastaPortal()">Criar</button>
+          <button class="btn btn-ghost btn-sm" onclick="fecharFormPastaPortal()">Cancelar</button>
+        </div>
+      </div>
+
+      <!-- Pastas do cliente (tabs dinâmicas) -->
+      <div id="bibPastaTabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
+
+      <!-- Zona de upload (visível quando uma pasta está selecionada) -->
+      <div id="bibUploadArea" style="display:none;margin-bottom:16px">
+        <div class="upload-zone" onclick="document.getElementById('bibFileInput').click()"
+          ondragover="event.preventDefault();this.classList.add('drag')"
+          ondragleave="this.classList.remove('drag')"
+          ondrop="handleBibFileDrop(event)">
+          <div class="upload-zone-icon">📎</div>
+          <h3>Enviar arquivo para esta pasta</h3>
+          <p>Clique ou arraste<br><small>Imagens, vídeos, PDF, Word, Excel, ZIP</small></p>
+          <input type="file" id="bibFileInput" style="display:none" multiple
+            accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.zip"
+            onchange="handleBibFileSelect(event)" />
+        </div>
+      </div>
+
+      <!-- Filtro por tipo -->
+      <div class="lib-tabs" id="bibTypeTabs">
         <button class="lib-tab active" onclick="filtrarBiblioteca('')">Todos</button>
         <button class="lib-tab" onclick="filtrarBiblioteca('imagem')">Imagens</button>
         <button class="lib-tab" onclick="filtrarBiblioteca('video')">Vídeos</button>
         <button class="lib-tab" onclick="filtrarBiblioteca('pdf')">PDFs</button>
         <button class="lib-tab" onclick="filtrarBiblioteca('documento')">Documentos</button>
       </div>
+
       <div class="lib-grid" id="libGrid">
         <div style="color:var(--muted);font-size:13px">Carregando...</div>
       </div>
@@ -871,6 +906,8 @@ let pendingArteId = null;
 let calAno = new Date().getFullYear();
 let calMes = new Date().getMonth() + 1;
 let currentLibCategoria = '';
+let currentBibPastaId = null;
+let clientePastas = [];
 let notifPollInterval = null;
 let perfilFotoB64 = null;
 
@@ -1198,7 +1235,7 @@ async function abrirDemanda(id) {
     renderInfoPanel(d);
     loadHistorico(id);
     loadComentarios(id);
-    loadPastas(id);
+    loadArquivos(id);
     loadEntregaveis(id);
     if (isAwaitingApproval) loadAprovacaoDemanda(id, d);
 
@@ -1361,171 +1398,62 @@ async function enviarComentario(demandaId) {
 }
 
 // ═══════════════════════════════════════════════════════
-// PASTAS & ARQUIVOS DO CLIENTE
+// ARQUIVOS DA DEMANDA
 // ═══════════════════════════════════════════════════════
-async function loadPastas(demandaId) {
+async function loadArquivos(demandaId) {
   const panel = document.getElementById('panel-arquivos');
   try {
-    const { pastas, arquivos } = await apiFetch('GET', `/demandas/${demandaId}/pastas`);
-    renderPastas(pastas, arquivos, demandaId);
+    const arquivos = await apiFetch('GET', `/demandas/${demandaId}/arquivos`);
+    renderArquivos(arquivos, demandaId);
   } catch {
-    panel.innerHTML = '<div style="color:var(--muted);padding:16px">Erro ao carregar pastas.</div>';
+    panel.innerHTML = '<div style="color:var(--muted);padding:16px">Erro ao carregar arquivos.</div>';
   }
 }
 
-function renderPastas(pastas, arquivos, demandaId) {
+function renderArquivos(arquivos, demandaId) {
   const panel = document.getElementById('panel-arquivos');
-
-  if (!pastas.length) {
-    // Sem pastas — comportamento anterior (upload genérico)
-    const fileRows = arquivos.map(f => `
-      <div class="file-item">
-        <div class="file-item-icon">${getFileIcon(f.tipo)}</div>
-        <div style="flex:1">
-          <div class="file-item-name">${f.nome}</div>
-          <div class="file-item-meta">${formatSize(f.tamanho)} · ${formatDateTime(f.criado_em)}</div>
-        </div>
-        <div class="file-item-actions">
-          <a href="${f.url}" target="_blank" download class="btn btn-sm btn-ghost">⬇ Baixar</a>
-          <button class="btn btn-sm btn-danger" onclick="excluirArquivo('${demandaId}','${f.id}')">🗑</button>
-        </div>
-      </div>`).join('');
-
-    panel.innerHTML = `
-      <div class="upload-zone" onclick="document.getElementById('fileInputGeneral').click()"
-        ondragover="event.preventDefault();this.classList.add('drag')"
-        ondragleave="this.classList.remove('drag')"
-        ondrop="handleFileDrop(event,'${demandaId}')">
-        <div class="upload-zone-icon">📁</div>
-        <h3>Enviar arquivo</h3>
-        <p>Clique ou arraste arquivos aqui<br><small>Imagens, vídeos, PDF, Word, Excel, ZIP</small></p>
-        <input type="file" id="fileInputGeneral" style="display:none" multiple
-          accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.zip"
-          onchange="handleFileSelect(event,'${demandaId}')" />
+  const fileRows = arquivos.map(f => `
+    <div class="file-item">
+      <div class="file-item-icon">${getFileIcon(f.tipo)}</div>
+      <div style="flex:1">
+        <div class="file-item-name">${f.nome}</div>
+        <div class="file-item-meta">${formatSize(f.tamanho)} · ${formatDateTime(f.criado_em)}</div>
       </div>
-      <div class="file-list">
-        ${arquivos.length === 0 ? '<div style="color:var(--muted);font-size:13px;text-align:center;padding:16px">Nenhum arquivo enviado.</div>' : fileRows}
-      </div>`;
-    return;
-  }
+      <div class="file-item-actions">
+        <a href="${f.url}" target="_blank" download class="btn btn-sm btn-ghost">⬇ Baixar</a>
+        <button class="btn btn-sm btn-danger" onclick="excluirArquivo('${demandaId}','${f.id}')">🗑</button>
+      </div>
+    </div>`).join('');
 
-  // Com pastas — exibir cada pasta com seus arquivos e zona de upload própria
-  const arqsPorPasta = {};
-  const arqsSemPasta = [];
-  arquivos.forEach(f => {
-    if (f.pasta_id) {
-      if (!arqsPorPasta[f.pasta_id]) arqsPorPasta[f.pasta_id] = [];
-      arqsPorPasta[f.pasta_id].push(f);
-    } else {
-      arqsSemPasta.push(f);
-    }
-  });
-
-  const pastasHtml = pastas.map((p, idx) => {
-    const arqs = arqsPorPasta[p.id] || [];
-    const arqsHtml = arqs.map(f => `
-      <div class="file-item" style="padding:8px 12px">
-        <div class="file-item-icon" style="font-size:18px">${getFileIcon(f.tipo)}</div>
-        <div style="flex:1">
-          <div class="file-item-name" style="font-size:13px">${f.nome}</div>
-          <div class="file-item-meta" style="font-size:11px">${formatSize(f.tamanho)} · ${formatDateTime(f.criado_em)}</div>
-        </div>
-        <div class="file-item-actions">
-          <a href="${f.url}" target="_blank" download class="btn btn-sm btn-ghost" style="padding:4px 8px;font-size:11px">⬇</a>
-          <button class="btn btn-sm btn-danger" style="padding:4px 8px;font-size:11px" onclick="excluirArquivoPasta('${demandaId}','${f.id}')">🗑</button>
-        </div>
-      </div>`).join('');
-
-    return `
-      <div style="border:1.5px solid var(--border);border-radius:var(--r);margin-bottom:16px;overflow:hidden">
-        <div style="background:var(--surface2);padding:12px 16px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="togglePasta('pasta_${p.id}')">
-          <span style="font-size:18px">📁</span>
-          <div style="flex:1">
-            <div style="font-weight:600;font-size:14px">${p.nome}</div>
-            ${p.descricao ? `<div style="font-size:11px;color:var(--muted);margin-top:1px">${p.descricao}</div>` : ''}
-          </div>
-          <span style="font-size:11px;color:var(--muted);white-space:nowrap">${arqs.length} arquivo${arqs.length !== 1 ? 's' : ''}</span>
-          <span id="pasta_${p.id}_chevron" style="color:var(--muted);font-size:14px;transition:transform .2s">▼</span>
-        </div>
-        <div id="pasta_${p.id}" style="${idx === 0 ? '' : 'display:none'}">
-          ${arqs.length > 0 ? `<div style="padding:4px 0">${arqsHtml}</div>` : ''}
-          <div style="padding:10px 16px 12px">
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;border:1.5px dashed var(--border);border-radius:var(--r-sm);color:var(--muted);font-size:12px;transition:all .2s"
-              onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-              <span style="font-size:16px">📎</span> Enviar arquivo nesta pasta
-              <input type="file" style="display:none" multiple
-                accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.zip"
-                onchange="handlePastaFileSelect(event,'${demandaId}','${p.id}')" />
-            </label>
-          </div>
-        </div>
-      </div>`;
-  }).join('');
-
-  // Arquivos sem pasta (enviados antes de criar pastas ou pelo upload antigo)
-  const semPastaHtml = arqsSemPasta.length ? `
-    <div style="margin-top:4px">
-      <div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:8px;padding-left:2px">Arquivos sem pasta</div>
-      ${arqsSemPasta.map(f => `
-        <div class="file-item">
-          <div class="file-item-icon">${getFileIcon(f.tipo)}</div>
-          <div style="flex:1">
-            <div class="file-item-name">${f.nome}</div>
-            <div class="file-item-meta">${formatSize(f.tamanho)} · ${formatDateTime(f.criado_em)}</div>
-          </div>
-          <div class="file-item-actions">
-            <a href="${f.url}" target="_blank" download class="btn btn-sm btn-ghost">⬇ Baixar</a>
-            <button class="btn btn-sm btn-danger" onclick="excluirArquivoPasta('${demandaId}','${f.id}')">🗑</button>
-          </div>
-        </div>`).join('')}
-    </div>` : '';
-
-  panel.innerHTML = pastasHtml + semPastaHtml;
-}
-
-function togglePasta(pastaId) {
-  const el = document.getElementById(pastaId);
-  const chev = document.getElementById(pastaId + '_chevron');
-  if (!el) return;
-  const isHidden = el.style.display === 'none';
-  el.style.display = isHidden ? '' : 'none';
-  if (chev) chev.style.transform = isHidden ? 'rotate(180deg)' : '';
-}
-
-async function handlePastaFileSelect(event, demandaId, pastaId) {
-  const files = Array.from(event.target.files);
-  for (const f of files) await uploadParaPasta(f, demandaId, pastaId);
-  event.target.value = '';
-  await loadPastas(demandaId);
-}
-
-async function uploadParaPasta(file, demandaId, pastaId) {
-  const MAX = 30 * 1024 * 1024;
-  if (file.size > MAX) { toast(`${file.name}: arquivo muito grande (max 30MB)`, 'error'); return; }
-  try {
-    toast(`Enviando ${file.name}...`);
-    const b64 = await fileToBase64(file);
-    await apiFetch('POST', `/demandas/${demandaId}/pastas/${pastaId}/arquivos`, {
-      nome: file.name, arquivo_b64: b64, tipo: file.type, tamanho: file.size
-    });
-    toast(`${file.name} enviado!`, 'success');
-  } catch (err) {
-    toast(`Erro: ${err.message}`, 'error');
-  }
+  panel.innerHTML = `
+    <div class="upload-zone" onclick="document.getElementById('fileInputDemanda').click()"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="handleFileDrop(event,'${demandaId}')">
+      <div class="upload-zone-icon">📁</div>
+      <h3>Enviar arquivo</h3>
+      <p>Clique ou arraste arquivos aqui<br><small>Imagens, vídeos, PDF, Word, Excel, ZIP</small></p>
+      <input type="file" id="fileInputDemanda" style="display:none" multiple
+        accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.zip"
+        onchange="handleFileSelect(event,'${demandaId}')" />
+    </div>
+    <div class="file-list">
+      ${arquivos.length === 0 ? '<div style="color:var(--muted);font-size:13px;text-align:center;padding:16px">Nenhum arquivo enviado.</div>' : fileRows}
+    </div>`;
 }
 
 async function handleFileDrop(event, demandaId) {
   event.preventDefault();
   const files = Array.from(event.dataTransfer.files);
   for (const f of files) await uploadFile(f, demandaId);
-  await loadPastas(demandaId);
+  await loadArquivos(demandaId);
 }
 
 async function handleFileSelect(event, demandaId) {
   const files = Array.from(event.target.files);
   for (const f of files) await uploadFile(f, demandaId);
   event.target.value = '';
-  await loadPastas(demandaId);
+  await loadArquivos(demandaId);
 }
 
 async function uploadFile(file, demandaId) {
@@ -1543,19 +1471,15 @@ async function uploadFile(file, demandaId) {
   }
 }
 
-async function excluirArquivoPasta(demandaId, arqId) {
+async function excluirArquivo(demandaId, arqId) {
   if (!confirm('Excluir este arquivo?')) return;
   try {
     await apiFetch('DELETE', `/demandas/${demandaId}/arquivos/${arqId}`);
     toast('Arquivo excluído', 'success');
-    await loadPastas(demandaId);
+    await loadArquivos(demandaId);
   } catch (err) {
     toast(err.message, 'error');
   }
-}
-
-async function excluirArquivo(demandaId, arqId) {
-  return excluirArquivoPasta(demandaId, arqId);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1831,25 +1755,54 @@ function abrirPostModal(post) {
 // ═══════════════════════════════════════════════════════
 // BIBLIOTECA
 // ═══════════════════════════════════════════════════════
-async function filtrarBiblioteca(categoria) {
-  currentLibCategoria = categoria;
-  document.querySelectorAll('.lib-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.lib-tab').forEach(t => {
-    if (t.textContent.trim().toLowerCase().includes(categoria || 'todos')) t.classList.add('active');
-  });
-  await loadBiblioteca();
+function buildBibUrl() {
+  const params = [];
+  if (currentBibPastaId) params.push('pasta_id=' + currentBibPastaId);
+  if (currentLibCategoria) params.push('categoria=' + currentLibCategoria);
+  return '/biblioteca' + (params.length ? '?' + params.join('&') : '');
 }
 
 async function loadBiblioteca() {
   const grid = document.getElementById('libGrid');
   grid.innerHTML = '<div style="color:var(--muted);font-size:13px">Carregando...</div>';
   try {
-    const url = `/biblioteca${currentLibCategoria ? '?categoria=' + currentLibCategoria : ''}`;
-    const files = await apiFetch('GET', url);
+    const pastas = await apiFetch('GET', '/pastas');
+    clientePastas = pastas;
+    renderBibPastaTabs(pastas);
+    const files = await apiFetch('GET', buildBibUrl());
     renderBiblioteca(files);
   } catch (err) {
     grid.innerHTML = `<div style="color:var(--muted)">${err.message}</div>`;
   }
+}
+
+function renderBibPastaTabs(pastas) {
+  const container = document.getElementById('bibPastaTabs');
+  const allTab = `<button class="lib-tab ${!currentBibPastaId ? 'active' : ''}" onclick="filtrarPastaBib(null)">📁 Todos</button>`;
+  const pastaTabs = pastas.map(p => `
+    <button class="lib-tab ${currentBibPastaId === p.id ? 'active' : ''}" onclick="filtrarPastaBib('${p.id}')" style="display:inline-flex;align-items:center;gap:6px">
+      📁 ${p.nome}
+      <span onclick="event.stopPropagation();excluirPastaPortal('${p.id}')" style="opacity:.5;cursor:pointer;font-size:11px;line-height:1" title="Excluir pasta">✕</span>
+    </button>`).join('');
+  container.innerHTML = allTab + pastaTabs;
+  document.getElementById('bibUploadArea').style.display = currentBibPastaId ? '' : 'none';
+}
+
+async function filtrarPastaBib(pastaId) {
+  currentBibPastaId = pastaId;
+  renderBibPastaTabs(clientePastas);
+  const files = await apiFetch('GET', buildBibUrl()).catch(() => []);
+  renderBiblioteca(files);
+}
+
+async function filtrarBiblioteca(categoria) {
+  currentLibCategoria = categoria;
+  document.querySelectorAll('#bibTypeTabs .lib-tab').forEach(t => {
+    const label = t.textContent.trim().toLowerCase();
+    t.classList.toggle('active', categoria === '' ? label === 'todos' : label.includes(categoria));
+  });
+  const files = await apiFetch('GET', buildBibUrl()).catch(() => []);
+  renderBiblioteca(files);
 }
 
 function renderBiblioteca(files) {
@@ -1858,23 +1811,86 @@ function renderBiblioteca(files) {
     grid.innerHTML = '<div class="lib-empty"><div style="font-size:40px;margin-bottom:12px">📂</div><p>Nenhum arquivo encontrado.</p></div>';
     return;
   }
-
   grid.innerHTML = files.map(f => {
     const isImage = (f.tipo || '').startsWith('image/');
-    const preview = isImage
-      ? `<img src="${f.url}" alt="${f.nome}" />`
-      : `<span>${getFileIcon(f.tipo)}</span>`;
+    const preview = isImage ? `<img src="${f.url}" alt="${f.nome}" />` : `<span>${getFileIcon(f.tipo)}</span>`;
     return `
       <div class="lib-item">
         <div class="lib-item-preview">${preview}</div>
         <div>
           <div class="lib-item-name" title="${f.nome}">${f.nome}</div>
-          <div class="lib-item-meta">${formatSize(f.tamanho)} · ${f.enviado_por_nome}</div>
+          <div class="lib-item-meta">${formatSize(f.tamanho)} · ${f.enviado_por_nome || 'você'}</div>
           <div class="lib-item-meta">${formatDate(f.criado_em?.split('T')[0])}</div>
         </div>
         <a href="${f.url}" target="_blank" download class="btn btn-sm btn-ghost" style="margin-top:auto;justify-content:center">⬇ Baixar</a>
       </div>`;
   }).join('');
+}
+
+function abrirFormPastaPortal() {
+  document.getElementById('formNovaPastaPortal').style.display = '';
+  document.getElementById('novaPastaPortalNome').focus();
+}
+
+function fecharFormPastaPortal() {
+  document.getElementById('formNovaPastaPortal').style.display = 'none';
+  document.getElementById('novaPastaPortalNome').value = '';
+}
+
+async function criarPastaPortal() {
+  const nome = document.getElementById('novaPastaPortalNome').value.trim();
+  if (!nome) { toast('Informe o nome da pasta', 'error'); return; }
+  try {
+    await apiFetch('POST', '/pastas', { nome });
+    fecharFormPastaPortal();
+    toast('Pasta criada!', 'success');
+    await loadBiblioteca();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+async function excluirPastaPortal(pastaId) {
+  if (!confirm('Excluir esta pasta? Os arquivos dentro dela ficarão sem pasta.')) return;
+  try {
+    await apiFetch('DELETE', `/pastas/${pastaId}`);
+    if (currentBibPastaId === pastaId) currentBibPastaId = null;
+    toast('Pasta excluída', 'success');
+    await loadBiblioteca();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+async function handleBibFileDrop(event) {
+  event.preventDefault();
+  if (!currentBibPastaId) { toast('Selecione uma pasta primeiro', 'error'); return; }
+  const files = Array.from(event.dataTransfer.files);
+  for (const f of files) await uploadParaBib(f);
+  await loadBiblioteca();
+}
+
+async function handleBibFileSelect(event) {
+  if (!currentBibPastaId) { toast('Selecione uma pasta primeiro', 'error'); return; }
+  const files = Array.from(event.target.files);
+  for (const f of files) await uploadParaBib(f);
+  event.target.value = '';
+  await loadBiblioteca();
+}
+
+async function uploadParaBib(file) {
+  const MAX = 30 * 1024 * 1024;
+  if (file.size > MAX) { toast(`${file.name}: arquivo muito grande (max 30MB)`, 'error'); return; }
+  try {
+    toast(`Enviando ${file.name}...`);
+    const b64 = await fileToBase64(file);
+    await apiFetch('POST', `/pastas/${currentBibPastaId}/arquivos`, {
+      nome: file.name, arquivo_b64: b64, tipo: file.type, tamanho: file.size
+    });
+    toast(`${file.name} enviado!`, 'success');
+  } catch (err) {
+    toast(`Erro: ${err.message}`, 'error');
+  }
 }
 
 // ═══════════════════════════════════════════════════════
