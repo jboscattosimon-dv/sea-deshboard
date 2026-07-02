@@ -257,6 +257,67 @@ router.get('/demandas/:id/aprovacoes', async (req, res) => {
   res.json(data || []);
 });
 
+// ============================================================
+// PASTAS DO PORTAL (criadas pela equipe para o cliente)
+// ============================================================
+
+router.get('/clientes/:id/pastas', async (req, res) => {
+  const { id } = req.params;
+
+  const { data: pastas, error } = await supabase
+    .from('portal_pastas')
+    .select('id, nome, ordem, criado_em')
+    .eq('cliente_id', id)
+    .order('ordem')
+    .order('criado_em');
+
+  if (error) return res.status(500).json({ erro: 'Erro ao buscar pastas' });
+
+  const ids = (pastas || []).map(p => p.id);
+  const counts = {};
+  if (ids.length > 0) {
+    const { data: arqs } = await supabase
+      .from('portal_arquivos')
+      .select('pasta_id')
+      .in('pasta_id', ids);
+    (arqs || []).forEach(a => { counts[a.pasta_id] = (counts[a.pasta_id] || 0) + 1; });
+  }
+
+  res.json((pastas || []).map(p => ({ ...p, total_arquivos: counts[p.id] || 0 })));
+});
+
+router.post('/clientes/:id/pastas', async (req, res) => {
+  const { id } = req.params;
+  const { nome } = req.body;
+  if (!nome?.trim()) return res.status(400).json({ erro: 'Nome é obrigatório' });
+
+  const { data, error } = await supabase
+    .from('portal_pastas')
+    .insert([{ id: gerarId('pst_'), cliente_id: id, nome: nome.trim() }])
+    .select()
+    .single();
+
+  if (error) return res.status(400).json({ erro: 'Erro ao criar pasta' });
+  res.status(201).json(data);
+});
+
+router.delete('/clientes/:id/pastas/:pastaId', async (req, res) => {
+  const { id, pastaId } = req.params;
+
+  const { data: pasta } = await supabase
+    .from('portal_pastas')
+    .select('id')
+    .eq('id', pastaId)
+    .eq('cliente_id', id)
+    .single();
+
+  if (!pasta) return res.status(404).json({ erro: 'Pasta não encontrada' });
+
+  await supabase.from('portal_arquivos').update({ pasta_id: null }).eq('pasta_id', pastaId);
+  await supabase.from('portal_pastas').delete().eq('id', pastaId);
+  res.json({ mensagem: 'Pasta excluída' });
+});
+
 router.get('/demandas/:id/aprovacoes-demanda', async (req, res) => {
   const { id } = req.params;
 
