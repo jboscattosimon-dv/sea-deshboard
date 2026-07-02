@@ -629,6 +629,11 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         Demandas
       </div>
+      <div class="nav-item" id="nav-aprovacoes" onclick="goTo('aprovacoes')" style="position:relative">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        Aprovações
+        <span id="navAprovacoesBadge" style="display:none;position:absolute;right:12px;top:50%;transform:translateY(-50%);background:#8B5CF6;color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:100px;align-items:center;justify-content:center;padding:0 5px"></span>
+      </div>
       <div class="nav-item" id="nav-calendario" onclick="goTo('calendario')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         Calendário Editorial
@@ -705,14 +710,16 @@
         <button class="tab active" onclick="switchTab('info')">Informações</button>
         <button class="tab" onclick="switchTab('historico')">Histórico</button>
         <button class="tab" onclick="switchTab('comentarios')">Comentários</button>
-        <button class="tab" onclick="switchTab('arquivos')">Arquivos</button>
-        <button class="tab" id="tabArte" style="display:none" onclick="switchTab('arte')">Arte Final ✨</button>
+        <button class="tab" onclick="switchTab('arquivos')">Pastas & Arquivos</button>
+        <button class="tab" onclick="switchTab('entregaveis')">Entregáveis</button>
+        <button class="tab" id="tabAprovacao" style="display:none" onclick="switchTab('aprovacao')">✅ Aprovação</button>
       </div>
       <div class="tab-panel active" id="panel-info"></div>
       <div class="tab-panel" id="panel-historico"></div>
       <div class="tab-panel" id="panel-comentarios"></div>
       <div class="tab-panel" id="panel-arquivos"></div>
-      <div class="tab-panel" id="panel-arte"></div>
+      <div class="tab-panel" id="panel-entregaveis"></div>
+      <div class="tab-panel" id="panel-aprovacao"></div>
     </div>
 
     <!-- ── CALENDÁRIO ─────────────────────────── -->
@@ -738,6 +745,31 @@
       </div>
       <div class="lib-grid" id="libGrid">
         <div style="color:var(--muted);font-size:13px">Carregando...</div>
+      </div>
+    </div>
+
+    <!-- ── APROVAÇÕES ───────────────────────────── -->
+    <div class="page" id="page-aprovacoes">
+      <div style="margin-bottom:24px">
+        <h1 style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800">Aprovações Pendentes</h1>
+        <p style="color:var(--muted);font-size:13.5px;margin-top:4px">Demandas que aguardam sua aprovação para serem concluídas.</p>
+      </div>
+      <div id="aprovacoesList">
+        <div style="color:var(--muted);padding:24px;text-align:center">Carregando...</div>
+      </div>
+    </div>
+
+    <!-- Modal de motivo de alteração (aprovação de demanda) -->
+    <div class="modal-overlay" id="modalMotivoAprovacao" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center">
+      <div style="background:var(--surface);border-radius:var(--r);padding:28px 24px;width:100%;max-width:440px;margin:16px">
+        <h3 style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:16px">Solicitar alterações</h3>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Descreva o que precisa ser ajustado. Sua mensagem será registrada e a equipe será notificada.</p>
+        <textarea id="motivoAprovacaoText" placeholder="Descreva as alterações necessárias..." rows="4"
+          style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-family:inherit;font-size:13px;background:var(--bg);color:var(--text);resize:vertical;outline:none"></textarea>
+        <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end">
+          <button class="btn btn-ghost" onclick="fecharModalMotivo()">Cancelar</button>
+          <button class="btn btn-primary" id="btnConfirmarMotivo">Confirmar</button>
+        </div>
       </div>
     </div>
 
@@ -904,7 +936,9 @@ function iniciarPortal() {
   goTo('dashboard');
   carregarStatuses();
   pollNotificacoes();
+  checkAprovacoesBadge();
   notifPollInterval = setInterval(pollNotificacoes, 60000);
+  setInterval(checkAprovacoesBadge, 120000);
 }
 
 function atualizarHeaderUser() {
@@ -955,6 +989,7 @@ const pageTitles = {
   dashboard: 'Dashboard',
   demandas: 'Demandas',
   detalhe: 'Detalhes da Demanda',
+  aprovacoes: 'Aprovações Pendentes',
   calendario: 'Calendário Editorial',
   biblioteca: 'Biblioteca de Arquivos',
   perfil: 'Perfil'
@@ -972,6 +1007,7 @@ function goTo(page) {
 
   if (page === 'dashboard') loadDashboard();
   else if (page === 'demandas') loadDemandas();
+  else if (page === 'aprovacoes') loadAprovacoesPendentes();
   else if (page === 'calendario') loadCalendario();
   else if (page === 'biblioteca') loadBiblioteca();
   else if (page === 'perfil') loadPerfil();
@@ -1138,7 +1174,7 @@ async function abrirDemanda(id) {
   goTo('detalhe');
   document.getElementById('detailTitle').textContent = 'Carregando...';
   document.getElementById('detailMeta').innerHTML = '';
-  ['info','historico','comentarios','arquivos','arte'].forEach(t => {
+  ['info','historico','comentarios','arquivos','entregaveis','aprovacao'].forEach(t => {
     document.getElementById('panel-' + t).innerHTML = '<div style="padding:24px;color:var(--muted)">Carregando...</div>';
   });
 
@@ -1152,17 +1188,19 @@ async function abrirDemanda(id) {
     document.getElementById('detailMeta').innerHTML = `
       ${d.status ? `<span class="badge" style="background:${d.status.cor}18;color:${d.status.cor}">${statusDot} ${d.status.nome}</span>` : ''}
       ${d.prioridade ? `<span class="badge ${prioClass}">${d.prioridade}</span>` : ''}
-      ${d.arte_pronta ? '<span class="arte-badge">✨ Arte pronta para aprovação</span>' : ''}
+      ${d.status?.id === 's_awcli' ? '<span class="arte-badge" style="background:#8B5CF618;color:#8B5CF6;border-color:#8B5CF633">⏳ Aguardando sua aprovação</span>' : ''}
     `;
 
-    const tabArte = document.getElementById('tabArte');
-    tabArte.style.display = d.arte_pronta ? '' : 'none';
+    const tabAprovacao = document.getElementById('tabAprovacao');
+    const isAwaitingApproval = d.status?.id === 's_awcli';
+    if (tabAprovacao) tabAprovacao.style.display = isAwaitingApproval ? '' : 'none';
 
     renderInfoPanel(d);
     loadHistorico(id);
     loadComentarios(id);
-    loadArquivos(id);
-    if (d.arte_pronta) loadArtes(id);
+    loadPastas(id);
+    loadEntregaveis(id);
+    if (isAwaitingApproval) loadAprovacaoDemanda(id, d);
 
     switchTab('info');
   } catch (err) {
@@ -1175,7 +1213,7 @@ function switchTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   const tabs = document.querySelectorAll('.tab');
-  const names = ['info','historico','comentarios','arquivos','arte'];
+  const names = ['info','historico','comentarios','arquivos','entregaveis','aprovacao'];
   const idx = names.indexOf(name);
   if (tabs[idx]) tabs[idx].classList.add('active');
   const panel = document.getElementById('panel-' + name);
@@ -1323,79 +1361,152 @@ async function enviarComentario(demandaId) {
 }
 
 // ═══════════════════════════════════════════════════════
-// ARQUIVOS
+// PASTAS & ARQUIVOS DO CLIENTE
 // ═══════════════════════════════════════════════════════
-async function loadArquivos(demandaId) {
+async function loadPastas(demandaId) {
   const panel = document.getElementById('panel-arquivos');
   try {
-    const files = await apiFetch('GET', `/demandas/${demandaId}/arquivos`);
-    renderArquivos(files, demandaId);
+    const { pastas, arquivos } = await apiFetch('GET', `/demandas/${demandaId}/pastas`);
+    renderPastas(pastas, arquivos, demandaId);
   } catch {
-    panel.innerHTML = '<div style="color:var(--muted);padding:16px">Erro ao carregar arquivos.</div>';
+    panel.innerHTML = '<div style="color:var(--muted);padding:16px">Erro ao carregar pastas.</div>';
   }
 }
 
-function renderArquivos(files, demandaId) {
+function renderPastas(pastas, arquivos, demandaId) {
   const panel = document.getElementById('panel-arquivos');
-  const fileRows = files.map(f => `
-    <div class="file-item">
-      <div class="file-item-icon">${getFileIcon(f.tipo)}</div>
-      <div style="flex:1">
-        <div class="file-item-name">${f.nome}</div>
-        <div class="file-item-meta">
-          ${formatSize(f.tamanho)} · ${f.enviado_por_nome} · ${formatDateTime(f.criado_em)}
+
+  if (!pastas.length) {
+    // Sem pastas — comportamento anterior (upload genérico)
+    const fileRows = arquivos.map(f => `
+      <div class="file-item">
+        <div class="file-item-icon">${getFileIcon(f.tipo)}</div>
+        <div style="flex:1">
+          <div class="file-item-name">${f.nome}</div>
+          <div class="file-item-meta">${formatSize(f.tamanho)} · ${formatDateTime(f.criado_em)}</div>
         </div>
-      </div>
-      <div class="file-item-actions">
-        <a href="${f.url}" target="_blank" download class="btn btn-sm btn-ghost">⬇ Baixar</a>
-        ${f.enviado_por_tipo === 'cliente' ? `<button class="btn btn-sm btn-danger" onclick="excluirArquivo('${demandaId}','${f.id}')">🗑</button>` : ''}
-      </div>
-    </div>`).join('');
+        <div class="file-item-actions">
+          <a href="${f.url}" target="_blank" download class="btn btn-sm btn-ghost">⬇ Baixar</a>
+          <button class="btn btn-sm btn-danger" onclick="excluirArquivo('${demandaId}','${f.id}')">🗑</button>
+        </div>
+      </div>`).join('');
 
-  panel.innerHTML = `
-    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()"
-      ondragover="event.preventDefault();this.classList.add('drag')"
-      ondragleave="this.classList.remove('drag')"
-      ondrop="handleFileDrop(event,'${demandaId}')">
-      <div class="upload-zone-icon">📁</div>
-      <h3>Enviar arquivo</h3>
-      <p>Clique ou arraste arquivos aqui<br><small>Imagens, vídeos, PDF, Word, Excel, ZIP</small></p>
-      <input type="file" id="fileInput" style="display:none" multiple
-        accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.zip"
-        onchange="handleFileSelect(event,'${demandaId}')" />
-    </div>
-    <div class="file-list" id="fileList">
-      ${files.length === 0 ? '<div style="color:var(--muted);font-size:13px;text-align:center;padding:16px">Nenhum arquivo enviado.</div>' : fileRows}
-    </div>`;
+    panel.innerHTML = `
+      <div class="upload-zone" onclick="document.getElementById('fileInputGeneral').click()"
+        ondragover="event.preventDefault();this.classList.add('drag')"
+        ondragleave="this.classList.remove('drag')"
+        ondrop="handleFileDrop(event,'${demandaId}')">
+        <div class="upload-zone-icon">📁</div>
+        <h3>Enviar arquivo</h3>
+        <p>Clique ou arraste arquivos aqui<br><small>Imagens, vídeos, PDF, Word, Excel, ZIP</small></p>
+        <input type="file" id="fileInputGeneral" style="display:none" multiple
+          accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.zip"
+          onchange="handleFileSelect(event,'${demandaId}')" />
+      </div>
+      <div class="file-list">
+        ${arquivos.length === 0 ? '<div style="color:var(--muted);font-size:13px;text-align:center;padding:16px">Nenhum arquivo enviado.</div>' : fileRows}
+      </div>`;
+    return;
+  }
+
+  // Com pastas — exibir cada pasta com seus arquivos e zona de upload própria
+  const arqsPorPasta = {};
+  const arqsSemPasta = [];
+  arquivos.forEach(f => {
+    if (f.pasta_id) {
+      if (!arqsPorPasta[f.pasta_id]) arqsPorPasta[f.pasta_id] = [];
+      arqsPorPasta[f.pasta_id].push(f);
+    } else {
+      arqsSemPasta.push(f);
+    }
+  });
+
+  const pastasHtml = pastas.map((p, idx) => {
+    const arqs = arqsPorPasta[p.id] || [];
+    const arqsHtml = arqs.map(f => `
+      <div class="file-item" style="padding:8px 12px">
+        <div class="file-item-icon" style="font-size:18px">${getFileIcon(f.tipo)}</div>
+        <div style="flex:1">
+          <div class="file-item-name" style="font-size:13px">${f.nome}</div>
+          <div class="file-item-meta" style="font-size:11px">${formatSize(f.tamanho)} · ${formatDateTime(f.criado_em)}</div>
+        </div>
+        <div class="file-item-actions">
+          <a href="${f.url}" target="_blank" download class="btn btn-sm btn-ghost" style="padding:4px 8px;font-size:11px">⬇</a>
+          <button class="btn btn-sm btn-danger" style="padding:4px 8px;font-size:11px" onclick="excluirArquivoPasta('${demandaId}','${f.id}')">🗑</button>
+        </div>
+      </div>`).join('');
+
+    return `
+      <div style="border:1.5px solid var(--border);border-radius:var(--r);margin-bottom:16px;overflow:hidden">
+        <div style="background:var(--surface2);padding:12px 16px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="togglePasta('pasta_${p.id}')">
+          <span style="font-size:18px">📁</span>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:14px">${p.nome}</div>
+            ${p.descricao ? `<div style="font-size:11px;color:var(--muted);margin-top:1px">${p.descricao}</div>` : ''}
+          </div>
+          <span style="font-size:11px;color:var(--muted);white-space:nowrap">${arqs.length} arquivo${arqs.length !== 1 ? 's' : ''}</span>
+          <span id="pasta_${p.id}_chevron" style="color:var(--muted);font-size:14px;transition:transform .2s">▼</span>
+        </div>
+        <div id="pasta_${p.id}" style="${idx === 0 ? '' : 'display:none'}">
+          ${arqs.length > 0 ? `<div style="padding:4px 0">${arqsHtml}</div>` : ''}
+          <div style="padding:10px 16px 12px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;border:1.5px dashed var(--border);border-radius:var(--r-sm);color:var(--muted);font-size:12px;transition:all .2s"
+              onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+              <span style="font-size:16px">📎</span> Enviar arquivo nesta pasta
+              <input type="file" style="display:none" multiple
+                accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.zip"
+                onchange="handlePastaFileSelect(event,'${demandaId}','${p.id}')" />
+            </label>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Arquivos sem pasta (enviados antes de criar pastas ou pelo upload antigo)
+  const semPastaHtml = arqsSemPasta.length ? `
+    <div style="margin-top:4px">
+      <div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:8px;padding-left:2px">Arquivos sem pasta</div>
+      ${arqsSemPasta.map(f => `
+        <div class="file-item">
+          <div class="file-item-icon">${getFileIcon(f.tipo)}</div>
+          <div style="flex:1">
+            <div class="file-item-name">${f.nome}</div>
+            <div class="file-item-meta">${formatSize(f.tamanho)} · ${formatDateTime(f.criado_em)}</div>
+          </div>
+          <div class="file-item-actions">
+            <a href="${f.url}" target="_blank" download class="btn btn-sm btn-ghost">⬇ Baixar</a>
+            <button class="btn btn-sm btn-danger" onclick="excluirArquivoPasta('${demandaId}','${f.id}')">🗑</button>
+          </div>
+        </div>`).join('')}
+    </div>` : '';
+
+  panel.innerHTML = pastasHtml + semPastaHtml;
 }
 
-async function handleFileDrop(event, demandaId) {
-  event.preventDefault();
-  document.getElementById('uploadZone').classList.remove('drag');
-  const files = Array.from(event.dataTransfer.files);
-  for (const f of files) await uploadFile(f, demandaId);
-  await loadArquivos(demandaId);
+function togglePasta(pastaId) {
+  const el = document.getElementById(pastaId);
+  const chev = document.getElementById(pastaId + '_chevron');
+  if (!el) return;
+  const isHidden = el.style.display === 'none';
+  el.style.display = isHidden ? '' : 'none';
+  if (chev) chev.style.transform = isHidden ? 'rotate(180deg)' : '';
 }
 
-async function handleFileSelect(event, demandaId) {
+async function handlePastaFileSelect(event, demandaId, pastaId) {
   const files = Array.from(event.target.files);
-  for (const f of files) await uploadFile(f, demandaId);
+  for (const f of files) await uploadParaPasta(f, demandaId, pastaId);
   event.target.value = '';
-  await loadArquivos(demandaId);
+  await loadPastas(demandaId);
 }
 
-async function uploadFile(file, demandaId) {
+async function uploadParaPasta(file, demandaId, pastaId) {
   const MAX = 30 * 1024 * 1024;
   if (file.size > MAX) { toast(`${file.name}: arquivo muito grande (max 30MB)`, 'error'); return; }
-
   try {
     toast(`Enviando ${file.name}...`);
     const b64 = await fileToBase64(file);
-    await apiFetch('POST', `/demandas/${demandaId}/arquivos`, {
-      nome: file.name,
-      arquivo_b64: b64,
-      tipo: file.type,
-      tamanho: file.size
+    await apiFetch('POST', `/demandas/${demandaId}/pastas/${pastaId}/arquivos`, {
+      nome: file.name, arquivo_b64: b64, tipo: file.type, tamanho: file.size
     });
     toast(`${file.name} enviado!`, 'success');
   } catch (err) {
@@ -1403,148 +1514,226 @@ async function uploadFile(file, demandaId) {
   }
 }
 
-async function excluirArquivo(demandaId, arqId) {
+async function handleFileDrop(event, demandaId) {
+  event.preventDefault();
+  const files = Array.from(event.dataTransfer.files);
+  for (const f of files) await uploadFile(f, demandaId);
+  await loadPastas(demandaId);
+}
+
+async function handleFileSelect(event, demandaId) {
+  const files = Array.from(event.target.files);
+  for (const f of files) await uploadFile(f, demandaId);
+  event.target.value = '';
+  await loadPastas(demandaId);
+}
+
+async function uploadFile(file, demandaId) {
+  const MAX = 30 * 1024 * 1024;
+  if (file.size > MAX) { toast(`${file.name}: arquivo muito grande (max 30MB)`, 'error'); return; }
+  try {
+    toast(`Enviando ${file.name}...`);
+    const b64 = await fileToBase64(file);
+    await apiFetch('POST', `/demandas/${demandaId}/arquivos`, {
+      nome: file.name, arquivo_b64: b64, tipo: file.type, tamanho: file.size
+    });
+    toast(`${file.name} enviado!`, 'success');
+  } catch (err) {
+    toast(`Erro: ${err.message}`, 'error');
+  }
+}
+
+async function excluirArquivoPasta(demandaId, arqId) {
   if (!confirm('Excluir este arquivo?')) return;
   try {
     await apiFetch('DELETE', `/demandas/${demandaId}/arquivos/${arqId}`);
     toast('Arquivo excluído', 'success');
-    await loadArquivos(demandaId);
+    await loadPastas(demandaId);
   } catch (err) {
     toast(err.message, 'error');
   }
 }
 
+async function excluirArquivo(demandaId, arqId) {
+  return excluirArquivoPasta(demandaId, arqId);
+}
+
 // ═══════════════════════════════════════════════════════
-// ARTES FINAIS
+// ENTREGÁVEIS (arquivos enviados pela equipe)
 // ═══════════════════════════════════════════════════════
-async function loadArtes(demandaId) {
-  const panel = document.getElementById('panel-arte');
+async function loadEntregaveis(demandaId) {
+  const panel = document.getElementById('panel-entregaveis');
   try {
-    currentArtesData = await apiFetch('GET', `/demandas/${demandaId}/artes`);
-    currentArteIdx = 0;
-    renderArtePanel(demandaId);
-    loadAprovacaoStatus(demandaId);
-  } catch (err) {
-    panel.innerHTML = `<div style="color:var(--muted);padding:16px">${err.message}</div>`;
+    const { arquivos, artes } = await apiFetch('GET', `/demandas/${demandaId}/entregaveis`);
+    if (!arquivos.length && !artes.length) {
+      panel.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📦</div><h3>Nenhum entregável</h3><p>A equipe ainda não enviou arquivos para esta demanda.</p></div>';
+      return;
+    }
+    const arqHtml = arquivos.map(f => `
+      <div class="file-item">
+        <div class="file-item-icon">${getFileIcon(f.tipo)}</div>
+        <div style="flex:1">
+          <div class="file-item-name">${f.nome}</div>
+          <div class="file-item-meta">${formatSize(f.tamanho)} · ${f.enviado_por_nome} · ${formatDateTime(f.criado_em)}</div>
+        </div>
+        <a href="${f.url}" target="_blank" download class="btn btn-sm btn-ghost">⬇ Baixar</a>
+      </div>`).join('');
+
+    const artesHtml = artes.map(a => `
+      <div class="file-item">
+        <div class="file-item-icon">${getFileIcon(a.tipo)}</div>
+        <div style="flex:1">
+          <div class="file-item-name">v${a.versao} — ${a.nome}</div>
+          <div class="file-item-meta">${a.responsavel_nome || ''} · ${formatDateTime(a.criado_em)}</div>
+        </div>
+        <a href="${a.url}" target="_blank" download class="btn btn-sm btn-ghost">⬇ Baixar</a>
+      </div>`).join('');
+
+    panel.innerHTML = `<div class="file-list">${arqHtml}${artesHtml}</div>`;
+  } catch {
+    panel.innerHTML = '<div style="color:var(--muted);padding:16px">Erro ao carregar entregáveis.</div>';
   }
 }
 
-function renderArtePanel(demandaId) {
-  const panel = document.getElementById('panel-arte');
-  if (!currentArtesData.length) {
-    panel.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🖼️</div><h3>Nenhuma arte disponível</h3></div>';
-    return;
-  }
-
-  const arte = currentArtesData[currentArteIdx];
-  const navBtns = currentArtesData.map((a, i) => `
-    <button class="version-btn ${i === currentArteIdx ? 'active' : ''}" onclick="mudarVersaoArte(${i})">
-      v${a.versao}
-    </button>`).join('');
-
-  const preview = gerarPreviewArte(arte);
-  const statusAcao = arte.status_arte;
-
+// ═══════════════════════════════════════════════════════
+// APROVAÇÃO DA DEMANDA
+// ═══════════════════════════════════════════════════════
+function loadAprovacaoDemanda(demandaId, demanda) {
+  const panel = document.getElementById('panel-aprovacao');
+  const titulo = demanda.titulo || truncate(demanda.descricao, 60) || 'esta demanda';
   panel.innerHTML = `
-    <div class="arte-version-nav">
-      <strong style="font-size:13px;font-weight:600;margin-right:4px">Versões:</strong>
-      ${navBtns}
-    </div>
-    <div class="arte-preview-box" id="artePreviewBox">${preview}</div>
-    <div class="arte-info-row">
-      <span>Versão: <strong>v${arte.versao}</strong></span>
-      <span>Data: <strong>${formatDateTime(arte.criado_em)}</strong></span>
-      ${arte.responsavel_nome ? `<span>Por: <strong>${arte.responsavel_nome}</strong></span>` : ''}
-      <span>Status: <strong>${formatStatusArte(statusAcao)}</strong></span>
-    </div>
-    <div class="approval-section" id="approvalSection"></div>`;
-
-  renderAprovacaoSection(demandaId, arte.id, statusAcao);
-}
-
-function gerarPreviewArte(arte) {
-  const tipo = (arte.tipo || '').toLowerCase();
-  if (tipo.startsWith('image/')) {
-    return `<img src="${arte.url}" alt="${arte.nome}" onclick="openLightbox('${arte.url}')" />`;
-  } else if (tipo.startsWith('video/')) {
-    return `<video src="${arte.url}" controls style="max-width:100%;max-height:520px"></video>`;
-  } else if (tipo === 'application/pdf') {
-    return `<iframe src="${arte.url}" style="width:100%;height:520px;border:none"></iframe>`;
-  } else {
-    return `<div class="no-preview">
-      <div style="font-size:48px;margin-bottom:12px">${getFileIcon(arte.tipo)}</div>
-      <p>${arte.nome}</p>
-      <a href="${arte.url}" target="_blank" class="btn btn-primary" style="margin-top:12px;display:inline-flex">⬇ Baixar arquivo</a>
-    </div>`;
-  }
-}
-
-function mudarVersaoArte(idx) {
-  currentArteIdx = idx;
-  renderArtePanel(currentDemandaId);
-}
-
-function formatStatusArte(s) {
-  const map = { aguardando: '⏳ Aguardando aprovação', aprovado: '✅ Aprovado', alteracao_solicitada: '✏️ Alteração solicitada', rejeitado: '❌ Rejeitado' };
-  return map[s] || s;
-}
-
-async function loadAprovacaoStatus(demandaId) {}
-
-function renderAprovacaoSection(demandaId, arteId, statusAtual) {
-  const section = document.getElementById('approvalSection');
-  if (!section) return;
-
-  if (statusAtual !== 'aguardando') {
-    const classMap = { aprovado: 'aprovado', alteracao_solicitada: 'alteracao_solicitada', rejeitado: 'rejeitado' };
-    const msgMap = { aprovado: '✅ Você aprovou esta arte.', alteracao_solicitada: '✏️ Você solicitou alteração nesta arte.', rejeitado: '❌ Você rejeitou esta arte.' };
-    section.innerHTML = `
-      <div class="approval-title">Aprovação</div>
-      <div class="approval-done ${classMap[statusAtual]}">${msgMap[statusAtual] || statusAtual}</div>`;
-    return;
-  }
-
-  section.innerHTML = `
-    <div class="approval-title">Sua opinião sobre esta arte</div>
-    <div class="approval-btn-row">
-      <button class="btn btn-success" onclick="confirmarAprovacao('${demandaId}','${arteId}','aprovado')">
-        ✅ Aprovar
-      </button>
-      <button class="btn btn-warning" onclick="abrirModalMotivo('${demandaId}','${arteId}','alteracao_solicitada')">
-        ✏️ Solicitar alteração
-      </button>
-      <button class="btn btn-danger" onclick="abrirModalMotivo('${demandaId}','${arteId}','rejeitado')">
-        ❌ Rejeitar
-      </button>
+    <div class="approval-section" style="padding:24px 0">
+      <div class="approval-title">Aprovação da demanda</div>
+      <p style="font-size:13.5px;color:var(--muted);margin-bottom:20px;line-height:1.6">
+        A equipe concluiu o trabalho em <strong>${titulo}</strong> e está aguardando sua aprovação. Revise os entregáveis na aba ao lado e então aprove ou solicite alterações.
+      </p>
+      <div class="approval-btn-row">
+        <button class="btn btn-success" style="font-size:14px;padding:10px 20px" onclick="aprovarDemanda('${demandaId}')">
+          ✅ Aprovar demanda
+        </button>
+        <button class="btn btn-warning" style="font-size:14px;padding:10px 20px" onclick="abrirModalAlteracao('${demandaId}')">
+          ✏️ Solicitar alterações
+        </button>
+      </div>
     </div>`;
 }
 
-function abrirModalMotivo(demandaId, arteId, acao) {
-  pendingAprovacaoAcao = acao;
-  pendingArteId = arteId;
-  const titulos = { alteracao_solicitada: 'Solicitar alteração', rejeitado: 'Rejeitar arte' };
-  document.getElementById('modalMotivoTitle').textContent = titulos[acao];
-  document.getElementById('motivoText').value = '';
-  document.getElementById('modalMotivoConfirm').onclick = () => confirmarAprovacaoComMotivo(demandaId, arteId, acao);
-  openModal('modalMotivo');
-}
-
-async function confirmarAprovacaoComMotivo(demandaId, arteId, acao) {
-  const motivo = document.getElementById('motivoText').value.trim();
-  if (!motivo) { toast('Informe o motivo', 'error'); return; }
-  closeModal('modalMotivo');
-  await confirmarAprovacao(demandaId, arteId, acao, motivo);
-}
-
-async function confirmarAprovacao(demandaId, arteId, acao, motivo = null) {
+async function aprovarDemanda(demandaId) {
+  if (!confirm('Confirmar aprovação desta demanda?')) return;
   try {
-    await apiFetch('POST', `/demandas/${demandaId}/aprovacao`, { acao, arte_id: arteId, motivo });
-    const msgs = { aprovado: 'Arte aprovada com sucesso!', alteracao_solicitada: 'Solicitação de alteração enviada!', rejeitado: 'Arte rejeitada.' };
-    toast(msgs[acao] || 'Ação registrada', 'success');
-    await loadArtes(demandaId);
+    const res = await apiFetch('POST', `/demandas/${demandaId}/aprovacao-demanda`, { acao: 'aprovado' });
+    toast(res.mensagem || 'Demanda aprovada!', 'success');
+    document.getElementById('tabAprovacao').style.display = 'none';
+    document.getElementById('panel-aprovacao').innerHTML = '<div class="approval-section" style="padding:24px 0"><div class="approval-done aprovado">✅ Você aprovou esta demanda. Obrigado!</div></div>';
+    switchTab('info');
+    checkAprovacoesBadge();
   } catch (err) {
     toast(err.message, 'error');
   }
+}
+
+let pendingAlteracaoDemandaId = null;
+
+function abrirModalAlteracao(demandaId) {
+  pendingAlteracaoDemandaId = demandaId;
+  document.getElementById('motivoAprovacaoText').value = '';
+  const btn = document.getElementById('btnConfirmarMotivo');
+  btn.onclick = confirmarAlteracao;
+  document.getElementById('modalMotivoAprovacao').style.display = 'flex';
+}
+
+function fecharModalMotivo() {
+  document.getElementById('modalMotivoAprovacao').style.display = 'none';
+  pendingAlteracaoDemandaId = null;
+}
+
+async function confirmarAlteracao() {
+  const motivo = document.getElementById('motivoAprovacaoText').value.trim();
+  if (!motivo) { toast('Descreva as alterações necessárias', 'error'); return; }
+  fecharModalMotivo();
+  try {
+    const res = await apiFetch('POST', `/demandas/${pendingAlteracaoDemandaId}/aprovacao-demanda`, {
+      acao: 'alteracao_solicitada', motivo
+    });
+    toast(res.mensagem || 'Solicitação enviada!', 'success');
+    document.getElementById('tabAprovacao').style.display = 'none';
+    document.getElementById('panel-aprovacao').innerHTML = '<div class="approval-section" style="padding:24px 0"><div class="approval-done alteracao_solicitada">✏️ Solicitação de alteração enviada. A equipe será notificada.</div></div>';
+    switchTab('info');
+    checkAprovacoesBadge();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// PÁGINA DE APROVAÇÕES PENDENTES
+// ═══════════════════════════════════════════════════════
+async function loadAprovacoesPendentes() {
+  const list = document.getElementById('aprovacoesList');
+  try {
+    const items = await apiFetch('GET', '/aprovacoes-pendentes');
+    updateAprovacoesBadge(items.length);
+    if (!items.length) {
+      list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✅</div><h3>Nenhuma aprovação pendente</h3><p>Quando a equipe concluir uma demanda e enviar para sua aprovação, ela aparecerá aqui.</p></div>';
+      return;
+    }
+    list.innerHTML = items.map(d => {
+      const titulo = d.titulo || truncate(d.descricao, 70) || 'Demanda';
+      return `
+        <div class="card" style="margin-bottom:14px;cursor:pointer" onclick="abrirDetalheAprovacao('${d.id}')">
+          <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+            <div style="flex:1;min-width:0">
+              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:6px">${titulo}</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <span class="badge" style="background:#8B5CF618;color:#8B5CF6">⏳ Aguardando aprovação</span>
+                ${d.prazo ? `<span style="font-size:12px;color:var(--muted)">📅 Prazo: ${formatDate(d.prazo)}</span>` : ''}
+                <span style="font-size:12px;color:var(--muted)">📌 ${formatDate(d.data || d.criado_em)}</span>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;flex-shrink:0">
+              <button class="btn btn-success btn-sm" style="white-space:nowrap" onclick="event.stopPropagation();aprovarDemandaDireta('${d.id}')">✅ Aprovar</button>
+              <button class="btn btn-ghost btn-sm" style="white-space:nowrap" onclick="event.stopPropagation();abrirModalAlteracao('${d.id}')">✏️ Solicitar alterações</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch (err) {
+    list.innerHTML = `<div style="color:var(--muted);padding:24px;text-align:center">${err.message}</div>`;
+  }
+}
+
+function abrirDetalheAprovacao(demandaId) {
+  goTo('detalhe');
+  loadDetalhe(demandaId);
+}
+
+async function aprovarDemandaDireta(demandaId) {
+  if (!confirm('Confirmar aprovação desta demanda?')) return;
+  try {
+    const res = await apiFetch('POST', `/demandas/${demandaId}/aprovacao-demanda`, { acao: 'aprovado' });
+    toast(res.mensagem || 'Demanda aprovada!', 'success');
+    loadAprovacoesPendentes();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+function updateAprovacoesBadge(count) {
+  const badge = document.getElementById('navAprovacoesBadge');
+  if (!badge) return;
+  if (count > 0) {
+    badge.textContent = count;
+    badge.style.display = 'inline-flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+async function checkAprovacoesBadge() {
+  try {
+    const items = await apiFetch('GET', '/aprovacoes-pendentes');
+    updateAprovacoesBadge(items.length);
+  } catch {}
 }
 
 // ═══════════════════════════════════════════════════════
