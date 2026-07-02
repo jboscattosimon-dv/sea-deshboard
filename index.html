@@ -1782,6 +1782,19 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
       <button class="btn btn-ghost" onclick="closeModal('portalModal')">Cancelar</button>
       <button class="btn btn-primary" id="portalSalvarBtn">Salvar acesso</button>
     </div>
+
+    <div style="border-top:1px solid var(--border);margin-top:20px;padding-top:16px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px">Pastas da Biblioteca</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input class="form-input" type="text" id="novaPastaAdminNome" placeholder="Nome da pasta"
+          style="flex:1;height:34px;padding:0 10px;font-size:13px"
+          onkeydown="if(event.key==='Enter')criarPortalPasta()" />
+        <button class="btn btn-primary btn-sm" onclick="criarPortalPasta()">+ Criar</button>
+      </div>
+      <div id="portalPastasLista" style="max-height:160px;overflow-y:auto">
+        <div style="color:var(--muted);font-size:13px">Carregando...</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2836,12 +2849,16 @@ async function deleteClient(id) {
 // ═══════════════════════════════════════
 //  PORTAL DO CLIENTE
 // ═══════════════════════════════════════
+let currentPortalClienteId = null;
+
 async function openPortalModal(clienteId, clienteNome) {
+  currentPortalClienteId = clienteId;
   document.getElementById('portalModalTitle').textContent = '🔐 Portal — ' + clienteNome;
   document.getElementById('portalEmail').value = '';
   document.getElementById('portalSenha').value = '';
   document.getElementById('portalAcesso').checked = false;
   document.getElementById('portalUltimoAcesso').textContent = '';
+  document.getElementById('novaPastaAdminNome').value = '';
 
   const data = await API.get('/portal-admin/clientes/' + clienteId);
   if (!data.erro) {
@@ -2856,6 +2873,46 @@ async function openPortalModal(clienteId, clienteNome) {
 
   document.getElementById('portalSalvarBtn').onclick = () => savePortalAccess(clienteId);
   openModal('portalModal');
+  loadPortalPastas(clienteId);
+}
+
+async function loadPortalPastas(clienteId) {
+  const lista = document.getElementById('portalPastasLista');
+  lista.innerHTML = '<div style="color:var(--muted);font-size:13px">Carregando...</div>';
+  const pastas = await API.get('/portal-admin/clientes/' + clienteId + '/pastas');
+  if (!pastas || pastas.erro) {
+    lista.innerHTML = '<div style="color:var(--muted);font-size:13px">Erro ao carregar.</div>';
+    return;
+  }
+  if (!pastas.length) {
+    lista.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:4px 0">Nenhuma pasta criada.</div>';
+    return;
+  }
+  lista.innerHTML = pastas.map(p => `
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <span>📁</span>
+      <span style="flex:1;font-size:13px;font-weight:500">${p.nome}</span>
+      <span style="font-size:11px;color:var(--muted)">${p.total_arquivos} arq.</span>
+      <button class="btn btn-danger btn-sm" style="padding:2px 8px;font-size:11px" onclick="excluirPortalPasta('${p.id}')">Excluir</button>
+    </div>`).join('');
+}
+
+async function criarPortalPasta() {
+  const nome = document.getElementById('novaPastaAdminNome').value.trim();
+  if (!nome) { toast('Informe o nome da pasta.'); return; }
+  const res = await API.post('/portal-admin/clientes/' + currentPortalClienteId + '/pastas', { nome });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  document.getElementById('novaPastaAdminNome').value = '';
+  toast('Pasta criada!', 'success');
+  await loadPortalPastas(currentPortalClienteId);
+}
+
+async function excluirPortalPasta(pastaId) {
+  if (!confirm('Excluir esta pasta? Os arquivos dentro dela ficarão sem pasta.')) return;
+  const res = await API.del('/portal-admin/clientes/' + currentPortalClienteId + '/pastas/' + pastaId);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast('Pasta excluída.');
+  await loadPortalPastas(currentPortalClienteId);
 }
 
 async function savePortalAccess(clienteId) {
