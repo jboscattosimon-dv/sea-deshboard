@@ -521,13 +521,15 @@ router.get('/calendario', async (req, res) => {
 
 router.get('/biblioteca', async (req, res) => {
   const clienteId = req.cliente.cliente_id;
-  const { categoria } = req.query;
+  const { categoria, pasta_id } = req.query;
 
   let query = supabase
     .from('portal_arquivos')
     .select('*')
     .eq('cliente_id', clienteId)
     .order('criado_em', { ascending: false });
+
+  if (pasta_id) query = query.eq('pasta_id', pasta_id);
 
   if (categoria === 'imagem') query = query.ilike('tipo', 'image/%');
   else if (categoria === 'video') query = query.ilike('tipo', 'video/%');
@@ -667,53 +669,101 @@ router.put('/notificacoes/:id/lida', async (req, res) => {
 });
 
 // ============================================================
-// PASTAS (cliente vê pastas e envia arquivos)
+// PASTAS (do cliente — criação e gestão livre pelo próprio cliente)
 // ============================================================
 
-router.get('/demandas/:id/pastas', async (req, res) => {
+router.get('/pastas', async (req, res) => {
   const clienteId = req.cliente.cliente_id;
-  const { id } = req.params;
-
-  const demanda = await verificarDemandaDoCliente(id, clienteId);
-  if (!demanda) return res.status(404).json({ erro: 'Demanda não encontrada' });
 
   const { data: pastas } = await supabase
     .from('portal_pastas')
     .select('*')
-    .eq('demanda_id', id)
+    .eq('cliente_id', clienteId)
     .order('ordem');
 
-  const { data: arquivos } = await supabase
-    .from('portal_arquivos')
-    .select('*')
-    .eq('demanda_id', id)
-    .eq('enviado_por_tipo', 'cliente')
-    .order('criado_em', { ascending: false });
+  const ids = (pastas || []).map(p => p.id);
+  const counts = {};
+  if (ids.length > 0) {
+    const { data: arqs } = await supabase
+      .from('portal_arquivos')
+      .select('pasta_id')
+      .in('pasta_id', ids);
+    (arqs || []).forEach(a => { counts[a.pasta_id] = (counts[a.pasta_id] || 0) + 1; });
+  }
 
-  res.json({ pastas: pastas || [], arquivos: arquivos || [] });
+  res.json((pastas || []).map(p => ({ ...p, total_arquivos: counts[p.id] || 0 })));
 });
 
-router.post('/demandas/:id/pastas/:pastaId/arquivos', async (req, res) => {
+router.post('/pastas', async (req, res) => {
   const clienteId = req.cliente.cliente_id;
-  const { id, pastaId } = req.params;
+  const { nome } = req.body;
+  if (!nome?.trim()) return res.status(400).json({ erro: 'Nome é obrigatório' });
+
+  const { data, error } = await supabase
+    .from('portal_pastas')
+    .insert([{ id: gerarId('pst_'), cliente_id: clienteId, nome: nome.trim() }])
+    .select()
+    .single();
+
+  if (error) return res.status(400).json({ erro: 'Erro ao criar pasta' });
+  res.status(201).json(data);
+});
+
+router.put('/pastas/:id', async (req, res) => {
+  const clienteId = req.cliente.cliente_id;
+  const { id } = req.params;
+  const { nome } = req.body;
+  if (!nome?.trim()) return res.status(400).json({ erro: 'Nome é obrigatório' });
+
+  const { data, error } = await supabase
+    .from('portal_pastas')
+    .update({ nome: nome.trim(), atualizado_em: new Date().toISOString() })
+    .eq('id', id)
+    .eq('cliente_id', clienteId)
+    .select()
+    .single();
+
+  if (error || !data) return res.status(404).json({ erro: 'Pasta não encontrada' });
+  res.json(data);
+});
+
+router.delete('/pastas/:id', async (req, res) => {
+  const clienteId = req.cliente.cliente_id;
+  const { id } = req.params;
+
+  const { data: pasta } = await supabase
+    .from('portal_pastas')
+    .select('id')
+    .eq('id', id)
+    .eq('cliente_id', clienteId)
+    .single();
+
+  if (!pasta) return res.status(404).json({ erro: 'Pasta não encontrada' });
+
+  await supabase.from('portal_arquivos').update({ pasta_id: null }).eq('pasta_id', id);
+  await supabase.from('portal_pastas').delete().eq('id', id);
+  res.json({ mensagem: 'Pasta excluída' });
+});
+
+// Upload de arquivo diretamente para uma pasta (vai para biblioteca)
+router.post('/pastas/:id/arquivos', async (req, res) => {
+  const clienteId = req.cliente.cliente_id;
+  const { id } = req.params;
   const { nome, arquivo_b64, tipo, tamanho } = req.body;
 
   if (!nome || !arquivo_b64) return res.status(400).json({ erro: 'Arquivo e nome são obrigatórios' });
 
-  const demanda = await verificarDemandaDoCliente(id, clienteId);
-  if (!demanda) return res.status(404).json({ erro: 'Demanda não encontrada' });
-
   const { data: pasta } = await supabase
     .from('portal_pastas')
     .select('id, nome')
-    .eq('id', pastaId)
-    .eq('demanda_id', id)
+    .eq('id', id)
+    .eq('cliente_id', clienteId)
     .single();
 
   if (!pasta) return res.status(404).json({ erro: 'Pasta não encontrada' });
 
   const sanitized = nome.replace(/[^a-zA-Z0-9._-]/g, '_');
-  const storagePath = `portal/${clienteId}/${id}/pasta_${pastaId}/${Date.now()}_${sanitized}`;
+  const storagePath = `portal/${clienteId}/biblioteca/${id}/${Date.now()}_${sanitized}`;
   const base64 = arquivo_b64.includes('base64,') ? arquivo_b64.split('base64,')[1] : arquivo_b64;
   const buffer = Buffer.from(base64, 'base64');
 
@@ -721,7 +771,7 @@ router.post('/demandas/:id/pastas/:pastaId/arquivos', async (req, res) => {
     .from('Portal')
     .upload(storagePath, buffer, { contentType: tipo || 'application/octet-stream' });
 
-  if (upErr) return res.status(500).json({ erro: 'Erro ao fazer upload do arquivo' });
+  if (upErr) return res.status(500).json({ erro: 'Erro ao fazer upload' });
 
   const { data: urlData } = supabase.storage.from('Portal').getPublicUrl(storagePath);
 
@@ -729,9 +779,9 @@ router.post('/demandas/:id/pastas/:pastaId/arquivos', async (req, res) => {
     .from('portal_arquivos')
     .insert([{
       id: gerarId('arq_'),
-      demanda_id: id,
+      demanda_id: null,
       cliente_id: clienteId,
-      pasta_id: pastaId,
+      pasta_id: id,
       nome,
       url: urlData.publicUrl,
       storage_path: storagePath,
@@ -745,21 +795,6 @@ router.post('/demandas/:id/pastas/:pastaId/arquivos', async (req, res) => {
     .single();
 
   if (error) return res.status(400).json({ erro: 'Erro ao salvar arquivo' });
-
-  await registrarHistorico(
-    'upload', id,
-    `Cliente ${req.cliente.nome} enviou "${nome}" na pasta "${pasta.nome}"`,
-    req.cliente.nome
-  );
-
-  if (demanda.trello_card_id) {
-    const trello = require('../trello');
-    trello.postComment(
-      demanda.trello_card_id,
-      `📎 O cliente enviou arquivos na pasta "${pasta.nome}".`
-    ).catch(e => console.error('[Trello]', e.message));
-  }
-
   res.status(201).json(data);
 });
 
