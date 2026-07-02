@@ -735,21 +735,7 @@
 
     <!-- ── BIBLIOTECA ─────────────────────────── -->
     <div class="page" id="page-biblioteca">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
-        <h1 style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800">Biblioteca de Arquivos</h1>
-        <button class="btn btn-primary btn-sm" onclick="abrirFormPastaPortal()">+ Nova Pasta</button>
-      </div>
-
-      <!-- Form inline para criar pasta -->
-      <div id="formNovaPastaPortal" style="display:none;background:var(--surface2);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <input type="text" id="novaPastaPortalNome" placeholder="Nome da pasta"
-            style="flex:1;min-width:160px;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);background:var(--surface);color:var(--text);font-family:inherit;font-size:13px;outline:none"
-            onkeydown="if(event.key==='Enter')criarPastaPortal()" />
-          <button class="btn btn-primary btn-sm" onclick="criarPastaPortal()">Criar</button>
-          <button class="btn btn-ghost btn-sm" onclick="fecharFormPastaPortal()">Cancelar</button>
-        </div>
-      </div>
+      <h1 style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:20px">Biblioteca de Arquivos</h1>
 
       <!-- Pastas do cliente (tabs dinâmicas) -->
       <div id="bibPastaTabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
@@ -1780,9 +1766,8 @@ function renderBibPastaTabs(pastas) {
   const container = document.getElementById('bibPastaTabs');
   const allTab = `<button class="lib-tab ${!currentBibPastaId ? 'active' : ''}" onclick="filtrarPastaBib(null)">📁 Todos</button>`;
   const pastaTabs = pastas.map(p => `
-    <button class="lib-tab ${currentBibPastaId === p.id ? 'active' : ''}" onclick="filtrarPastaBib('${p.id}')" style="display:inline-flex;align-items:center;gap:6px">
+    <button class="lib-tab ${currentBibPastaId === p.id ? 'active' : ''}" onclick="filtrarPastaBib('${p.id}')">
       📁 ${p.nome}
-      <span onclick="event.stopPropagation();excluirPastaPortal('${p.id}')" style="opacity:.5;cursor:pointer;font-size:11px;line-height:1" title="Excluir pasta">✕</span>
     </button>`).join('');
   container.innerHTML = allTab + pastaTabs;
   document.getElementById('bibUploadArea').style.display = currentBibPastaId ? '' : 'none';
@@ -1825,41 +1810,6 @@ function renderBiblioteca(files) {
         <a href="${f.url}" target="_blank" download class="btn btn-sm btn-ghost" style="margin-top:auto;justify-content:center">⬇ Baixar</a>
       </div>`;
   }).join('');
-}
-
-function abrirFormPastaPortal() {
-  document.getElementById('formNovaPastaPortal').style.display = '';
-  document.getElementById('novaPastaPortalNome').focus();
-}
-
-function fecharFormPastaPortal() {
-  document.getElementById('formNovaPastaPortal').style.display = 'none';
-  document.getElementById('novaPastaPortalNome').value = '';
-}
-
-async function criarPastaPortal() {
-  const nome = document.getElementById('novaPastaPortalNome').value.trim();
-  if (!nome) { toast('Informe o nome da pasta', 'error'); return; }
-  try {
-    await apiFetch('POST', '/pastas', { nome });
-    fecharFormPastaPortal();
-    toast('Pasta criada!', 'success');
-    await loadBiblioteca();
-  } catch (err) {
-    toast(err.message, 'error');
-  }
-}
-
-async function excluirPastaPortal(pastaId) {
-  if (!confirm('Excluir esta pasta? Os arquivos dentro dela ficarão sem pasta.')) return;
-  try {
-    await apiFetch('DELETE', `/pastas/${pastaId}`);
-    if (currentBibPastaId === pastaId) currentBibPastaId = null;
-    toast('Pasta excluída', 'success');
-    await loadBiblioteca();
-  } catch (err) {
-    toast(err.message, 'error');
-  }
 }
 
 async function handleBibFileDrop(event) {
