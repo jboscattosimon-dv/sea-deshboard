@@ -694,57 +694,6 @@ router.get('/pastas', async (req, res) => {
   res.json((pastas || []).map(p => ({ ...p, total_arquivos: counts[p.id] || 0 })));
 });
 
-router.post('/pastas', async (req, res) => {
-  const clienteId = req.cliente.cliente_id;
-  const { nome } = req.body;
-  if (!nome?.trim()) return res.status(400).json({ erro: 'Nome é obrigatório' });
-
-  const { data, error } = await supabase
-    .from('portal_pastas')
-    .insert([{ id: gerarId('pst_'), cliente_id: clienteId, nome: nome.trim() }])
-    .select()
-    .single();
-
-  if (error) return res.status(400).json({ erro: 'Erro ao criar pasta' });
-  res.status(201).json(data);
-});
-
-router.put('/pastas/:id', async (req, res) => {
-  const clienteId = req.cliente.cliente_id;
-  const { id } = req.params;
-  const { nome } = req.body;
-  if (!nome?.trim()) return res.status(400).json({ erro: 'Nome é obrigatório' });
-
-  const { data, error } = await supabase
-    .from('portal_pastas')
-    .update({ nome: nome.trim(), atualizado_em: new Date().toISOString() })
-    .eq('id', id)
-    .eq('cliente_id', clienteId)
-    .select()
-    .single();
-
-  if (error || !data) return res.status(404).json({ erro: 'Pasta não encontrada' });
-  res.json(data);
-});
-
-router.delete('/pastas/:id', async (req, res) => {
-  const clienteId = req.cliente.cliente_id;
-  const { id } = req.params;
-
-  const { data: pasta } = await supabase
-    .from('portal_pastas')
-    .select('id')
-    .eq('id', id)
-    .eq('cliente_id', clienteId)
-    .single();
-
-  if (!pasta) return res.status(404).json({ erro: 'Pasta não encontrada' });
-
-  await supabase.from('portal_arquivos').update({ pasta_id: null }).eq('pasta_id', id);
-  await supabase.from('portal_pastas').delete().eq('id', id);
-  res.json({ mensagem: 'Pasta excluída' });
-});
-
 // Upload de arquivo diretamente para uma pasta (vai para biblioteca)
 router.post('/pastas/:id/arquivos', async (req, res) => {
   const clienteId = req.cliente.cliente_id;
