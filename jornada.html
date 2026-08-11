@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sua jornada de onboarding — SEA</title>
+<title>Seu onboarding — SEA</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Instrument+Sans:wght@400;500;600&display=swap');
 
@@ -109,7 +109,7 @@
 </head>
 <body>
   <div class="wrap" id="app">
-    <div class="loading">Carregando sua jornada…</div>
+    <div class="loading">Carregando seu onboarding…</div>
   </div>
 
   <script>
@@ -125,7 +125,7 @@
         jornadaData = await resp.json();
         render();
       } catch (e) {
-        app.innerHTML = '<div class="card empty">Não encontramos essa jornada. Confira o link recebido ou fale com sua equipe de atendimento.</div>';
+        app.innerHTML = '<div class="card empty">Não encontramos esse onboarding. Confira o link recebido ou fale com sua equipe de atendimento.</div>';
       }
     }
 
@@ -192,12 +192,12 @@
 
       app.innerHTML =
         '<div class="header">' +
-          '<div class="eyebrow">SEA · Sua jornada de onboarding</div>' +
+          '<div class="eyebrow">SEA · Seu onboarding</div>' +
           '<h1>Olá, ' + escapeHtml(data.cliente_nome) + '!</h1>' +
         '</div>' +
         '<div class="card">' +
           '<div class="stepper">' + stepperHtml + '</div>' +
-          '<div class="progress-text">' + overallPct + '% da jornada concluída</div>' +
+          '<div class="progress-text">' + overallPct + '% do onboarding concluído</div>' +
         '</div>' +
         pendHtml +
         '<div class="card">' +
