@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Criar jornada de onboarding (ferramenta temporária)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Instrument+Sans:wght@400;500;600&display=swap');
+  :root {
+    --bg: #F2EFE9; --surface: #FFFFFF; --surface2: #EAE6DF; --border: #E0DBD2;
+    --text: #081542; --muted: #8C8878; --r: 14px; --r-sm: 9px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.07);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: var(--bg); color: var(--text); font-family: 'Instrument Sans', sans-serif; padding: 24px;
+  }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+    box-shadow: var(--shadow); padding: 28px; width: 100%; max-width: 420px;
+  }
+  .eyebrow { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  h1 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 20px; margin: 4px 0 20px; }
+  label { font-size: 13px; font-weight: 600; display: block; margin: 14px 0 6px; }
+  input, select {
+    width: 100%; padding: 10px 12px; border-radius: var(--r-sm); border: 1px solid var(--border);
+    font-family: 'Instrument Sans', sans-serif; font-size: 14px; background: var(--bg); color: var(--text);
+  }
+  button {
+    width: 100%; margin-top: 20px; padding: 11px 16px; border: none; border-radius: 100px;
+    background: var(--text); color: #fff; font-family: 'Instrument Sans', sans-serif;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+  .msg { font-size: 13px; margin-top: 14px; padding: 10px 12px; border-radius: var(--r-sm); }
+  .msg.erro { background: #F6DEDB; color: #B4463C; }
+  .msg.sucesso { background: #DEEBE1; color: #3E7A52; }
+  .link-box {
+    margin-top: 12px; padding: 12px; background: var(--surface2); border-radius: var(--r-sm);
+    font-size: 13px; word-break: break-all;
+  }
+  .link-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .link-actions button, .link-actions a {
+    flex: 1; text-align: center; padding: 8px 10px; border-radius: 100px; font-size: 12px;
+    font-weight: 600; text-decoration: none; cursor: pointer; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text); font-family: 'Instrument Sans', sans-serif;
+  }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="eyebrow">SEA · Ferramenta interna</div>
+    <h1>Criar jornada de onboarding</h1>
+
+    <div id="loginBox">
+      <label for="email">E-mail</label>
+      <input id="email" type="email" autocomplete="username">
+      <label for="senha">Senha</label>
+      <input id="senha" type="password" autocomplete="current-password">
+      <button id="btnLogin">Entrar</button>
+      <div id="loginMsg"></div>
+    </div>
+
+    <div id="jornadaBox" class="hidden">
+      <label for="clienteSelect">Cliente</label>
+      <select id="clienteSelect"></select>
+      <button id="btnCriar">Criar jornada para este cliente</button>
+      <div id="jornadaMsg"></div>
+      <div id="linkBox" class="link-box hidden">
+        <div id="linkTexto"></div>
+        <div class="link-actions">
+          <button id="btnCopiar">Copiar link</button>
+          <a id="btnAbrir" href="#" target="_blank" rel="noopener">Abrir página</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let jwt = null;
+
+    document.getElementById('btnLogin').addEventListener('click', async () => {
+      const email = document.getElementById('email').value.trim();
+      const senha = document.getElementById('senha').value;
+      const msgEl = document.getElementById('loginMsg');
+      msgEl.innerHTML = '';
+      if (!email || !senha) return;
+
+      try {
+        const resp = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, senha }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.erro || 'Erro ao entrar');
+        jwt = data.token;
+        document.getElementById('loginBox').classList.add('hidden');
+        document.getElementById('jornadaBox').classList.remove('hidden');
+        await carregarClientes();
+      } catch (e) {
+        msgEl.innerHTML = '<div class="msg erro">' + escapeHtml(e.message) + '</div>';
+      }
+    });
+
+    async function carregarClientes() {
+      const select = document.getElementById('clienteSelect');
+      select.innerHTML = '<option>Carregando…</option>';
+      try {
+        const resp = await fetch('/api/clientes', { headers: { Authorization: 'Bearer ' + jwt } });
+        const clientes = await resp.json();
+        if (!resp.ok) throw new Error(clientes.erro || 'Erro ao buscar clientes');
+        select.innerHTML = clientes.map((c) => '<option value="' + c.id + '">' + escapeHtml(c.nome) + '</option>').join('');
+      } catch (e) {
+        select.innerHTML = '<option>Erro ao carregar</option>';
+      }
+    }
+
+    document.getElementById('btnCriar').addEventListener('click', async () => {
+      const clienteId = document.getElementById('clienteSelect').value;
+      const btn = document.getElementById('btnCriar');
+      const msgEl = document.getElementById('jornadaMsg');
+      const linkBox = document.getElementById('linkBox');
+      msgEl.innerHTML = '';
+      linkBox.classList.add('hidden');
+      if (!clienteId) return;
+
+      btn.disabled = true;
+      btn.textContent = 'Criando…';
+      try {
+        const resp = await fetch('/api/jornada/cliente/' + encodeURIComponent(clienteId), {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + jwt },
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.erro || 'Erro ao criar jornada');
+
+        msgEl.innerHTML = '<div class="msg sucesso">Jornada criada!</div>';
+        document.getElementById('linkTexto').textContent = data.url;
+        document.getElementById('btnAbrir').href = data.url;
+        linkBox.classList.remove('hidden');
+      } catch (e) {
+        msgEl.innerHTML = '<div class="msg erro">' + escapeHtml(e.message) + '</div>';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Criar jornada para este cliente';
+      }
+    });
+
+    document.getElementById('btnCopiar').addEventListener('click', () => {
+      const texto = document.getElementById('linkTexto').textContent;
+      navigator.clipboard.writeText(texto);
+      const btn = document.getElementById('btnCopiar');
+      const original = btn.textContent;
+      btn.textContent = 'Copiado!';
+      setTimeout(() => { btn.textContent = original; }, 1500);
+    });
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str == null ? '' : String(str);
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
