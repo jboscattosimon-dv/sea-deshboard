@@ -68,15 +68,8 @@
 
   .progress-text { font-size: 13px; color: var(--muted); }
 
-  .pend-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; margin: 0 0 12px; }
-  .pend-item {
-    display: flex; align-items: center; justify-content: space-between; gap: 10px;
-    padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--r-sm);
-    background: var(--bg); margin-bottom: 8px;
-  }
-  .pend-item:last-child { margin-bottom: 0; }
-  .pend-text { font-size: 14px; }
-  .pend-fase { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .fase-nome { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; }
+  .fase-periodo { font-size: 12px; color: var(--muted); margin-top: 2px; margin-bottom: 14px; }
 
   .btn-acao {
     background: var(--text); color: #fff; border: none; border-radius: 100px;
@@ -85,23 +78,33 @@
     display: inline-flex; align-items: center; flex-shrink: 0;
   }
 
-  .fase-nome { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; }
-  .fase-periodo { font-size: 12px; color: var(--muted); margin-top: 2px; }
   .etapa {
     border: 1px solid var(--border); border-radius: var(--r-sm);
-    padding: 12px 14px; margin-top: 8px; background: var(--bg);
+    padding: 11px 14px; margin-top: 8px; background: var(--bg);
     display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
   }
+  .etapa.done { opacity: .55; }
+  .etapa.done .etapa-titulo { text-decoration: line-through; }
+  .etapa-dot {
+    width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; box-sizing: border-box;
+    border: 2px solid var(--border); display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: #fff;
+  }
+  .etapa-dot.done { background: var(--success); border-color: var(--success); }
+  .etapa-titulo { font-size: 14px; }
+  .etapa-prazo { font-size: 12px; color: var(--muted); margin-top: 1px; }
   .badge {
     display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px;
-    border-radius: 100px; font-size: 12px; font-weight: 600; flex-shrink: 0;
+    border-radius: 100px; font-size: 11px; font-weight: 600; flex-shrink: 0;
   }
-  .badge.pendente { background: var(--surface2); color: var(--muted); }
   .badge.andamento { background: var(--amber-bg); color: var(--amber); }
-  .badge.concluido { background: var(--success-bg); color: var(--success); }
   .badge.bloqueado { background: var(--amber-bg); color: var(--amber); }
-  .etapa-titulo { font-size: 14px; }
-  .etapa-prazo { font-size: 12px; color: var(--muted); }
+
+  .concluidas-toggle {
+    cursor: pointer; font-size: 12px; color: var(--muted); font-weight: 600;
+    padding: 12px 2px 2px; user-select: none;
+  }
+  .tudo-certo { text-align: center; color: var(--muted); font-size: 13.5px; padding: 18px 10px; }
 
   .empty { text-align: center; color: var(--muted); font-size: 14px; padding: 40px 20px; }
   .loading { text-align: center; color: var(--muted); padding: 60px 20px; font-size: 14px; }
@@ -157,38 +160,39 @@
       const totalDone = data.fases.reduce((a, f) => a + f.etapas.filter((e) => e.status === 'concluido').length, 0);
       const overallPct = totalEtapas ? Math.round((totalDone / totalEtapas) * 100) : 0;
 
-      const pendHtml = data.pendencias.length
-        ? '<div class="card"><div class="pend-title">O que falta com você agora</div>' +
-          data.pendencias.map((p) => (
-            '<div class="pend-item">' +
-              '<div>' +
-                '<div class="pend-text">' + escapeHtml(p.titulo) + '</div>' +
-                '<div class="pend-fase">' + escapeHtml(p.fase) + (p.prazo_label ? ' · ' + escapeHtml(p.prazo_label) : '') + '</div>' +
-              '</div>' +
-              (isSafeUrl(p.acao_url)
-                ? '<a class="btn-acao" href="' + escapeAttr(p.acao_url) + '" target="_blank" rel="noopener">' + escapeHtml(p.acao_label || 'Abrir') + '</a>'
-                : '') +
-            '</div>'
-          )).join('') +
-        '</div>'
-        : '<div class="card"><div class="pend-title">Tudo certo por aqui! 🎉</div>' +
-          '<div style="font-size:14px;color:var(--muted)">Não há nada pendente da sua parte no momento.</div></div>';
-
       const faseAtiva = data.fases[activeIdx];
-      const etapasHtml = (faseAtiva.etapas || []).map((e) => (
-        '<div class="etapa">' +
+      const todasEtapas = faseAtiva.etapas || [];
+      const pendentes = todasEtapas.filter((e) => e.status !== 'concluido');
+      const feitas = todasEtapas.filter((e) => e.status === 'concluido');
+
+      const linhaEtapa = (e, done) => (
+        '<div class="etapa ' + (done ? 'done' : '') + '">' +
           '<div style="display:flex;align-items:center;gap:10px;min-width:0">' +
-            '<span class="badge ' + e.status + '">' + (STATUS_LABEL[e.status] || e.status) + '</span>' +
-            '<span class="etapa-titulo">' + escapeHtml(e.titulo) + '</span>' +
+            '<span class="etapa-dot ' + (done ? 'done' : '') + '">' + (done ? '✓' : '') + '</span>' +
+            '<div style="min-width:0">' +
+              '<div class="etapa-titulo">' + escapeHtml(e.titulo) +
+                (!done && (e.status === 'andamento' || e.status === 'bloqueado')
+                  ? ' <span class="badge ' + e.status + '">' + escapeHtml(STATUS_LABEL[e.status]) + '</span>'
+                  : '') +
+              '</div>' +
+              (e.prazo_label ? '<div class="etapa-prazo">' + escapeHtml(e.prazo_label) + '</div>' : '') +
+            '</div>' +
           '</div>' +
-          '<div style="display:flex;align-items:center;gap:10px;flex-shrink:0">' +
-            (e.prazo_label ? '<span class="etapa-prazo">' + escapeHtml(e.prazo_label) + '</span>' : '') +
-            (isSafeUrl(e.acao_url)
-              ? '<a class="btn-acao" href="' + escapeAttr(e.acao_url) + '" target="_blank" rel="noopener">' + escapeHtml(e.acao_label || 'Abrir') + '</a>'
-              : '') +
-          '</div>' +
+          (!done && isSafeUrl(e.acao_url)
+            ? '<a class="btn-acao" href="' + escapeAttr(e.acao_url) + '" target="_blank" rel="noopener">' + escapeHtml(e.acao_label || 'Abrir') + '</a>'
+            : '') +
         '</div>'
-      )).join('') || '<div class="empty">Nenhuma etapa nesta fase.</div>';
+      );
+
+      const pendentesHtml = pendentes.length
+        ? pendentes.map((e) => linhaEtapa(e, false)).join('')
+        : '<div class="tudo-certo">✓ Tudo certo por aqui — em breve a equipe segue para o próximo passo.</div>';
+
+      const feitasHtml = !feitas.length ? '' : (
+        '<details><summary class="concluidas-toggle">' + feitas.length + ' concluída' + (feitas.length !== 1 ? 's' : '') + '</summary>' +
+        feitas.map((e) => linhaEtapa(e, true)).join('') +
+        '</details>'
+      );
 
       app.innerHTML =
         '<div class="header">' +
@@ -199,11 +203,11 @@
           '<div class="stepper">' + stepperHtml + '</div>' +
           '<div class="progress-text">' + overallPct + '% do onboarding concluído</div>' +
         '</div>' +
-        pendHtml +
         '<div class="card">' +
           '<div class="fase-nome">' + escapeHtml(faseAtiva.nome) + '</div>' +
           '<div class="fase-periodo">' + escapeHtml(faseAtiva.periodo_label || '') + '</div>' +
-          etapasHtml +
+          pendentesHtml +
+          feitasHtml +
         '</div>';
 
       app.querySelectorAll('.step-node').forEach((node) => {
