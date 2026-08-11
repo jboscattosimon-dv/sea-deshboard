@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Criar jornada de onboarding (ferramenta temporária)</title>
+<title>Criar onboarding (ferramenta temporária)</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Instrument+Sans:wght@400;500;600&display=swap');
   :root {
@@ -52,7 +52,7 @@
 <body>
   <div class="card">
     <div class="eyebrow">SEA · Ferramenta interna</div>
-    <h1>Criar jornada de onboarding</h1>
+    <h1>Criar onboarding</h1>
 
     <div id="loginBox">
       <label for="email">E-mail</label>
@@ -66,7 +66,7 @@
     <div id="jornadaBox" class="hidden">
       <label for="clienteSelect">Cliente</label>
       <select id="clienteSelect"></select>
-      <button id="btnCriar">Criar jornada para este cliente</button>
+      <button id="btnCriar">Criar onboarding para este cliente</button>
       <div id="jornadaMsg"></div>
       <div id="linkBox" class="link-box hidden">
         <div id="linkTexto"></div>
@@ -135,9 +135,9 @@
           headers: { Authorization: 'Bearer ' + jwt },
         });
         const data = await resp.json();
-        if (!resp.ok) throw new Error(data.erro || 'Erro ao criar jornada');
+        if (!resp.ok) throw new Error(data.erro || 'Erro ao criar onboarding');
 
-        msgEl.innerHTML = '<div class="msg sucesso">Jornada criada!</div>';
+        msgEl.innerHTML = '<div class="msg sucesso">Onboarding criado!</div>';
         document.getElementById('linkTexto').textContent = data.url;
         document.getElementById('btnAbrir').href = data.url;
         linkBox.classList.remove('hidden');
@@ -145,7 +145,7 @@
         msgEl.innerHTML = '<div class="msg erro">' + escapeHtml(e.message) + '</div>';
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Criar jornada para este cliente';
+        btn.textContent = 'Criar onboarding para este cliente';
       }
     });
 

@@ -1206,10 +1206,10 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
       SDR
     </div>
 
-    <!-- Jornada de Onboarding -->
+    <!-- Onboarding (jornada) -->
     <div class="nav-item" data-page="jornada" onclick="goTo('jornada')" id="navJornada">
       <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
-      Jornada
+      Onboarding
     </div>
 
     <!-- Auditoria -->
@@ -1748,10 +1748,10 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
   <div class="page" id="page-jornada">
     <div class="page-header">
       <div>
-        <div class="page-title">Jornada de Onboarding</div>
-        <div class="page-sub" id="jornadaListaSub">Acompanhe a jornada de onboarding de todos os clientes</div>
+        <div class="page-title">Onboarding</div>
+        <div class="page-sub" id="jornadaListaSub">Acompanhe o onboarding de todos os clientes</div>
       </div>
-      <button class="btn btn-primary" onclick="abrirNovaJornadaPicker()">+ Nova jornada</button>
+      <button class="btn btn-primary" onclick="abrirNovaJornadaPicker()">+ Novo onboarding</button>
     </div>
     <div id="jornadaListaMetrics" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:24px"></div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
@@ -1877,7 +1877,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
 <!-- MODAL JORNADA DE ONBOARDING -->
 <div class="modal-overlay" id="modal-jornada">
   <div class="modal" style="max-width:760px">
-    <div class="modal-title" id="jor-modal-title">Jornada de Onboarding</div>
+    <div class="modal-title" id="jor-modal-title">Onboarding</div>
     <button class="modal-close" onclick="closeModal('modal-jornada')">×</button>
     <div id="jor-link-box" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-bottom:16px;font-size:12px">
       <span style="color:var(--muted)">Link do cliente:</span>
@@ -1896,7 +1896,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
 <!-- MODAL NOVA JORNADA (escolher cliente) -->
 <div class="modal-overlay" id="modal-jornada-nova">
   <div class="modal">
-    <div class="modal-title">Nova jornada de onboarding</div>
+    <div class="modal-title">Novo onboarding</div>
     <button class="modal-close" onclick="closeModal('modal-jornada-nova')">×</button>
     <div style="margin-bottom:16px">
       <label class="form-label">Cliente</label>
@@ -2173,7 +2173,7 @@ function goTo(page) {
     clients:'Clientes', statuses:'Status', formats:'Formatos', users:'Usuários', history:'Histórico',
     crm_leads:'Leads', crm_funil:'Funil de Vendas', crm_atividades:'Atividades', crm_relatorios:'Relatórios CRM',
     crm_etapas:'Etapas do Funil', sdr:'SDR', sdr_topicos:'Tópicos SDR', calendario:'Calendário Editorial',
-    onboarding:'Onboarding', onboarding_catalogo:'Itens de Onboarding', jornada:'Jornada de Onboarding'
+    onboarding:'Onboarding (antigo)', onboarding_catalogo:'Itens de Onboarding (antigo)', jornada:'Onboarding'
   };
   document.getElementById('headerTitle').textContent = titles[page] || page;
   buildHeaderActions(page);
@@ -3309,8 +3309,7 @@ function openPermissoes(userId) {
         { key: 'demands',     label: 'Demandas' },
         { key: 'internal',    label: 'Demandas Internas' },
         { key: 'calendario',  label: 'Calendário Editorial' },
-        { key: 'onboarding',  label: 'Onboarding' },
-        { key: 'jornada',     label: 'Jornada de Onboarding' },
+        { key: 'jornada',     label: 'Onboarding' },
       ]
     },
     {
@@ -3323,7 +3322,6 @@ function openPermissoes(userId) {
         { key: 'users',      label: 'Usuários' },
         { key: 'crm_etapas',  label: 'Etapas do Funil' },
         { key: 'sdr_topicos',         label: 'Tópicos SDR' },
-        { key: 'onboarding_catalogo', label: 'Itens Onboarding', sub: true },
       ]
     },
     {
@@ -3402,7 +3400,7 @@ function onPermEditarChange(page, el) {
 }
 
 async function savePermissoes(userId) {
-  const pages = ['dashboard','demands','internal','clients','financeiro','statuses','formats','users','crm_leads','crm_funil','crm_atividades','crm_relatorios','crm_etapas','sdr','sdr_topicos','onboarding_catalogo','calendario','onboarding','jornada'];
+  const pages = ['dashboard','demands','internal','clients','financeiro','statuses','formats','users','crm_leads','crm_funil','crm_atividades','crm_relatorios','crm_etapas','sdr','sdr_topicos','calendario','jornada'];
   const permissoes = {};
   pages.forEach(page => {
     const visualizar = document.getElementById(`perm_${page}_visualizar`)?.checked ?? true;
@@ -7259,17 +7257,17 @@ function renderListaJornadas() {
   document.getElementById('jornadaListaMetrics').innerHTML = [
     ['Ativas', ativas, '#1E40AF'],
     ['Com etapas atrasadas', atrasadas, '#B91C1C'],
-    ['Total cadastradas', _jorLista.length, '#065F46'],
+    ['Total cadastrados', _jorLista.length, '#065F46'],
   ].map(([lbl, val, color]) => `
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px">
       <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;color:${color}">${val}</div>
       <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-top:2px">${lbl}</div>
     </div>`).join('');
 
-  document.getElementById('jornadaListaSub').textContent = `${_jorLista.length} jornada${_jorLista.length !== 1 ? 's' : ''} cadastrada${_jorLista.length !== 1 ? 's' : ''}`;
+  document.getElementById('jornadaListaSub').textContent = `${_jorLista.length} onboarding${_jorLista.length !== 1 ? 's' : ''} cadastrado${_jorLista.length !== 1 ? 's' : ''}`;
 
   if (!lista.length) {
-    document.getElementById('jornadaListaTable').innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">Nenhuma jornada encontrada.</td></tr>`;
+    document.getElementById('jornadaListaTable').innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">Nenhum onboarding encontrado.</td></tr>`;
     return;
   }
 
@@ -7308,7 +7306,7 @@ async function jorCriarNova() {
   const res = await API.post('/jornada/cliente/' + clienteId, {});
   if (res.erro) { toast('Erro: ' + res.erro); return; }
   closeModal('modal-jornada-nova');
-  toast('Jornada criada!');
+  toast('Onboarding criado!');
   await carregarListaJornadas();
   abrirModalJornada(clienteId);
 }
@@ -7320,16 +7318,16 @@ async function abrirModalJornada(clienteId) {
   _jorData = null;
   _jorFaseAtiva = 0;
   _jorEditingEtapaId = null;
-  document.getElementById('jor-modal-title').textContent = 'Jornada de Onboarding';
+  document.getElementById('jor-modal-title').textContent = 'Onboarding';
   document.getElementById('jor-link-box').style.display = 'none';
   document.getElementById('jor-tab-etapas').innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Carregando...</div>';
   document.getElementById('jor-tab-checklist').innerHTML = '';
   openModal('modal-jornada');
 
   const res = await API.get('/jornada/cliente/' + clienteId);
-  if (res.erro || !res) { toast('Erro ao carregar jornada.'); closeModal('modal-jornada'); return; }
+  if (res.erro || !res) { toast('Erro ao carregar onboarding.'); closeModal('modal-jornada'); return; }
   _jorData = res;
-  document.getElementById('jor-modal-title').textContent = 'Jornada — ' + (res.clientes?.nome || '');
+  document.getElementById('jor-modal-title').textContent = 'Onboarding — ' + (res.clientes?.nome || '');
   if (res.token_publico) {
     document.getElementById('jor-link-box').style.display = 'flex';
     document.getElementById('jor-link-texto').textContent = window.location.origin + '/jornada/' + res.token_publico;
@@ -7363,11 +7361,11 @@ function jorCopiarLink() {
 }
 
 async function jorExcluirJornada() {
-  if (!confirm('Excluir esta jornada e todas as suas etapas? Essa ação não pode ser desfeita.')) return;
+  if (!confirm('Excluir este onboarding e todas as suas etapas? Essa ação não pode ser desfeita.')) return;
   const res = await API.del('/jornada/cliente/' + _jorClienteId);
   if (res.erro) { toast('Erro: ' + res.erro); return; }
   closeModal('modal-jornada');
-  toast('Jornada excluída.');
+  toast('Onboarding excluído.');
   carregarListaJornadas();
 }
 
@@ -7532,10 +7530,10 @@ function renderJorChecklistTab() {
     <div style="max-height:380px;overflow-y:auto;margin-bottom:16px">${html}</div>
     <div style="font-size:12px;color:var(--muted);margin-bottom:12px">${done} de ${total} itens marcados</div>
     <div class="form-actions">
-      <button class="btn btn-danger btn-sm" onclick="jorExcluirJornada()" style="margin-right:auto">Excluir jornada</button>
+      <button class="btn btn-danger btn-sm" onclick="jorExcluirJornada()" style="margin-right:auto">Excluir onboarding</button>
       ${jaConcluida
-        ? `<span style="font-size:12px;color:#065F46;font-weight:600">✓ Jornada concluída</span>`
-        : `<button class="btn btn-primary" ${done < total ? 'disabled' : ''} style="${done < total ? 'opacity:.5;cursor:not-allowed' : 'background:#27AE60;border-color:#27AE60'}" onclick="jorConcluirJornada()">Concluir jornada</button>`}
+        ? `<span style="font-size:12px;color:#065F46;font-weight:600">✓ Onboarding concluído</span>`
+        : `<button class="btn btn-primary" ${done < total ? 'disabled' : ''} style="${done < total ? 'opacity:.5;cursor:not-allowed' : 'background:#27AE60;border-color:#27AE60'}" onclick="jorConcluirJornada()">Concluir onboarding</button>`}
     </div>
   `;
 }
@@ -7547,11 +7545,11 @@ async function jorToggleChecklist(itemId, checked) {
 }
 
 async function jorConcluirJornada() {
-  if (!confirm('Marcar esta jornada como concluída?')) return;
+  if (!confirm('Marcar este onboarding como concluído?')) return;
   const res = await API.patch('/jornada/' + _jorData.id + '/status', { status: 'concluido' });
   if (res.erro) { toast('Erro: ' + res.erro); return; }
   await jorRecarregar();
-  toast('Jornada concluída! 🎉');
+  toast('Onboarding concluído! 🎉');
 }
 
 </script>
