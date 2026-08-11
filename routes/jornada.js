@@ -261,7 +261,7 @@ router.get('/', auth, async (req, res) => {
 
 // PATCH /api/jornada/etapas/:etapaId — edição inline
 router.patch('/etapas/:etapaId', auth, async (req, res) => {
-  const cols = ['titulo', 'responsavel', 'status', 'prazo_label', 'prazo_dias', 'notas', 'mensagem_enviada', 'acao_url', 'acao_label', 'visivel_cliente'];
+  const cols = ['titulo', 'responsavel', 'status', 'prazo_label', 'prazo_dias', 'notas', 'mensagem_modelo', 'mensagem_enviada', 'acao_url', 'acao_label', 'visivel_cliente'];
   const updates = {};
   cols.forEach((c) => { if (req.body[c] !== undefined) updates[c] = req.body[c]; });
   if (updates.status === 'concluido') {

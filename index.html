@@ -1753,14 +1753,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
       </div>
       <button class="btn btn-primary" onclick="abrirNovaJornadaPicker()">+ Novo onboarding</button>
     </div>
-    <div id="jornadaListaMetrics" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:24px"></div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
-      <select class="form-select" id="jorFiltroStatus" style="width:auto;padding:6px 10px;font-size:12px" onchange="renderListaJornadas()">
-        <option value="">Todos os status</option>
-        <option value="em_andamento">Em andamento</option>
-        <option value="concluido">Concluído</option>
-      </select>
-    </div>
+    <div id="jornadaListaFiltros" style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap"></div>
     <div id="jornadaListaGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px"></div>
   </div>
 
@@ -7243,21 +7236,29 @@ async function carregarListaJornadas() {
   renderListaJornadas();
 }
 
-function renderListaJornadas() {
-  const filtro = document.getElementById('jorFiltroStatus')?.value || '';
-  const lista = filtro ? _jorLista.filter((j) => j.status === filtro) : _jorLista;
+const JOR_FILTROS = [
+  { key: 'todos', label: 'Todos' },
+  { key: 'ativos', label: 'Ativos' },
+  { key: 'atrasados', label: 'Atrasados' },
+  { key: 'concluidos', label: 'Concluídos' },
+];
+let _jorFiltroAtivo = 'todos';
 
-  const ativas = _jorLista.filter((j) => j.status !== 'concluido').length;
-  const atrasadas = _jorLista.filter((j) => j.status !== 'concluido' && j.etapas_atrasadas > 0).length;
-  document.getElementById('jornadaListaMetrics').innerHTML = [
-    ['Ativas', ativas, '#1E40AF'],
-    ['Com etapas atrasadas', atrasadas, '#B91C1C'],
-    ['Total cadastrados', _jorLista.length, '#065F46'],
-  ].map(([lbl, val, color]) => `
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px">
-      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;color:${color}">${val}</div>
-      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-top:2px">${lbl}</div>
-    </div>`).join('');
+function jorSetFiltro(key) {
+  _jorFiltroAtivo = key;
+  renderListaJornadas();
+}
+
+function renderListaJornadas() {
+  document.getElementById('jornadaListaFiltros').innerHTML = JOR_FILTROS.map((f) => {
+    const active = f.key === _jorFiltroAtivo;
+    return `<button onclick="jorSetFiltro('${f.key}')" style="padding:7px 14px;border-radius:100px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid ${active ? 'var(--primary)' : 'var(--border)'};background:${active ? 'var(--primary)' : 'var(--surface)'};color:${active ? '#fff' : 'var(--text)'}">${f.label}</button>`;
+  }).join('');
+
+  let lista = _jorLista;
+  if (_jorFiltroAtivo === 'ativos') lista = lista.filter((j) => j.status !== 'concluido');
+  else if (_jorFiltroAtivo === 'atrasados') lista = lista.filter((j) => j.status !== 'concluido' && j.etapas_atrasadas > 0);
+  else if (_jorFiltroAtivo === 'concluidos') lista = lista.filter((j) => j.status === 'concluido');
 
   document.getElementById('jornadaListaSub').textContent = `${_jorLista.length} onboarding${_jorLista.length !== 1 ? 's' : ''} cadastrado${_jorLista.length !== 1 ? 's' : ''}`;
 
@@ -7445,6 +7446,7 @@ function jorEtapaViewRow(e) {
   const isDone = e.status === 'concluido';
   const isEspecial = e.status === 'andamento' || e.status === 'bloqueado';
   const meta = JOR_STATUS_META[e.status] || JOR_STATUS_META.pendente;
+  const preview = e.mensagem_modelo ? (e.mensagem_modelo.length > 70 ? e.mensagem_modelo.slice(0, 70) + '…' : e.mensagem_modelo) : '';
   return `
     <div style="display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--border)">
       <button onclick="jorToggleEtapaConcluida('${e.id}', '${e.status}')" title="${isDone ? 'Marcar como pendente' : 'Marcar como concluída'}" style="width:20px;height:20px;flex-shrink:0;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;border:2px solid ${isDone ? 'var(--primary)' : 'var(--border)'};background:${isDone ? 'var(--primary)' : 'transparent'};padding:0">${isDone ? '✓' : ''}</button>
@@ -7454,8 +7456,9 @@ function jorEtapaViewRow(e) {
           <span>${escapeHtmlJor(e.responsavel)}${e.prazo_label ? ' · ' + escapeHtmlJor(e.prazo_label) : ''}</span>
           ${isEspecial ? `<span style="padding:1px 7px;border-radius:100px;font-size:10px;font-weight:600;background:${meta.bg};color:${meta.color}">${meta.label}</span>` : ''}
         </div>
+        ${preview ? `<div style="font-size:11px;color:var(--muted);font-style:italic;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">💬 "${escapeHtmlJor(preview)}"</div>` : ''}
       </div>
-      ${e.mensagem_modelo ? `<button onclick="jorCopiarMensagem('${e.id}')" title="Copiar mensagem" class="btn btn-ghost btn-sm" style="padding:5px 8px;flex-shrink:0">💬</button>` : ''}
+      ${e.mensagem_modelo ? `<button onclick="jorCopiarMensagem('${e.id}')" title="${e.mensagem_enviada ? 'Copiar de novo' : 'Copiar e marcar como enviada'}" class="btn btn-sm" style="padding:5px 10px;flex-shrink:0;border:none;font-weight:600;background:${e.mensagem_enviada ? '#D1FAE5' : 'var(--surface2)'};color:${e.mensagem_enviada ? '#065F46' : 'var(--text)'}">${e.mensagem_enviada ? '✓ Enviada' : 'Copiar'}</button>` : ''}
       <button onclick="jorEditStep('${e.id}')" title="Editar" class="btn btn-ghost btn-sm" style="padding:5px 8px;flex-shrink:0;opacity:.6">✎</button>
     </div>`;
 }
@@ -7473,6 +7476,8 @@ function jorEtapaEditRow(e) {
         </select>
         <input class="form-input" id="jorEditPrazo" placeholder="Prazo (ex: Dia 25)" value="${escapeAttrJor(e.prazo_label || '')}" style="width:150px">
       </div>
+      <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Mensagem pronta (opcional — use {{cliente}} pro nome do cliente)</label>
+      <textarea class="form-input" id="jorEditMensagem" rows="3" placeholder="Texto pra copiar e colar no WhatsApp" style="margin-bottom:10px;resize:vertical;font-family:inherit">${escapeHtmlJor(e.mensagem_modelo || '')}</textarea>
       <div style="display:flex;justify-content:flex-end;gap:8px">
         <button class="btn btn-danger btn-sm" onclick="jorRemoverStep('${e.id}')" style="margin-right:auto">Remover</button>
         <button class="btn btn-ghost btn-sm" onclick="jorCancelEdit()">Cancelar</button>
@@ -7489,8 +7494,9 @@ async function jorSalvarStep(etapaId) {
   const responsavel = document.getElementById('jorEditResponsavel').value;
   const status = document.getElementById('jorEditStatus').value;
   const prazo_label = document.getElementById('jorEditPrazo').value.trim();
+  const mensagem_modelo = document.getElementById('jorEditMensagem').value.trim();
   if (!titulo) { toast('Título não pode ficar vazio.'); return; }
-  const res = await API.patch('/jornada/etapas/' + etapaId, { titulo, responsavel, status, prazo_label });
+  const res = await API.patch('/jornada/etapas/' + etapaId, { titulo, responsavel, status, prazo_label, mensagem_modelo: mensagem_modelo || null });
   if (res.erro) { toast('Erro: ' + res.erro); return; }
   _jorEditingEtapaId = null;
   await jorRecarregar();
@@ -7515,7 +7521,7 @@ async function jorAdicionarStep() {
   jorEditStep(res.id);
 }
 
-function jorCopiarMensagem(etapaId) {
+async function jorCopiarMensagem(etapaId) {
   const fase = (_jorData.fases || [])[_jorFaseAtiva];
   const etapa = (fase?.etapas || []).find((e) => e.id === etapaId);
   if (!etapa || !etapa.mensagem_modelo) return;
@@ -7523,6 +7529,10 @@ function jorCopiarMensagem(etapaId) {
   const texto = etapa.mensagem_modelo.replace(/\{\{cliente\}\}/g, nome);
   navigator.clipboard.writeText(texto);
   toast('Mensagem copiada!');
+  if (!etapa.mensagem_enviada) {
+    await API.patch('/jornada/etapas/' + etapaId, { mensagem_enviada: true });
+    await jorRecarregar();
+  }
 }
 
 // ── Aba Checklist de encerramento ───────────────────────
