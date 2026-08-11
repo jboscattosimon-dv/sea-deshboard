@@ -224,14 +224,16 @@ router.get('/cliente/:clienteId', auth, async (req, res) => {
 router.get('/', auth, async (req, res) => {
   const { data, error } = await supabase
     .from('jornada_onboarding')
-    .select('id, cliente_id, status, criado_em, clientes(nome), fases:jornada_fases(id, nome, ordem, etapas:jornada_etapas(id, status, prazo_dias))')
+    .select('id, cliente_id, status, criado_em, clientes(nome), fases:jornada_fases(id, nome, ordem, etapas:jornada_etapas(id, titulo, status, prazo_dias, ordem))')
     .order('criado_em', { ascending: false });
   if (error) return res.status(400).json({ erro: error.message });
 
   const agora = Date.now();
   res.json((data || []).map((j) => {
-    const fases = (j.fases || []).sort((a, b) => a.ordem - b.ordem);
-    const todasEtapas = fases.flatMap((f) => f.etapas || []);
+    const fases = (j.fases || [])
+      .sort((a, b) => a.ordem - b.ordem)
+      .map((f) => ({ ...f, etapas: (f.etapas || []).sort((a, b) => a.ordem - b.ordem) }));
+    const todasEtapas = fases.flatMap((f) => f.etapas);
     const total = todasEtapas.length;
     const done = todasEtapas.filter((e) => e.status === 'concluido').length;
     const atrasadas = todasEtapas.filter((e) => {
@@ -241,17 +243,23 @@ router.get('/', auth, async (req, res) => {
     }).length;
     let faseAtual = '';
     for (const f of fases) {
-      if ((f.etapas || []).some((e) => e.status !== 'concluido')) { faseAtual = f.nome; break; }
+      if (f.etapas.some((e) => e.status !== 'concluido')) { faseAtual = f.nome; break; }
     }
     if (!faseAtual && fases.length) faseAtual = fases[fases.length - 1].nome;
+    const fasesConcluidas = fases.filter((f) => f.etapas.length && f.etapas.every((e) => e.status === 'concluido')).length;
+    const pendentes = todasEtapas.filter((e) => e.status !== 'concluido').map((e) => e.titulo);
     return {
       id: j.id,
       cliente_id: j.cliente_id,
       cliente_nome: j.clientes?.nome || '',
       status: j.status,
       fase_atual: faseAtual,
+      total_fases: fases.length,
+      fases_concluidas: fasesConcluidas,
       progresso: total ? Math.round((done / total) * 100) : 0,
       etapas_atrasadas: atrasadas,
+      proximas_etapas: pendentes.slice(0, 2),
+      total_pendentes: pendentes.length,
     };
   }));
 });
