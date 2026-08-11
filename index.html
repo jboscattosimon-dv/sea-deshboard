@@ -1761,12 +1761,7 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
         <option value="concluido">Concluído</option>
       </select>
     </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Cliente</th><th>Fase atual</th><th>Progresso</th><th>Status</th><th></th></tr></thead>
-        <tbody id="jornadaListaTable"></tbody>
-      </table>
-    </div>
+    <div id="jornadaListaGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px"></div>
   </div>
 
 </main>
@@ -7241,9 +7236,9 @@ function escapeAttrJor(str) { return escapeHtmlJor(str); }
 // ── Tela 1: Lista ────────────────────────────────────────
 
 async function carregarListaJornadas() {
-  document.getElementById('jornadaListaTable').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">Carregando...</td></tr>';
+  document.getElementById('jornadaListaGrid').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--muted)">Carregando...</div>';
   const res = await API.get('/jornada');
-  if (res.erro) { toast('Erro ao carregar jornadas: ' + res.erro); return; }
+  if (res.erro) { toast('Erro ao carregar onboardings: ' + res.erro); return; }
   _jorLista = Array.isArray(res) ? res : [];
   renderListaJornadas();
 }
@@ -7266,28 +7261,47 @@ function renderListaJornadas() {
 
   document.getElementById('jornadaListaSub').textContent = `${_jorLista.length} onboarding${_jorLista.length !== 1 ? 's' : ''} cadastrado${_jorLista.length !== 1 ? 's' : ''}`;
 
+  const grid = document.getElementById('jornadaListaGrid');
   if (!lista.length) {
-    document.getElementById('jornadaListaTable').innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">Nenhum onboarding encontrado.</td></tr>`;
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">Nenhum onboarding encontrado.</div>`;
     return;
   }
 
-  document.getElementById('jornadaListaTable').innerHTML = lista.map((j) => `
-    <tr>
-      <td><strong>${escapeHtmlJor(j.cliente_nome)}</strong>${j.etapas_atrasadas > 0 ? ` <span title="${j.etapas_atrasadas} etapa(s) atrasada(s)" style="color:#B91C1C">⚠</span>` : ''}</td>
-      <td style="color:var(--muted);font-size:12.5px">${escapeHtmlJor(j.fase_atual)}</td>
-      <td style="min-width:120px">
+  grid.innerHTML = lista.map((j) => {
+    const totalFases = j.total_fases || 4;
+    const dots = Array.from({ length: totalFases }, (_, i) => {
+      const filled = i < j.fases_concluidas;
+      const isCurrent = !filled && i === j.fases_concluidas && j.status !== 'concluido';
+      const cor = filled ? 'var(--primary)' : isCurrent ? '#E67E22' : 'var(--surface2)';
+      return `<span style="width:7px;height:7px;border-radius:50%;background:${cor};display:inline-block;flex-shrink:0"></span>`
+        + (i < totalFases - 1 ? `<span style="width:10px;height:2px;background:${filled ? 'var(--primary)' : 'var(--border)'};display:inline-block"></span>` : '');
+    }).join('');
+
+    let faltaTexto;
+    if (j.status === 'concluido') faltaTexto = '✓ Onboarding concluído';
+    else if (!j.proximas_etapas?.length) faltaTexto = 'Tudo em dia';
+    else {
+      const extra = j.total_pendentes - j.proximas_etapas.length;
+      faltaTexto = 'Falta: ' + j.proximas_etapas.map(escapeHtmlJor).join(', ') + (extra > 0 ? ` +${extra}` : '');
+    }
+
+    return `
+      <div onclick="abrirModalJornada('${j.cliente_id}')" style="cursor:pointer;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px" onmouseover="this.style.boxShadow='var(--shadow)'" onmouseout="this.style.boxShadow='none'">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <strong style="font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtmlJor(j.cliente_nome)}</strong>
+          ${j.etapas_atrasadas > 0 ? `<span title="${j.etapas_atrasadas} etapa(s) atrasada(s)" style="color:#B91C1C;font-size:11.5px;font-weight:700;flex-shrink:0">⚠ ${j.etapas_atrasadas}</span>` : ''}
+        </div>
+        <div style="display:flex;align-items:center">${dots}</div>
+        <div style="font-size:12px;color:var(--muted)">${escapeHtmlJor(j.fase_atual)}</div>
         <div style="display:flex;align-items:center;gap:8px">
           <div style="flex:1;height:6px;background:var(--surface2);border-radius:100px;overflow:hidden">
             <div style="height:100%;width:${j.progresso}%;background:#27AE60;border-radius:100px"></div>
           </div>
           <span style="font-size:11px;color:var(--muted);white-space:nowrap">${j.progresso}%</span>
         </div>
-      </td>
-      <td><span style="padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;${j.status === 'concluido' ? 'background:#D1FAE5;color:#065F46' : 'background:#DBEAFE;color:#1E40AF'}">${j.status === 'concluido' ? 'Concluído' : 'Em andamento'}</span></td>
-      <td><div class="row-actions">
-        <button class="btn btn-ghost btn-sm" onclick="abrirModalJornada('${j.cliente_id}')">Ver</button>
-      </div></td>
-    </tr>`).join('');
+        <div style="font-size:12.5px;color:var(--text);border-top:1px solid var(--border);padding-top:9px">${faltaTexto}</div>
+      </div>`;
+  }).join('');
 }
 
 function abrirNovaJornadaPicker() {
