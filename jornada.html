@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sua jornada de onboarding — SEA</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Instrument+Sans:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #F2EFE9;
+    --surface: #FFFFFF;
+    --surface2: #EAE6DF;
+    --border: #E0DBD2;
+    --text: #081542;
+    --muted: #8C8878;
+    --r: 14px;
+    --r-sm: 9px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.07);
+    --success: #27AE60;
+    --success-bg: #E3F6EA;
+    --amber: #E67E22;
+    --amber-bg: #FBEBDD;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Instrument Sans', sans-serif;
+    padding: 28px 16px 60px;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; }
+
+  .header { margin-bottom: 20px; }
+  .eyebrow {
+    font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600;
+  }
+  h1 {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 24px;
+    margin: 4px 0 0;
+  }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 20px; margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+
+  .stepper { display: flex; align-items: center; margin-bottom: 8px; }
+  .step-node { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; cursor: pointer; background: none; border: none; font-family: inherit; }
+  .step-circle {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; font-family: 'Syne', sans-serif;
+    background: var(--surface2); color: var(--muted);
+    border: 2px solid transparent; box-sizing: border-box;
+  }
+  .step-circle.done { background: var(--text); color: #fff; }
+  .step-circle.active { background: var(--surface); color: var(--text); border-color: var(--text); }
+  .step-label { font-size: 11px; color: var(--muted); white-space: nowrap; text-align: center; max-width: 74px; overflow: hidden; text-overflow: ellipsis; }
+  .step-label.active { color: var(--text); font-weight: 600; }
+  .step-line { flex: 1; height: 2px; background: var(--border); margin: 0 4px 20px; position: relative; }
+  .step-line-fill { position: absolute; inset: 0; background: var(--text); width: 0%; }
+  .step-line-fill.done { width: 100%; }
+
+  .progress-text { font-size: 13px; color: var(--muted); }
+
+  .pend-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; margin: 0 0 12px; }
+  .pend-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--r-sm);
+    background: var(--bg); margin-bottom: 8px;
+  }
+  .pend-item:last-child { margin-bottom: 0; }
+  .pend-text { font-size: 14px; }
+  .pend-fase { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .btn-acao {
+    background: var(--text); color: #fff; border: none; border-radius: 100px;
+    padding: 7px 14px; font-size: 12px; font-weight: 600; cursor: pointer;
+    font-family: 'Instrument Sans', sans-serif; white-space: nowrap; text-decoration: none;
+    display: inline-flex; align-items: center; flex-shrink: 0;
+  }
+
+  .fase-nome { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; }
+  .fase-periodo { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .etapa {
+    border: 1px solid var(--border); border-radius: var(--r-sm);
+    padding: 12px 14px; margin-top: 8px; background: var(--bg);
+    display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px;
+    border-radius: 100px; font-size: 12px; font-weight: 600; flex-shrink: 0;
+  }
+  .badge.pendente { background: var(--surface2); color: var(--muted); }
+  .badge.andamento { background: var(--amber-bg); color: var(--amber); }
+  .badge.concluido { background: var(--success-bg); color: var(--success); }
+  .badge.bloqueado { background: var(--amber-bg); color: var(--amber); }
+  .etapa-titulo { font-size: 14px; }
+  .etapa-prazo { font-size: 12px; color: var(--muted); }
+
+  .empty { text-align: center; color: var(--muted); font-size: 14px; padding: 40px 20px; }
+  .loading { text-align: center; color: var(--muted); padding: 60px 20px; font-size: 14px; }
+</style>
+</head>
+<body>
+  <div class="wrap" id="app">
+    <div class="loading">Carregando sua jornada…</div>
+  </div>
+
+  <script>
+    const token = window.location.pathname.split('/').filter(Boolean).pop();
+    const STATUS_LABEL = { pendente: 'Pendente', andamento: 'Em andamento', concluido: 'Concluído', bloqueado: 'Precisa de atenção' };
+    let jornadaData = null;
+
+    async function carregar() {
+      const app = document.getElementById('app');
+      try {
+        const resp = await fetch('/api/jornada/publica/' + encodeURIComponent(token));
+        if (!resp.ok) throw new Error('not found');
+        jornadaData = await resp.json();
+        render();
+      } catch (e) {
+        app.innerHTML = '<div class="card empty">Não encontramos essa jornada. Confira o link recebido ou fale com sua equipe de atendimento.</div>';
+      }
+    }
+
+    function render(forceIdx) {
+      const data = jornadaData;
+      const app = document.getElementById('app');
+
+      let activeIdx = forceIdx;
+      if (activeIdx === undefined || activeIdx === null) {
+        activeIdx = data.fases.findIndex((f) => f.pct < 100);
+        if (activeIdx === -1) activeIdx = data.fases.length - 1;
+      }
+
+      const stepperHtml = data.fases.map((f, i) => {
+        const done = f.pct === 100;
+        const active = i === activeIdx;
+        return (
+          '<button class="step-node" data-idx="' + i + '">' +
+            '<div class="step-circle ' + (done ? 'done' : '') + ' ' + (active ? 'active' : '') + '">' + (done ? '✓' : i + 1) + '</div>' +
+            '<div class="step-label ' + (active ? 'active' : '') + '">' + escapeHtml(f.nome) + '</div>' +
+          '</button>' +
+          (i < data.fases.length - 1
+            ? '<div class="step-line"><div class="step-line-fill ' + (done ? 'done' : '') + '"></div></div>'
+            : '')
+        );
+      }).join('');
+
+      const totalEtapas = data.fases.reduce((a, f) => a + f.etapas.length, 0);
+      const totalDone = data.fases.reduce((a, f) => a + f.etapas.filter((e) => e.status === 'concluido').length, 0);
+      const overallPct = totalEtapas ? Math.round((totalDone / totalEtapas) * 100) : 0;
+
+      const pendHtml = data.pendencias.length
+        ? '<div class="card"><div class="pend-title">O que falta com você agora</div>' +
+          data.pendencias.map((p) => (
+            '<div class="pend-item">' +
+              '<div>' +
+                '<div class="pend-text">' + escapeHtml(p.titulo) + '</div>' +
+                '<div class="pend-fase">' + escapeHtml(p.fase) + (p.prazo_label ? ' · ' + escapeHtml(p.prazo_label) : '') + '</div>' +
+              '</div>' +
+              (isSafeUrl(p.acao_url)
+                ? '<a class="btn-acao" href="' + escapeAttr(p.acao_url) + '" target="_blank" rel="noopener">' + escapeHtml(p.acao_label || 'Abrir') + '</a>'
+                : '') +
+            '</div>'
+          )).join('') +
+        '</div>'
+        : '<div class="card"><div class="pend-title">Tudo certo por aqui! 🎉</div>' +
+          '<div style="font-size:14px;color:var(--muted)">Não há nada pendente da sua parte no momento.</div></div>';
+
+      const faseAtiva = data.fases[activeIdx];
+      const etapasHtml = (faseAtiva.etapas || []).map((e) => (
+        '<div class="etapa">' +
+          '<div style="display:flex;align-items:center;gap:10px;min-width:0">' +
+            '<span class="badge ' + e.status + '">' + (STATUS_LABEL[e.status] || e.status) + '</span>' +
+            '<span class="etapa-titulo">' + escapeHtml(e.titulo) + '</span>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:10px;flex-shrink:0">' +
+            (e.prazo_label ? '<span class="etapa-prazo">' + escapeHtml(e.prazo_label) + '</span>' : '') +
+            (isSafeUrl(e.acao_url)
+              ? '<a class="btn-acao" href="' + escapeAttr(e.acao_url) + '" target="_blank" rel="noopener">' + escapeHtml(e.acao_label || 'Abrir') + '</a>'
+              : '') +
+          '</div>' +
+        '</div>'
+      )).join('') || '<div class="empty">Nenhuma etapa nesta fase.</div>';
+
+      app.innerHTML =
+        '<div class="header">' +
+          '<div class="eyebrow">SEA · Sua jornada de onboarding</div>' +
+          '<h1>Olá, ' + escapeHtml(data.cliente_nome) + '!</h1>' +
+        '</div>' +
+        '<div class="card">' +
+          '<div class="stepper">' + stepperHtml + '</div>' +
+          '<div class="progress-text">' + overallPct + '% da jornada concluída</div>' +
+        '</div>' +
+        pendHtml +
+        '<div class="card">' +
+          '<div class="fase-nome">' + escapeHtml(faseAtiva.nome) + '</div>' +
+          '<div class="fase-periodo">' + escapeHtml(faseAtiva.periodo_label || '') + '</div>' +
+          etapasHtml +
+        '</div>';
+
+      app.querySelectorAll('.step-node').forEach((node) => {
+        node.addEventListener('click', () => render(Number(node.dataset.idx)));
+      });
+    }
+
+    function isSafeUrl(url) {
+      return typeof url === 'string' && /^https?:\/\//i.test(url);
+    }
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str == null ? '' : String(str);
+      return div.innerHTML;
+    }
+    function escapeAttr(str) { return escapeHtml(str); }
+
+    carregar();
+  </script>
+</body>
+</html>
