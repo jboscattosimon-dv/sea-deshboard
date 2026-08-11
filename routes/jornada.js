@@ -133,15 +133,10 @@ router.get('/publica/:token', async (req, res) => {
       return { id: f.id, nome: f.nome, periodo_label: f.periodo_label, etapas, pct: total ? Math.round((done / total) * 100) : 100 };
     });
 
-  const pendencias = fasesVisiveis.flatMap((f) =>
-    f.etapas.filter((e) => e.status !== 'concluido').map((e) => ({ ...e, fase: f.nome }))
-  );
-
   res.json({
     cliente_nome: jornada.clientes?.nome || '',
     status: jornada.status,
     fases: fasesVisiveis,
-    pendencias,
   });
 });
 
