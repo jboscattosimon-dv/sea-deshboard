@@ -220,4 +220,129 @@ router.get('/cliente/:clienteId', auth, async (req, res) => {
   res.json(jornada);
 });
 
+// GET /api/jornada — lista todos os clientes com jornada ativa (painel interno)
+router.get('/', auth, async (req, res) => {
+  const { data, error } = await supabase
+    .from('jornada_onboarding')
+    .select('id, cliente_id, status, criado_em, clientes(nome), fases:jornada_fases(id, nome, ordem, etapas:jornada_etapas(id, status, prazo_dias))')
+    .order('criado_em', { ascending: false });
+  if (error) return res.status(400).json({ erro: error.message });
+
+  const agora = Date.now();
+  res.json((data || []).map((j) => {
+    const fases = (j.fases || []).sort((a, b) => a.ordem - b.ordem);
+    const todasEtapas = fases.flatMap((f) => f.etapas || []);
+    const total = todasEtapas.length;
+    const done = todasEtapas.filter((e) => e.status === 'concluido').length;
+    const atrasadas = todasEtapas.filter((e) => {
+      if (e.status === 'concluido' || e.prazo_dias == null) return false;
+      const limite = new Date(j.criado_em).getTime() + e.prazo_dias * 86400000;
+      return agora > limite;
+    }).length;
+    let faseAtual = '';
+    for (const f of fases) {
+      if ((f.etapas || []).some((e) => e.status !== 'concluido')) { faseAtual = f.nome; break; }
+    }
+    if (!faseAtual && fases.length) faseAtual = fases[fases.length - 1].nome;
+    return {
+      id: j.id,
+      cliente_id: j.cliente_id,
+      cliente_nome: j.clientes?.nome || '',
+      status: j.status,
+      fase_atual: faseAtual,
+      progresso: total ? Math.round((done / total) * 100) : 0,
+      etapas_atrasadas: atrasadas,
+    };
+  }));
+});
+
+// PATCH /api/jornada/etapas/:etapaId — edição inline
+router.patch('/etapas/:etapaId', auth, async (req, res) => {
+  const cols = ['titulo', 'responsavel', 'status', 'prazo_label', 'prazo_dias', 'notas', 'mensagem_enviada', 'acao_url', 'acao_label', 'visivel_cliente'];
+  const updates = {};
+  cols.forEach((c) => { if (req.body[c] !== undefined) updates[c] = req.body[c]; });
+  if (updates.status === 'concluido') {
+    updates.concluido_por = req.usuario.id;
+    updates.concluido_em = new Date().toISOString();
+  } else if (updates.status) {
+    updates.concluido_por = null;
+    updates.concluido_em = null;
+  }
+  const { data, error } = await supabase.from('jornada_etapas').update(updates).eq('id', req.params.etapaId).select().single();
+  if (error) return res.status(400).json({ erro: error.message });
+  res.json(data);
+});
+
+// DELETE /api/jornada/etapas/:etapaId
+router.delete('/etapas/:etapaId', auth, async (req, res) => {
+  const { error } = await supabase.from('jornada_etapas').delete().eq('id', req.params.etapaId);
+  if (error) return res.status(400).json({ erro: error.message });
+  res.json({ ok: true });
+});
+
+// POST /api/jornada/fases/:faseId/etapas — nova etapa
+router.post('/fases/:faseId/etapas', auth, async (req, res) => {
+  const { faseId } = req.params;
+  const { data: ultima } = await supabase
+    .from('jornada_etapas').select('ordem').eq('fase_id', faseId).order('ordem', { ascending: false }).limit(1);
+  const novaOrdem = ultima?.length ? ultima[0].ordem + 1 : 0;
+  const { data, error } = await supabase.from('jornada_etapas').insert([{
+    fase_id: faseId,
+    titulo: req.body.titulo || 'Nova etapa',
+    responsavel: req.body.responsavel || 'Gabriela',
+    status: 'pendente',
+    prazo_label: req.body.prazo_label || null,
+    ordem: novaOrdem,
+  }]).select().single();
+  if (error) return res.status(400).json({ erro: error.message });
+  res.status(201).json(data);
+});
+
+// PATCH /api/jornada/checklist/:itemId — marcar/desmarcar item de encerramento
+router.patch('/checklist/:itemId', auth, async (req, res) => {
+  const concluido = !!req.body.concluido;
+  const updates = {
+    concluido,
+    concluido_por: concluido ? req.usuario.id : null,
+    concluido_em: concluido ? new Date().toISOString() : null,
+  };
+  const { data, error } = await supabase.from('jornada_checklist').update(updates).eq('id', req.params.itemId).select().single();
+  if (error) return res.status(400).json({ erro: error.message });
+  res.json(data);
+});
+
+// PATCH /api/jornada/:jornadaId/status — concluir (valida checklist) ou reabrir
+router.patch('/:jornadaId/status', auth, async (req, res) => {
+  const { jornadaId } = req.params;
+  const { status } = req.body;
+  if (status === 'concluido') {
+    const { data: itens, error: itensErr } = await supabase
+      .from('jornada_checklist').select('concluido').eq('jornada_id', jornadaId);
+    if (itensErr) return res.status(400).json({ erro: itensErr.message });
+    const pendentes = (itens || []).filter((i) => !i.concluido).length;
+    if (pendentes > 0) return res.status(400).json({ erro: `Ainda faltam ${pendentes} itens do checklist de encerramento` });
+  }
+  const updates = { status };
+  if (status === 'concluido') {
+    updates.concluido_em = new Date().toISOString();
+    updates.concluido_por = req.usuario.id;
+  } else {
+    updates.concluido_em = null;
+    updates.concluido_por = null;
+  }
+  const { data, error } = await supabase.from('jornada_onboarding').update(updates).eq('id', jornadaId).select().single();
+  if (error) return res.status(400).json({ erro: error.message });
+  res.json(data);
+});
+
+// DELETE /api/jornada/cliente/:clienteId — exclui a jornada inteira
+router.delete('/cliente/:clienteId', auth, async (req, res) => {
+  const { data: jornada } = await supabase
+    .from('jornada_onboarding').select('id').eq('cliente_id', req.params.clienteId).single();
+  if (!jornada) return res.status(404).json({ erro: 'Jornada não encontrada' });
+  const { error } = await supabase.from('jornada_onboarding').delete().eq('id', jornada.id);
+  if (error) return res.status(400).json({ erro: error.message });
+  res.json({ ok: true });
+});
+
 module.exports = router;

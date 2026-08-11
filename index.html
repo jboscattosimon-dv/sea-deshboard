@@ -1206,6 +1206,11 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
       SDR
     </div>
 
+    <!-- Jornada de Onboarding -->
+    <div class="nav-item" data-page="jornada" onclick="goTo('jornada')" id="navJornada">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+      Jornada
+    </div>
 
     <!-- Auditoria -->
     <div class="sidebar-section">Auditoria</div>
@@ -1739,6 +1744,31 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     </div>
   </div>
 
+  <!-- ── JORNADA DE ONBOARDING ── -->
+  <div class="page" id="page-jornada">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Jornada de Onboarding</div>
+        <div class="page-sub" id="jornadaListaSub">Acompanhe a jornada de onboarding de todos os clientes</div>
+      </div>
+      <button class="btn btn-primary" onclick="abrirNovaJornadaPicker()">+ Nova jornada</button>
+    </div>
+    <div id="jornadaListaMetrics" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:24px"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <select class="form-select" id="jorFiltroStatus" style="width:auto;padding:6px 10px;font-size:12px" onchange="renderListaJornadas()">
+        <option value="">Todos os status</option>
+        <option value="em_andamento">Em andamento</option>
+        <option value="concluido">Concluído</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Cliente</th><th>Fase atual</th><th>Progresso</th><th>Status</th><th></th></tr></thead>
+        <tbody id="jornadaListaTable"></tbody>
+      </table>
+    </div>
+  </div>
+
 </main>
 
 <footer style="text-align:center;padding:10px 24px;font-size:11px;color:var(--muted);border-top:1px solid var(--border);background:var(--bg);letter-spacing:0.02em">
@@ -1841,6 +1871,41 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     <div id="onb-tab-checklist"></div>
     <div id="onb-tab-acomp" style="display:none"></div>
     <div id="onb-tab-catalogo" style="display:none"></div>
+  </div>
+</div>
+
+<!-- MODAL JORNADA DE ONBOARDING -->
+<div class="modal-overlay" id="modal-jornada">
+  <div class="modal" style="max-width:760px">
+    <div class="modal-title" id="jor-modal-title">Jornada de Onboarding</div>
+    <button class="modal-close" onclick="closeModal('modal-jornada')">×</button>
+    <div id="jor-link-box" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-bottom:16px;font-size:12px">
+      <span style="color:var(--muted)">Link do cliente:</span>
+      <span id="jor-link-texto" style="word-break:break-all;flex:1;min-width:160px"></span>
+      <button class="btn btn-ghost btn-sm" onclick="jorCopiarLink()">Copiar</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+      <button class="ctab ctab-active" id="ctab-jor-etapas" onclick="jorSwitchTab('etapas')">Etapas</button>
+      <button class="ctab" id="ctab-jor-checklist" onclick="jorSwitchTab('checklist')">Checklist de encerramento</button>
+    </div>
+    <div id="jor-tab-etapas"></div>
+    <div id="jor-tab-checklist" style="display:none"></div>
+  </div>
+</div>
+
+<!-- MODAL NOVA JORNADA (escolher cliente) -->
+<div class="modal-overlay" id="modal-jornada-nova">
+  <div class="modal">
+    <div class="modal-title">Nova jornada de onboarding</div>
+    <button class="modal-close" onclick="closeModal('modal-jornada-nova')">×</button>
+    <div style="margin-bottom:16px">
+      <label class="form-label">Cliente</label>
+      <select class="form-select" id="jorNovoClienteSelect"></select>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-jornada-nova')">Cancelar</button>
+      <button class="btn btn-primary" onclick="jorCriarNova()">Criar jornada</button>
+    </div>
   </div>
 </div>
 
@@ -2108,7 +2173,7 @@ function goTo(page) {
     clients:'Clientes', statuses:'Status', formats:'Formatos', users:'Usuários', history:'Histórico',
     crm_leads:'Leads', crm_funil:'Funil de Vendas', crm_atividades:'Atividades', crm_relatorios:'Relatórios CRM',
     crm_etapas:'Etapas do Funil', sdr:'SDR', sdr_topicos:'Tópicos SDR', calendario:'Calendário Editorial',
-    onboarding:'Onboarding', onboarding_catalogo:'Itens de Onboarding'
+    onboarding:'Onboarding', onboarding_catalogo:'Itens de Onboarding', jornada:'Jornada de Onboarding'
   };
   document.getElementById('headerTitle').textContent = titles[page] || page;
   buildHeaderActions(page);
@@ -2133,6 +2198,7 @@ function goTo(page) {
   if (page === 'calendario')           renderCalendario();
   if (page === 'onboarding')           carregarPainelOnboarding();
   if (page === 'onboarding_catalogo')  renderOnboardingCatalogoPage();
+  if (page === 'jornada')              carregarListaJornadas();
 }
 
 function buildHeaderActions(page) {
@@ -3244,6 +3310,7 @@ function openPermissoes(userId) {
         { key: 'internal',    label: 'Demandas Internas' },
         { key: 'calendario',  label: 'Calendário Editorial' },
         { key: 'onboarding',  label: 'Onboarding' },
+        { key: 'jornada',     label: 'Jornada de Onboarding' },
       ]
     },
     {
@@ -3335,7 +3402,7 @@ function onPermEditarChange(page, el) {
 }
 
 async function savePermissoes(userId) {
-  const pages = ['dashboard','demands','internal','clients','financeiro','statuses','formats','users','crm_leads','crm_funil','crm_atividades','crm_relatorios','crm_etapas','sdr','sdr_topicos','onboarding_catalogo','calendario','onboarding'];
+  const pages = ['dashboard','demands','internal','clients','financeiro','statuses','formats','users','crm_leads','crm_funil','crm_atividades','crm_relatorios','crm_etapas','sdr','sdr_topicos','onboarding_catalogo','calendario','onboarding','jornada'];
   const permissoes = {};
   pages.forEach(page => {
     const visualizar = document.getElementById(`perm_${page}_visualizar`)?.checked ?? true;
@@ -3396,6 +3463,9 @@ function applyPermissions() {
   // Onboarding
   const onbNav = document.getElementById('navOnboarding');
   if (onbNav) onbNav.style.display = canView('onboarding') ? '' : 'none';
+  // Jornada de Onboarding
+  const jorNav = document.getElementById('navJornada');
+  if (jorNav) jorNav.style.display = canView('jornada') ? '' : 'none';
 
   // CRM pages
   const crmPages = ['crm_leads','crm_funil','crm_atividades','crm_relatorios'];
@@ -7144,6 +7214,344 @@ async function excluirPagamento(pagamentoId) {
   _finPagamentos = _finPagamentos.filter(p => p.id !== pagamentoId);
   toast('Pagamento excluído.');
   renderFinPagamentosTab();
+}
+
+// ═══════════════════════════════════════
+//  MÓDULO JORNADA DE ONBOARDING
+// ═══════════════════════════════════════
+let _jorLista = [];
+let _jorClienteId = null;
+let _jorData = null;
+let _jorFaseAtiva = 0;
+let _jorEditingEtapaId = null;
+
+const JOR_TEAM = ['Gabriela', 'Maitê', 'Laura', 'Carol', 'Mikael'];
+const JOR_STATUS_META = {
+  pendente:  { label: 'Pendente',      bg: 'var(--surface2)', color: 'var(--muted)' },
+  andamento: { label: 'Em andamento',  bg: '#FEF3C7', color: '#92400E' },
+  concluido: { label: 'Concluído',     bg: '#D1FAE5', color: '#065F46' },
+  bloqueado: { label: 'Bloqueado',     bg: '#FEE2E2', color: '#B91C1C' },
+};
+
+function escapeHtmlJor(str) {
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : String(str);
+  return div.innerHTML;
+}
+function escapeAttrJor(str) { return escapeHtmlJor(str); }
+
+// ── Tela 1: Lista ────────────────────────────────────────
+
+async function carregarListaJornadas() {
+  document.getElementById('jornadaListaTable').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">Carregando...</td></tr>';
+  const res = await API.get('/jornada');
+  if (res.erro) { toast('Erro ao carregar jornadas: ' + res.erro); return; }
+  _jorLista = Array.isArray(res) ? res : [];
+  renderListaJornadas();
+}
+
+function renderListaJornadas() {
+  const filtro = document.getElementById('jorFiltroStatus')?.value || '';
+  const lista = filtro ? _jorLista.filter((j) => j.status === filtro) : _jorLista;
+
+  const ativas = _jorLista.filter((j) => j.status !== 'concluido').length;
+  const atrasadas = _jorLista.filter((j) => j.status !== 'concluido' && j.etapas_atrasadas > 0).length;
+  document.getElementById('jornadaListaMetrics').innerHTML = [
+    ['Ativas', ativas, '#1E40AF'],
+    ['Com etapas atrasadas', atrasadas, '#B91C1C'],
+    ['Total cadastradas', _jorLista.length, '#065F46'],
+  ].map(([lbl, val, color]) => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px">
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;color:${color}">${val}</div>
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-top:2px">${lbl}</div>
+    </div>`).join('');
+
+  document.getElementById('jornadaListaSub').textContent = `${_jorLista.length} jornada${_jorLista.length !== 1 ? 's' : ''} cadastrada${_jorLista.length !== 1 ? 's' : ''}`;
+
+  if (!lista.length) {
+    document.getElementById('jornadaListaTable').innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">Nenhuma jornada encontrada.</td></tr>`;
+    return;
+  }
+
+  document.getElementById('jornadaListaTable').innerHTML = lista.map((j) => `
+    <tr>
+      <td><strong>${escapeHtmlJor(j.cliente_nome)}</strong>${j.etapas_atrasadas > 0 ? ` <span title="${j.etapas_atrasadas} etapa(s) atrasada(s)" style="color:#B91C1C">⚠</span>` : ''}</td>
+      <td style="color:var(--muted);font-size:12.5px">${escapeHtmlJor(j.fase_atual)}</td>
+      <td style="min-width:120px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;height:6px;background:var(--surface2);border-radius:100px;overflow:hidden">
+            <div style="height:100%;width:${j.progresso}%;background:#27AE60;border-radius:100px"></div>
+          </div>
+          <span style="font-size:11px;color:var(--muted);white-space:nowrap">${j.progresso}%</span>
+        </div>
+      </td>
+      <td><span style="padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;${j.status === 'concluido' ? 'background:#D1FAE5;color:#065F46' : 'background:#DBEAFE;color:#1E40AF'}">${j.status === 'concluido' ? 'Concluído' : 'Em andamento'}</span></td>
+      <td><div class="row-actions">
+        <button class="btn btn-ghost btn-sm" onclick="abrirModalJornada('${j.cliente_id}')">Ver</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function abrirNovaJornadaPicker() {
+  const jaTem = new Set(_jorLista.map((j) => j.cliente_id));
+  const disponiveis = (typeof clients !== 'undefined' ? clients : []).filter((c) => !jaTem.has(c.id));
+  const select = document.getElementById('jorNovoClienteSelect');
+  select.innerHTML = disponiveis.length
+    ? disponiveis.map((c) => `<option value="${c.id}">${escapeHtmlJor(c.name)}</option>`).join('')
+    : '<option value="">Nenhum cliente disponível</option>';
+  openModal('modal-jornada-nova');
+}
+
+async function jorCriarNova() {
+  const clienteId = document.getElementById('jorNovoClienteSelect').value;
+  if (!clienteId) return;
+  const res = await API.post('/jornada/cliente/' + clienteId, {});
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  closeModal('modal-jornada-nova');
+  toast('Jornada criada!');
+  await carregarListaJornadas();
+  abrirModalJornada(clienteId);
+}
+
+// ── Tela 2 e 3: modal de detalhe (abas Etapas / Checklist) ──
+
+async function abrirModalJornada(clienteId) {
+  _jorClienteId = clienteId;
+  _jorData = null;
+  _jorFaseAtiva = 0;
+  _jorEditingEtapaId = null;
+  document.getElementById('jor-modal-title').textContent = 'Jornada de Onboarding';
+  document.getElementById('jor-link-box').style.display = 'none';
+  document.getElementById('jor-tab-etapas').innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Carregando...</div>';
+  document.getElementById('jor-tab-checklist').innerHTML = '';
+  openModal('modal-jornada');
+
+  const res = await API.get('/jornada/cliente/' + clienteId);
+  if (res.erro || !res) { toast('Erro ao carregar jornada.'); closeModal('modal-jornada'); return; }
+  _jorData = res;
+  document.getElementById('jor-modal-title').textContent = 'Jornada — ' + (res.clientes?.nome || '');
+  if (res.token_publico) {
+    document.getElementById('jor-link-box').style.display = 'flex';
+    document.getElementById('jor-link-texto').textContent = window.location.origin + '/jornada/' + res.token_publico;
+  }
+  jorSwitchTab('etapas');
+}
+
+async function jorRecarregar() {
+  const res = await API.get('/jornada/cliente/' + _jorClienteId);
+  if (res && !res.erro) _jorData = res;
+  renderJorEtapasTab();
+  renderJorChecklistTab();
+  carregarListaJornadas();
+}
+
+function jorSwitchTab(tab) {
+  ['etapas', 'checklist'].forEach((t) => {
+    document.getElementById('jor-tab-' + t).style.display = t === tab ? '' : 'none';
+    const btn = document.getElementById('ctab-jor-' + t);
+    if (btn) btn.classList.toggle('ctab-active', t === tab);
+  });
+  if (tab === 'etapas') renderJorEtapasTab();
+  if (tab === 'checklist') renderJorChecklistTab();
+}
+
+function jorCopiarLink() {
+  const texto = document.getElementById('jor-link-texto').textContent;
+  if (!texto) return;
+  navigator.clipboard.writeText(texto);
+  toast('Link copiado!');
+}
+
+async function jorExcluirJornada() {
+  if (!confirm('Excluir esta jornada e todas as suas etapas? Essa ação não pode ser desfeita.')) return;
+  const res = await API.del('/jornada/cliente/' + _jorClienteId);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  closeModal('modal-jornada');
+  toast('Jornada excluída.');
+  carregarListaJornadas();
+}
+
+// ── Aba Etapas ───────────────────────────────────────────
+
+function jorSetFaseAtiva(idx) {
+  _jorEditingEtapaId = null;
+  _jorFaseAtiva = idx;
+  renderJorEtapasTab();
+}
+
+function renderJorEtapasTab() {
+  if (!_jorData) return;
+  const fases = _jorData.fases || [];
+  if (_jorFaseAtiva >= fases.length) _jorFaseAtiva = 0;
+
+  const stepperHtml = fases.map((f, i) => {
+    const total = (f.etapas || []).length;
+    const done = (f.etapas || []).filter((e) => e.status === 'concluido').length;
+    const isDone = total > 0 && done === total;
+    const isActive = i === _jorFaseAtiva;
+    return `
+      <div style="display:flex;align-items:center;${i < fases.length - 1 ? 'flex:1' : ''}">
+        <div onclick="jorSetFaseAtiva(${i})" style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;flex-shrink:0">
+          <div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;background:${isDone ? 'var(--primary)' : isActive ? 'var(--surface)' : 'var(--surface2)'};color:${isDone ? '#fff' : isActive ? 'var(--text)' : 'var(--muted)'};border:2px solid ${isActive ? 'var(--primary)' : 'transparent'};box-sizing:border-box">${isDone ? '✓' : i + 1}</div>
+          <div style="font-size:10.5px;color:${isActive ? 'var(--text)' : 'var(--muted)'};font-weight:${isActive ? 600 : 400};white-space:nowrap">${escapeHtmlJor(f.nome)}</div>
+        </div>
+        ${i < fases.length - 1 ? `<div style="flex:1;height:2px;background:${isDone ? 'var(--primary)' : 'var(--border)'};margin:0 4px 18px"></div>` : ''}
+      </div>`;
+  }).join('');
+
+  const faseAtiva = fases[_jorFaseAtiva];
+  const etapasHtml = !faseAtiva ? '' : (faseAtiva.etapas || [])
+    .map((e) => (_jorEditingEtapaId === e.id ? jorEtapaEditRow(e) : jorEtapaViewRow(e)))
+    .join('');
+
+  document.getElementById('jor-tab-etapas').innerHTML = `
+    <div style="display:flex;align-items:center;margin-bottom:16px">${stepperHtml}</div>
+    <div style="display:flex;flex-direction:column;gap:8px;max-height:380px;overflow-y:auto">
+      ${etapasHtml || '<p style="color:var(--muted);font-size:13px;padding:8px 0">Nenhuma etapa nesta fase.</p>'}
+    </div>
+    <button class="btn btn-ghost" style="width:100%;margin-top:14px;border:1px dashed var(--border)" onclick="jorAdicionarStep()">+ Adicionar etapa</button>
+  `;
+}
+
+function jorEtapaViewRow(e) {
+  const meta = JOR_STATUS_META[e.status] || JOR_STATUS_META.pendente;
+  return `
+    <div style="border:1px solid var(--border);border-radius:9px;padding:10px 12px;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0">
+        <span style="padding:3px 9px;border-radius:100px;font-size:11px;font-weight:600;background:${meta.bg};color:${meta.color};white-space:nowrap">${meta.label}</span>
+        <span style="font-size:13.5px">${escapeHtmlJor(e.titulo)}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+        <span style="font-size:12px;color:var(--muted)">${escapeHtmlJor(e.responsavel)}</span>
+        ${e.prazo_label ? `<span style="font-size:12px;color:var(--muted)">${escapeHtmlJor(e.prazo_label)}</span>` : ''}
+        ${e.mensagem_modelo ? `<button class="btn btn-ghost btn-sm" onclick="jorCopiarMensagem('${e.id}')">Copiar mensagem</button>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="jorEditStep('${e.id}')">✎</button>
+      </div>
+    </div>`;
+}
+
+function jorEtapaEditRow(e) {
+  return `
+    <div style="border:1px solid var(--primary);border-radius:9px;padding:12px;background:var(--surface)">
+      <input class="form-input" id="jorEditTitulo" value="${escapeAttrJor(e.titulo)}" style="margin-bottom:8px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <select class="form-select" id="jorEditResponsavel" style="width:auto">
+          ${JOR_TEAM.map((t) => `<option value="${t}" ${t === e.responsavel ? 'selected' : ''}>${t}</option>`).join('')}
+        </select>
+        <select class="form-select" id="jorEditStatus" style="width:auto">
+          ${Object.entries(JOR_STATUS_META).map(([k, v]) => `<option value="${k}" ${k === e.status ? 'selected' : ''}>${v.label}</option>`).join('')}
+        </select>
+        <input class="form-input" id="jorEditPrazo" placeholder="Prazo (ex: Dia 25)" value="${escapeAttrJor(e.prazo_label || '')}" style="width:150px">
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px">
+        <button class="btn btn-danger btn-sm" onclick="jorRemoverStep('${e.id}')" style="margin-right:auto">Remover</button>
+        <button class="btn btn-ghost btn-sm" onclick="jorCancelEdit()">Cancelar</button>
+        <button class="btn btn-primary btn-sm" onclick="jorSalvarStep('${e.id}')">Salvar</button>
+      </div>
+    </div>`;
+}
+
+function jorEditStep(etapaId) { _jorEditingEtapaId = etapaId; renderJorEtapasTab(); }
+function jorCancelEdit() { _jorEditingEtapaId = null; renderJorEtapasTab(); }
+
+async function jorSalvarStep(etapaId) {
+  const titulo = document.getElementById('jorEditTitulo').value.trim();
+  const responsavel = document.getElementById('jorEditResponsavel').value;
+  const status = document.getElementById('jorEditStatus').value;
+  const prazo_label = document.getElementById('jorEditPrazo').value.trim();
+  if (!titulo) { toast('Título não pode ficar vazio.'); return; }
+  const res = await API.patch('/jornada/etapas/' + etapaId, { titulo, responsavel, status, prazo_label });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  _jorEditingEtapaId = null;
+  await jorRecarregar();
+  toast('Etapa atualizada!');
+}
+
+async function jorRemoverStep(etapaId) {
+  if (!confirm('Remover esta etapa?')) return;
+  const res = await API.del('/jornada/etapas/' + etapaId);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  _jorEditingEtapaId = null;
+  await jorRecarregar();
+  toast('Etapa removida.');
+}
+
+async function jorAdicionarStep() {
+  const fase = (_jorData.fases || [])[_jorFaseAtiva];
+  if (!fase) return;
+  const res = await API.post('/jornada/fases/' + fase.id + '/etapas', { titulo: 'Nova etapa', responsavel: JOR_TEAM[0] });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  await jorRecarregar();
+  jorEditStep(res.id);
+}
+
+function jorCopiarMensagem(etapaId) {
+  const fase = (_jorData.fases || [])[_jorFaseAtiva];
+  const etapa = (fase?.etapas || []).find((e) => e.id === etapaId);
+  if (!etapa || !etapa.mensagem_modelo) return;
+  const nome = _jorData.clientes?.nome || '';
+  const texto = etapa.mensagem_modelo.replace(/\{\{cliente\}\}/g, nome);
+  navigator.clipboard.writeText(texto);
+  toast('Mensagem copiada!');
+}
+
+// ── Aba Checklist de encerramento ───────────────────────
+
+function renderJorChecklistTab() {
+  if (!_jorData) return;
+  const grupos = {
+    contrato_estrutura:  'Contrato e estrutura',
+    estrategia:           'Estratégia',
+    ambientacao:           'Ambientação do cliente',
+    primeiro_calendario:   'Primeiro calendário',
+    conferencia_final:     'Conferência final',
+  };
+  const itens = _jorData.checklist || [];
+  const porGrupo = {};
+  itens.forEach((i) => { (porGrupo[i.grupo] = porGrupo[i.grupo] || []).push(i); });
+
+  const html = Object.entries(grupos).map(([key, label]) => {
+    const lista = porGrupo[key] || [];
+    if (!lista.length) return '';
+    return `
+      <div style="margin-bottom:16px">
+        <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);padding:6px 0 4px;border-bottom:1px solid var(--border);margin-bottom:6px">${label}</div>
+        ${lista.map((i) => `
+          <label style="display:flex;align-items:center;gap:10px;padding:7px 0;font-size:13.5px;cursor:pointer">
+            <input type="checkbox" ${i.concluido ? 'checked' : ''} onchange="jorToggleChecklist('${i.id}', this.checked)">
+            ${escapeHtmlJor(i.label)}
+          </label>`).join('')}
+      </div>`;
+  }).join('');
+
+  const total = itens.length;
+  const done = itens.filter((i) => i.concluido).length;
+  const jaConcluida = _jorData.status === 'concluido';
+
+  document.getElementById('jor-tab-checklist').innerHTML = `
+    <div style="max-height:380px;overflow-y:auto;margin-bottom:16px">${html}</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px">${done} de ${total} itens marcados</div>
+    <div class="form-actions">
+      <button class="btn btn-danger btn-sm" onclick="jorExcluirJornada()" style="margin-right:auto">Excluir jornada</button>
+      ${jaConcluida
+        ? `<span style="font-size:12px;color:#065F46;font-weight:600">✓ Jornada concluída</span>`
+        : `<button class="btn btn-primary" ${done < total ? 'disabled' : ''} style="${done < total ? 'opacity:.5;cursor:not-allowed' : 'background:#27AE60;border-color:#27AE60'}" onclick="jorConcluirJornada()">Concluir jornada</button>`}
+    </div>
+  `;
+}
+
+async function jorToggleChecklist(itemId, checked) {
+  const res = await API.patch('/jornada/checklist/' + itemId, { concluido: checked });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  await jorRecarregar();
+}
+
+async function jorConcluirJornada() {
+  if (!confirm('Marcar esta jornada como concluída?')) return;
+  const res = await API.patch('/jornada/' + _jorData.id + '/status', { status: 'concluido' });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  await jorRecarregar();
+  toast('Jornada concluída! 🎉');
 }
 
 </script>
