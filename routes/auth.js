@@ -13,6 +13,7 @@ router.post('/login', async (req, res) => {
     .eq('email', email)
     .single();
 
+  if (error) console.error('[Supabase erro]', error);
   if (error || !data) return res.status(401).json({ erro: 'Usuário não encontrado' });
 
   const senhaOk = await bcrypt.compare(senha, data.senha_hash);
