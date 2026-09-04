@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -502,6 +502,39 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
 .badge .dot { width: 6px; height: 6px; border-radius: 50%; }
 
 .row-actions { display: flex; gap: 6px; }
+
+/* ─── ONBOARDING ─── */
+.progress-track { width: 100%; height: 8px; border-radius: 100px; background: var(--surface2); overflow: hidden; flex-shrink: 0; }
+.progress-track.sm { height: 6px; }
+.progress-fill { height: 100%; border-radius: 100px; background: linear-gradient(135deg, #2a2920, #18170F); transition: width 0.4s cubic-bezier(.22,1,.36,1); }
+.progress-fill.done { background: linear-gradient(135deg, #34C97A, #27AE60); }
+
+.onb-stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 16px; }
+.onb-stat-card .num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; line-height: 1; margin-bottom: 4px; }
+.onb-stat-card .lbl { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.onb-client-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; cursor: pointer; transition: transform 0.2s cubic-bezier(.22,1,.36,1), box-shadow 0.2s; }
+.onb-client-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.10); }
+
+.onb-stage-block { border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); margin-bottom: 14px; overflow: hidden; }
+.onb-stage-head { display: flex; align-items: center; gap: 10px; padding: 14px 16px; background: linear-gradient(135deg, var(--surface2) 0%, var(--surface) 100%); border-bottom: 1px solid var(--border); }
+.onb-stage-head .onb-stage-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 13px; flex: 1; min-width: 0; }
+.onb-stage-head .onb-stage-sub { font-size: 11px; color: var(--muted); }
+.onb-stage-body { padding: 6px 10px; }
+
+.onb-drag-handle { cursor: grab; color: var(--muted); font-size: 14px; line-height: 1; user-select: none; padding: 2px 4px; flex-shrink: 0; }
+.onb-drag-handle:active { cursor: grabbing; }
+
+.onb-task-row { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: var(--r-sm); transition: background 0.15s, opacity 0.2s, border-color 0.15s; }
+.onb-task-row:hover { background: var(--bg); }
+.onb-task-check { width: 19px; height: 19px; border-radius: 50%; border: 1.5px solid var(--border); flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; background: var(--surface); }
+.onb-task-check.done { background: linear-gradient(135deg, #34C97A, #27AE60); border-color: #27AE60; }
+.onb-task-check svg { opacity: 0; transition: opacity 0.15s; }
+.onb-task-check.done svg { opacity: 1; }
+.onb-task-info { flex: 1; min-width: 0; cursor: pointer; }
+.onb-task-title { font-size: 12.5px; font-weight: 500; }
+.onb-task-title.done { color: var(--muted); text-decoration: line-through; }
+.onb-task-meta { font-size: 10.5px; color: var(--muted); margin-top: 1px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 
 /* ─── FORM / MODAL ─── */
 .modal-overlay {
@@ -1169,6 +1202,10 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
           Tópicos SDR
         </div>
+        <div class="nav-sub-item" data-page="onboarding_modelos" onclick="goTo('onboarding_modelos')" id="navOnboardingModelos">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+          Modelos de Onboarding
+        </div>
       </div>
     </div>
 
@@ -1206,8 +1243,8 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
       SDR
     </div>
 
-    <!-- Onboarding (jornada) -->
-    <div class="nav-item" data-page="jornada" onclick="goTo('jornada')" id="navJornada">
+    <!-- Onboarding -->
+    <div class="nav-item" data-page="onboarding" onclick="goTo('onboarding')" id="navOnboarding">
       <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
       Onboarding
     </div>
@@ -1653,17 +1690,6 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     </div>
   </div>
 
-  <!-- ── ONBOARDING: CATÁLOGO DE ITENS ── -->
-  <div class="page" id="page-onboarding_catalogo">
-    <div class="page-header">
-      <div>
-        <div class="page-title">Itens de Onboarding</div>
-        <div class="page-sub">Catálogo de itens disponíveis para coleta no onboarding de clientes</div>
-      </div>
-    </div>
-    <div id="onbCatalogoPageContent"></div>
-  </div>
-
   <!-- ── SDR: TÓPICOS (Cadastro) ── -->
   <div class="page" id="page-sdr_topicos">
     <div class="page-header">
@@ -1718,43 +1744,43 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     <div id="calGrid" style="overflow-y:auto;flex:1"></div>
   </div>
 
-  <!-- ── ONBOARDING (painel) ── -->
+  <!-- ── ONBOARDING: VISÃO GERAL ── -->
   <div class="page" id="page-onboarding">
     <div class="page-header">
       <div>
         <div class="page-title">Onboarding</div>
-        <div class="page-sub" id="onboardingPainelSub">Acompanhe o onboarding de todos os clientes</div>
+        <div class="page-sub" id="onboardingSub">Acompanhe a jornada de implantação dos clientes</div>
       </div>
+      <button class="btn btn-primary" onclick="onbAbrirNovo()">+ Novo onboarding</button>
     </div>
-    <div id="onboardingPainelMetrics" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:24px"></div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
-      <select class="form-select" id="onbFiltroStatus" style="width:auto;padding:6px 10px;font-size:12px" onchange="renderPainelOnboarding()">
-        <option value="">Todos os status</option>
-        <option value="em_andamento">Em andamento</option>
-        <option value="aguardando_cliente">Aguardando cliente</option>
-        <option value="em_revisao">Em revisão</option>
-        <option value="concluido">Concluído</option>
-      </select>
+    <div id="onboardingStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:22px"></div>
+    <div class="filter-bar">
+      <button class="pill active" data-onbf="todos" onclick="onbSetFiltro('todos')">Todos</button>
+      <button class="pill" data-onbf="andamento" onclick="onbSetFiltro('andamento')">Em andamento</button>
+      <button class="pill" data-onbf="atrasados" onclick="onbSetFiltro('atrasados')">Atrasados</button>
+      <button class="pill" data-onbf="concluidos" onclick="onbSetFiltro('concluidos')">Concluídos</button>
+      <div class="search-wrap">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" type="text" id="onbBusca" placeholder="Pesquisar cliente..." oninput="onbRenderVisaoGeralConteudo()">
+      </div>
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Cliente</th><th>Progresso</th><th>Status</th><th>Envio</th><th></th></tr></thead>
-        <tbody id="onboardingPainelTable"></tbody>
+        <thead><tr><th>Cliente</th><th>Progresso</th><th>Responsável</th><th>Status</th><th></th></tr></thead>
+        <tbody id="onboardingTable"></tbody>
       </table>
     </div>
   </div>
 
-  <!-- ── JORNADA DE ONBOARDING ── -->
-  <div class="page" id="page-jornada">
+  <!-- ── ONBOARDING: MODELOS ── -->
+  <div class="page" id="page-onboarding_modelos">
     <div class="page-header">
       <div>
-        <div class="page-title">Onboarding</div>
-        <div class="page-sub" id="jornadaListaSub">Acompanhe o onboarding de todos os clientes</div>
+        <div class="page-title">Modelos de Onboarding</div>
+        <div class="page-sub">Defina a estrutura de etapas e tarefas usada para criar o onboarding de cada cliente</div>
       </div>
-      <button class="btn btn-primary" onclick="abrirNovaJornadaPicker()">+ Novo onboarding</button>
     </div>
-    <div id="jornadaListaFiltros" style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap"></div>
-    <div id="jornadaListaGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px"></div>
+    <div id="onbModelosContent"></div>
   </div>
 
 </main>
@@ -1846,54 +1872,27 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
   </div>
 </div>
 
-<!-- MODAL ONBOARDING -->
+<!-- MODAL ONBOARDING (execução do cliente) -->
 <div class="modal-overlay" id="modal-onboarding">
-  <div class="modal" style="max-width:740px">
+  <div class="modal" style="max-width:820px">
     <div class="modal-title" id="onb-modal-title">Onboarding</div>
     <button class="modal-close" onclick="closeModal('modal-onboarding')">×</button>
-    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
-      <button class="ctab ctab-active" id="ctab-onb-checklist" onclick="onbSwitchTab('checklist')">Checklist</button>
-      <button class="ctab" id="ctab-onb-acomp" onclick="onbSwitchTab('acomp')" style="display:none">Acompanhamento</button>
-      <button class="ctab" id="ctab-onb-catalogo" onclick="onbSwitchTab('catalogo')" style="display:none">Catálogo (Admin)</button>
+    <div id="onb-modal-resumo"></div>
+    <div style="display:flex;gap:8px;margin:20px 0;flex-wrap:wrap">
+      <button class="ctab ctab-active" id="ctab-onb-etapas" onclick="onbSwitchTab('etapas')">Etapas</button>
+      <button class="ctab" id="ctab-onb-atividades" onclick="onbSwitchTab('atividades')">Atividades</button>
     </div>
-    <div id="onb-tab-checklist"></div>
-    <div id="onb-tab-acomp" style="display:none"></div>
-    <div id="onb-tab-catalogo" style="display:none"></div>
+    <div id="onb-tab-etapas"></div>
+    <div id="onb-tab-atividades" style="display:none"></div>
   </div>
 </div>
 
-<!-- MODAL JORNADA DE ONBOARDING -->
-<div class="modal-overlay" id="modal-jornada">
-  <div class="modal" style="max-width:760px">
-    <div class="modal-title" id="jor-modal-title">Onboarding</div>
-    <button class="modal-close" onclick="closeModal('modal-jornada')">×</button>
-    <div id="jor-link-box" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-bottom:16px;font-size:12px">
-      <span style="color:var(--muted)">Link do cliente:</span>
-      <span id="jor-link-texto" style="word-break:break-all;flex:1;min-width:160px"></span>
-      <button class="btn btn-ghost btn-sm" onclick="jorCopiarLink()">Copiar</button>
-    </div>
-    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
-      <button class="ctab ctab-active" id="ctab-jor-etapas" onclick="jorSwitchTab('etapas')">Etapas</button>
-      <button class="ctab" id="ctab-jor-checklist" onclick="jorSwitchTab('checklist')">Checklist de encerramento</button>
-    </div>
-    <div id="jor-tab-etapas"></div>
-    <div id="jor-tab-checklist" style="display:none"></div>
-  </div>
-</div>
-
-<!-- MODAL NOVA JORNADA (escolher cliente) -->
-<div class="modal-overlay" id="modal-jornada-nova">
+<!-- MODAL NOVO ONBOARDING -->
+<div class="modal-overlay" id="modal-onboarding-novo">
   <div class="modal">
     <div class="modal-title">Novo onboarding</div>
-    <button class="modal-close" onclick="closeModal('modal-jornada-nova')">×</button>
-    <div style="margin-bottom:16px">
-      <label class="form-label">Cliente</label>
-      <select class="form-select" id="jorNovoClienteSelect"></select>
-    </div>
-    <div class="form-actions">
-      <button class="btn btn-ghost" onclick="closeModal('modal-jornada-nova')">Cancelar</button>
-      <button class="btn btn-primary" onclick="jorCriarNova()">Criar jornada</button>
-    </div>
+    <button class="modal-close" onclick="closeModal('modal-onboarding-novo')">×</button>
+    <div id="onb-novo-body"></div>
   </div>
 </div>
 
@@ -2068,7 +2067,7 @@ async function loadFromAPI() {
     API.get('/formatos')
   ]);
   statuses = (st || []).map(s => ({ id: s.id, name: s.nome, color: s.cor }));
-  clients  = (cl || []).map(c => ({ id: c.id, name: c.nome }));
+  clients  = (cl || []).map(c => ({ id: c.id, name: c.nome, responsavelId: c.responsavel_id || null }));
   formats  = (fmt || []).map(f => ({ id: f.id, name: f.nome }));
   demands  = (dem || []).map(d => ({
     id: d.id,
@@ -2152,7 +2151,7 @@ function goTo(page) {
     const g = document.getElementById('navGroupCRM');
     if (g) g.classList.add('open');
   }
-  if (cadastroPages.includes(page) || page === 'crm_etapas' || page === 'sdr_topicos') {
+  if (cadastroPages.includes(page) || page === 'crm_etapas' || page === 'sdr_topicos' || page === 'onboarding_modelos') {
     const g = document.getElementById('navGroupCadastro');
     if (g) g.classList.add('open');
   }
@@ -2161,7 +2160,7 @@ function goTo(page) {
     clients:'Clientes', statuses:'Status', formats:'Formatos', users:'Usuários', history:'Histórico',
     crm_leads:'Leads', crm_funil:'Funil de Vendas', crm_atividades:'Atividades', crm_relatorios:'Relatórios CRM',
     crm_etapas:'Etapas do Funil', sdr:'SDR', sdr_topicos:'Tópicos SDR', calendario:'Calendário Editorial',
-    onboarding:'Onboarding (antigo)', onboarding_catalogo:'Itens de Onboarding (antigo)', jornada:'Onboarding'
+    onboarding:'Onboarding', onboarding_modelos:'Modelos de Onboarding'
   };
   document.getElementById('headerTitle').textContent = titles[page] || page;
   buildHeaderActions(page);
@@ -2184,9 +2183,8 @@ function goTo(page) {
   if (page === 'sdr')                  renderSDR();
   if (page === 'sdr_topicos')          renderSdrTopicosAdmin();
   if (page === 'calendario')           renderCalendario();
-  if (page === 'onboarding')           carregarPainelOnboarding();
-  if (page === 'onboarding_catalogo')  renderOnboardingCatalogoPage();
-  if (page === 'jornada')              carregarListaJornadas();
+  if (page === 'onboarding')           renderOnboardingVisaoGeral();
+  if (page === 'onboarding_modelos')   renderOnboardingModelos();
 }
 
 function buildHeaderActions(page) {
@@ -2206,7 +2204,7 @@ function buildHeaderActions(page) {
     sdr_topicos:         canEdit('sdr_topicos')          ? btnNew('Novo tópico',   'openSdrTopicoForm')         : '',
     calendario:          canEdit('calendario')           ? btnNew('Nova demanda',  'openDemandForm')             : '',
     onboarding:          '',
-    onboarding_catalogo: canEdit('onboarding_catalogo')  ? btnNew('Novo item',     'onbCatNovoItemPage')         : '',
+    onboarding_modelos:  canEdit('onboarding_modelos')   ? btnNew('Criar modelo',  'onbModeloNovo')              : '',
     dashboard: `<button class="btn btn-ghost btn-sm" onclick="openExportModal()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M12 4v12m0 0l-4-4m4 4l4-4"/><path d="M4 20h16"/></svg> Exportar PDF</button>
                 ${canEdit('demands') ? btnNew('Nova demanda', 'openDemandForm') : ''}`,
   };
@@ -2832,13 +2830,23 @@ function renderClients() {
   }).join('');
 }
 
-function openClientForm(editId) {
+async function openClientForm(editId) {
+  await onbCarregarUsuarios();
   const editing = editId ? clients.find(c => c.id === editId) : null;
+  const respOpts = onbUsuarios.filter(isRespUser)
+    .map(u => `<option value="${u.id}" ${editing?.responsavelId===u.id?'selected':''}>${u.nome}</option>`).join('');
   document.getElementById('formTitle').textContent = editing ? 'Editar Cliente' : 'Novo Cliente';
   document.getElementById('formBody').innerHTML = `
     <div class="form-group">
       <label class="form-label">Nome do cliente</label>
       <input class="form-input" type="text" id="fClientName" placeholder="Ex: Bella Estética" value="${editing?.name||''}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Responsável pelo cliente</label>
+      <select class="form-select" id="fClientResponsavel">
+        <option value="">Sem responsável definido</option>
+        ${respOpts}
+      </select>
     </div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
@@ -2850,19 +2858,20 @@ function openClientForm(editId) {
 
 async function saveClient(editId) {
   const name = document.getElementById('fClientName').value.trim();
+  const responsavelId = document.getElementById('fClientResponsavel').value || null;
   if (!name) { toast('Informe o nome do cliente.'); return; }
   try {
     let res;
     if (editId) {
-      res = await API.put('/clientes/' + editId, { nome: name });
+      res = await API.put('/clientes/' + editId, { nome: name, responsavel_id: responsavelId });
       if (res.erro) { toast('Erro ao salvar: ' + res.erro); return; }
       const i = clients.findIndex(c => c.id === editId);
-      if (i >= 0) clients[i].name = name;
+      if (i >= 0) { clients[i].name = name; clients[i].responsavelId = responsavelId; }
       logHistorico('atualizado', 'cliente', editId, `Cliente atualizado: ${name}`);
     } else {
-      res = await API.post('/clientes', { nome: name });
+      res = await API.post('/clientes', { nome: name, responsavel_id: responsavelId });
       if (res.erro) { toast('Erro ao criar: ' + res.erro); return; }
-      clients.push({ id: res.id, name: res.nome });
+      clients.push({ id: res.id, name: res.nome, responsavelId: res.responsavel_id || null });
       logHistorico('criado', 'cliente', res.id, `Cliente criado: ${name}`);
     }
     save();
@@ -3297,7 +3306,7 @@ function openPermissoes(userId) {
         { key: 'demands',     label: 'Demandas' },
         { key: 'internal',    label: 'Demandas Internas' },
         { key: 'calendario',  label: 'Calendário Editorial' },
-        { key: 'jornada',     label: 'Onboarding' },
+        { key: 'onboarding',  label: 'Onboarding' },
       ]
     },
     {
@@ -3310,6 +3319,7 @@ function openPermissoes(userId) {
         { key: 'users',      label: 'Usuários' },
         { key: 'crm_etapas',  label: 'Etapas do Funil' },
         { key: 'sdr_topicos',         label: 'Tópicos SDR' },
+        { key: 'onboarding_modelos',  label: 'Modelos de Onboarding' },
       ]
     },
     {
@@ -3329,7 +3339,7 @@ function openPermissoes(userId) {
     },
   ];
 
-  const PERM_OFF_BY_DEFAULT = ['financeiro','onboarding','onboarding_catalogo'];
+  const PERM_OFF_BY_DEFAULT = ['financeiro','onboarding_modelos'];
   function chk(page, perm) {
     const val = perms[page]?.[perm];
     if (val === undefined) return !PERM_OFF_BY_DEFAULT.includes(page);
@@ -3388,7 +3398,7 @@ function onPermEditarChange(page, el) {
 }
 
 async function savePermissoes(userId) {
-  const pages = ['dashboard','demands','internal','clients','financeiro','statuses','formats','users','crm_leads','crm_funil','crm_atividades','crm_relatorios','crm_etapas','sdr','sdr_topicos','calendario','jornada'];
+  const pages = ['dashboard','demands','internal','clients','financeiro','statuses','formats','users','crm_leads','crm_funil','crm_atividades','crm_relatorios','crm_etapas','sdr','sdr_topicos','calendario','onboarding','onboarding_modelos'];
   const permissoes = {};
   pages.forEach(page => {
     const visualizar = document.getElementById(`perm_${page}_visualizar`)?.checked ?? true;
@@ -3404,7 +3414,7 @@ async function savePermissoes(userId) {
   renderUsers();
 }
 
-const _PERM_OFF_DEFAULT = ['financeiro','onboarding','onboarding_catalogo'];
+const _PERM_OFF_DEFAULT = ['financeiro','onboarding_modelos'];
 
 function canView(page) {
   const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
@@ -3449,9 +3459,6 @@ function applyPermissions() {
   // Onboarding
   const onbNav = document.getElementById('navOnboarding');
   if (onbNav) onbNav.style.display = canView('onboarding') ? '' : 'none';
-  // Jornada de Onboarding
-  const jorNav = document.getElementById('navJornada');
-  if (jorNav) jorNav.style.display = canView('jornada') ? '' : 'none';
 
   // CRM pages
   const crmPages = ['crm_leads','crm_funil','crm_atividades','crm_relatorios'];
@@ -3463,7 +3470,7 @@ function applyPermissions() {
     if (el) el.style.display = canView(page) ? '' : 'none';
   });
   // Cadastro sub-items (inclui crm_etapas)
-  const cadastroPages = ['clients','statuses','formats','users','crm_etapas','sdr_topicos','onboarding_catalogo'];
+  const cadastroPages = ['clients','statuses','formats','users','crm_etapas','sdr_topicos','onboarding_modelos'];
   cadastroPages.forEach(page => {
     const el = document.querySelector(`.nav-sub-item[data-page="${page}"]`);
     if (el) el.style.display = canView(page) ? '' : 'none';
@@ -6294,637 +6301,6 @@ function openDemandFormDate(date) {
 }
 
 // ═══════════════════════════════════════
-//  ONBOARDING — PÁGINA DE CATÁLOGO
-// ═══════════════════════════════════════
-async function renderOnboardingCatalogoPage() {
-  const el = document.getElementById('onbCatalogoPageContent');
-  if (!el) return;
-  el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Carregando...</div>';
-  const [catRes, catsRes] = await Promise.all([API.get('/onboarding/catalogo'), API.get('/onboarding/categorias')]);
-  if (catRes.erro) { el.innerHTML = `<p style="color:#E74C3C;font-size:13px">Erro: ${catRes.erro}</p>`; return; }
-  const catalogo = Array.isArray(catRes) ? catRes : [];
-  const categorias = Array.isArray(catsRes) ? catsRes : [];
-
-  const canEd = canEdit('onboarding_catalogo');
-  const categoriasHtml = `
-    <div style="margin-bottom:24px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px">Categorias</span>
-        ${canEd ? `<button class="btn btn-ghost btn-sm" onclick="onbNovaCategoriaForm()" style="padding:3px 10px;font-size:12px">+ Nova categoria</button>` : ''}
-      </div>
-      <div id="onbCatCatForm"></div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Categoria</th><th>Descrição</th><th style="text-align:center">Itens</th><th></th></tr></thead>
-          <tbody>
-            ${categorias.length ? categorias.map(c => `<tr>
-              <td><strong>${c.nome}</strong></td>
-              <td style="font-size:12px;color:var(--muted)">${c.descricao || '—'}</td>
-              <td style="text-align:center;color:var(--muted)">${c.item_count}</td>
-              <td><div class="row-actions">
-                ${canEd ? `
-                  <button class="btn btn-ghost btn-sm" onclick='onbNovaCategoriaForm(${JSON.stringify(c)})'>Editar</button>
-                  <button class="btn btn-danger btn-sm" onclick="onbExcluirCategoria('${c.id}','${c.nome.replace(/'/g,"\\'")}',${c.item_count})">Excluir</button>
-                ` : ''}
-              </div></td>
-            </tr>`).join('') : `<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted)">Nenhuma categoria cadastrada.</td></tr>`}
-          </tbody>
-        </table>
-      </div>
-    </div>`;
-
-  const rows = catalogo.length ? catalogo.map(i => `
-    <tr>
-      <td style="color:var(--muted);font-size:11px">${i.categoria}</td>
-      <td><strong>${i.label}</strong>${i.descricao ? `<div style="font-size:11px;color:var(--muted)">${i.descricao}</div>` : ''}</td>
-      <td style="color:var(--muted);font-size:12px">${i.tipo}</td>
-      <td style="text-align:center;font-size:12px">${i.ordem}</td>
-      <td><div class="row-actions">
-        ${canEdit('onboarding_catalogo') ? `
-          <button class="btn btn-ghost btn-sm" onclick="onbCatEditarItemPage('${i.id}')">Editar</button>
-          <button class="btn btn-danger btn-sm" onclick="onbCatExcluirItemPage('${i.id}','${i.label.replace(/'/g,"\\'")}')">Excluir</button>
-        ` : ''}
-      </div></td>
-    </tr>`).join('')
-    : `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted)">Nenhum item no catálogo.</td></tr>`;
-
-  el.innerHTML = `
-    <div id="onbCatPageForm"></div>
-    ${categoriasHtml}
-    <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:10px">Itens</div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Categoria</th><th>Item</th><th>Tipo</th><th style="text-align:center">Ordem</th><th></th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>`;
-}
-
-function onbCatNovoItemPage() { _onbCatFormPage(); }
-function onbCatEditarItemPage(id) { _onbCatFormPage(id); }
-
-function onbNovaCategoriaForm(editCat) {
-  const formEl = document.getElementById('onbCatCatForm');
-  if (!formEl) return;
-  const isEdit = !!editCat;
-  formEl.innerHTML = `
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px">
-      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:14px">${isEdit ? 'Editar categoria' : 'Nova categoria'}</div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Nome</label>
-          <input class="form-input" id="onbNovaCatNome" value="${editCat?.nome || ''}" placeholder="Ex: Jurídico" onkeydown="if(event.key==='Enter')onbSalvarCategoria('${editCat?.id || ''}')">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Ordem</label>
-          <input class="form-input" type="number" id="onbNovaCatOrdem" value="${editCat?.ordem ?? 0}" min="0">
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Descrição (opcional)</label>
-        <textarea class="form-textarea" id="onbNovaCatDesc" rows="2" placeholder="Descrição interna desta categoria">${editCat?.descricao || ''}</textarea>
-      </div>
-      <div class="form-actions">
-        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('onbCatCatForm').innerHTML=''">Cancelar</button>
-        <button class="btn btn-primary btn-sm" onclick="onbSalvarCategoria('${editCat?.id || ''}')">${isEdit ? 'Salvar' : 'Criar categoria'}</button>
-      </div>
-    </div>`;
-  document.getElementById('onbNovaCatNome')?.focus();
-}
-
-async function onbSalvarCategoria(editId) {
-  const nome = document.getElementById('onbNovaCatNome')?.value?.trim();
-  const descricao = document.getElementById('onbNovaCatDesc')?.value?.trim() || null;
-  const ordem = parseInt(document.getElementById('onbNovaCatOrdem')?.value) || 0;
-  if (!nome) { toast('Informe o nome da categoria.'); return; }
-  const res = editId
-    ? await API.patch('/onboarding/categorias/' + editId, { nome, descricao, ordem })
-    : await API.post('/onboarding/categorias', { nome, descricao, ordem });
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  toast(editId ? 'Categoria atualizada!' : 'Categoria criada!');
-  document.getElementById('onbCatCatForm').innerHTML = '';
-  renderOnboardingCatalogoPage();
-}
-
-async function _onbCatFormPage(editId, presetCategoria) {
-  let item = null;
-  const [catRes, catsRes] = await Promise.all([
-    editId ? API.get('/onboarding/catalogo') : Promise.resolve([]),
-    API.get('/onboarding/categorias')
-  ]);
-  if (editId && !catRes.erro) item = (Array.isArray(catRes) ? catRes : []).find(i => i.id === editId);
-  const categorias = (Array.isArray(catsRes) ? catsRes : []).map(c => typeof c === 'object' ? c.nome : c);
-
-  const tipos = ['upload','texto','link','checkbox'];
-  const formEl = document.getElementById('onbCatPageForm');
-  if (!formEl) return;
-
-  const categoriaAtual = presetCategoria || item?.categoria || '';
-  const isNova = !!presetCategoria || (item && !categorias.includes(item.categoria));
-  const catOpts = categorias.map(c =>
-    `<option value="${c}" ${!isNova && categoriaAtual === c ? 'selected' : ''}>${c}</option>`
-  ).join('');
-
-  formEl.innerHTML = `
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:20px">
-      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:16px">${editId ? 'Editar item' : 'Novo item'}</div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Categoria</label>
-          <select class="form-select" id="onbCatPageCategoriaSelect" onchange="onbCatToggleCategoriaInput(this)">
-            <option value="">Selecione...</option>
-            ${catOpts}
-            <option value="__nova__" ${isNova ? 'selected' : ''}>+ Nova categoria...</option>
-          </select>
-          <input class="form-input" id="onbCatPageCategoriaNova" style="margin-top:6px;${(categorias.length === 0 || isNova) ? '' : 'display:none'}" placeholder="Nome da nova categoria" value="${isNova ? categoriaAtual : ''}">
-        </div>
-        <div class="form-group"><label class="form-label">Label</label>
-          <input class="form-input" id="onbCatPageLabel" value="${item?.label||''}" placeholder="Ex: Logo em alta resolução"></div>
-      </div>
-      <div class="form-group"><label class="form-label">Descrição (instrução ao cliente)</label>
-        <textarea class="form-textarea" id="onbCatPageDesc" rows="2">${item?.descricao||''}</textarea></div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Tipo</label>
-          <select class="form-select" id="onbCatPageTipo">
-            ${tipos.map(t => `<option value="${t}" ${(item?.tipo||'upload')===t?'selected':''}>${t}</option>`).join('')}
-          </select></div>
-        <div class="form-group"><label class="form-label">Ordem</label>
-          <input class="form-input" type="number" id="onbCatPageOrdem" value="${item?.ordem??0}"></div>
-      </div>
-      <div class="form-actions">
-        <button class="btn btn-ghost" onclick="document.getElementById('onbCatPageForm').innerHTML='';buildHeaderActions('onboarding_catalogo')">Cancelar</button>
-        <button class="btn btn-primary" onclick="onbCatSalvarItemPage('${editId||''}')">${editId ? 'Salvar alterações' : 'Criar item'}</button>
-      </div>
-    </div>`;
-  formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function onbCatToggleCategoriaInput(sel) {
-  const novaInput = document.getElementById('onbCatPageCategoriaNova');
-  if (!novaInput) return;
-  novaInput.style.display = sel.value === '__nova__' ? '' : 'none';
-  if (sel.value !== '__nova__') novaInput.value = '';
-}
-
-async function onbCatSalvarItemPage(editId) {
-  const sel = document.getElementById('onbCatPageCategoriaSelect');
-  const categoriaVal = sel?.value === '__nova__' || sel?.value === ''
-    ? document.getElementById('onbCatPageCategoriaNova')?.value?.trim()
-    : sel?.value;
-  const body = {
-    categoria: categoriaVal,
-    label: document.getElementById('onbCatPageLabel')?.value?.trim(),
-    descricao: document.getElementById('onbCatPageDesc')?.value?.trim() || null,
-    tipo: document.getElementById('onbCatPageTipo')?.value,
-    ordem: parseInt(document.getElementById('onbCatPageOrdem')?.value) || 0
-  };
-  if (!body.categoria || !body.label) { toast('Preencha categoria e label.'); return; }
-  const res = editId ? await API.patch('/onboarding/catalogo/' + editId, body) : await API.post('/onboarding/catalogo', body);
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  toast(editId ? 'Item atualizado!' : 'Item criado!');
-  renderOnboardingCatalogoPage();
-}
-
-async function onbCatExcluirItemPage(id, label) {
-  if (!confirm(`Excluir permanentemente "${label}"?\nIsso também remove este item de todos os onboardings de clientes.`)) return;
-  const res = await API.del('/onboarding/catalogo/' + id);
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  toast('Item excluído.');
-  renderOnboardingCatalogoPage();
-}
-
-async function onbExcluirCategoria(id, nome, count) {
-  const msg = count > 0
-    ? `Excluir a categoria "${nome}" e seus ${count} item(ns)?\nIsso também remove esses itens de todos os onboardings de clientes.`
-    : `Excluir a categoria "${nome}"?`;
-  if (!confirm(msg)) return;
-  const res = await API.del('/onboarding/categorias/' + id);
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  toast('Categoria excluída.');
-  renderOnboardingCatalogoPage();
-}
-
-// ═══════════════════════════════════════
-//  MÓDULO ONBOARDING
-// ═══════════════════════════════════════
-let _onbClienteId = null;
-let _onbCatalogo = [];
-let _onbData = null;
-let _onbPainel = [];
-
-const ONB_STATUS_LABELS = { em_andamento:'Em andamento', aguardando_cliente:'Aguardando cliente', em_revisao:'Em revisão', concluido:'Concluído' };
-const ONB_STATUS_COLORS = { em_andamento:'background:#DBEAFE;color:#1E40AF', aguardando_cliente:'background:#FEF3C7;color:#92400E', em_revisao:'background:#EDE9FE;color:#5B21B6', concluido:'background:#D1FAE5;color:#065F46' };
-const ONB_ITEM_STATUS_LABELS = { pendente:'Pendente', recebido:'Recebido', aprovado:'Aprovado', reprovado:'Reprovado' };
-const ONB_ITEM_STATUS_COLORS = { pendente:'background:#F3F4F6;color:#6B7280', recebido:'background:#DBEAFE;color:#1E40AF', aprovado:'background:#D1FAE5;color:#065F46', reprovado:'background:#FEE2E2;color:#991B1B' };
-
-async function abrirModalOnboarding(clienteId) {
-  const cliente = clients.find(c => c.id === clienteId);
-  _onbClienteId = clienteId;
-  _onbCatalogo = [];
-  _onbData = null;
-  document.getElementById('onb-modal-title').textContent = 'Onboarding — ' + (cliente?.name || clienteId);
-  document.getElementById('onb-tab-checklist').innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Carregando...</div>';
-  document.getElementById('onb-tab-acomp').innerHTML = '';
-  document.getElementById('onb-tab-catalogo').innerHTML = '';
-  openModal('modal-onboarding');
-
-  const [catRes, onbRes] = await Promise.all([
-    API.get('/onboarding/catalogo'),
-    API.get('/onboarding/cliente/' + clienteId)
-  ]);
-  if (!catRes.erro) _onbCatalogo = Array.isArray(catRes) ? catRes : [];
-  _onbData = (onbRes && !onbRes.erro) ? onbRes : null;
-
-  const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
-  document.getElementById('ctab-onb-acomp').style.display = _onbData ? '' : 'none';
-  document.getElementById('ctab-onb-catalogo').style.display = u.papel === 'admin' ? '' : 'none';
-  onbSwitchTab(_onbData ? 'acomp' : 'checklist');
-}
-
-function onbSwitchTab(tab) {
-  ['checklist','acomp','catalogo'].forEach(t => {
-    document.getElementById('onb-tab-' + t).style.display = t === tab ? '' : 'none';
-    const btn = document.getElementById('ctab-onb-' + t);
-    if (btn) btn.classList.toggle('ctab-active', t === tab);
-  });
-  if (tab === 'checklist') renderOnbChecklistTab();
-  if (tab === 'acomp') renderOnbAcompTab();
-  if (tab === 'catalogo') renderOnbCatalogoTab();
-}
-
-function renderOnbChecklistTab() {
-  const grouped = {};
-  _onbCatalogo.forEach(i => { if (!grouped[i.categoria]) grouped[i.categoria] = []; grouped[i.categoria].push(i); });
-  const selectedIds = new Set((_onbData?.itens || []).map(i => i.catalogo?.id).filter(Boolean));
-  const obrigMap = {};
-  (_onbData?.itens || []).forEach(i => { if (i.catalogo?.id) obrigMap[i.catalogo.id] = i.obrigatorio; });
-
-  const cats = Object.entries(grouped).map(([cat, itens]) => `
-    <div style="margin-bottom:14px">
-      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);padding:8px 0 4px;border-bottom:1px solid var(--border);margin-bottom:6px">${cat}</div>
-      ${itens.map(item => {
-        const ck = _onbData ? selectedIds.has(item.id) : (item.obrigatorio_por_padrao ?? false);
-        const ob = obrigMap[item.id] ?? true;
-        return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
-          <input type="checkbox" id="onb-ck-${item.id}" ${ck ? 'checked' : ''} onchange="onbToggleItemRow('${item.id}')">
-          <div style="flex:1">
-            <div style="font-size:13px;font-weight:500">${item.label}</div>
-            ${item.descricao ? `<div style="font-size:11px;color:var(--muted)">${item.descricao}</div>` : ''}
-          </div>
-          <div id="onb-obrig-wrap-${item.id}" style="${ck ? '' : 'display:none'}">
-            <label style="font-size:11px;display:flex;align-items:center;gap:4px;cursor:pointer;white-space:nowrap">
-              <input type="checkbox" id="onb-obrig-${item.id}" ${ob ? 'checked' : ''}> Obrigatório
-            </label>
-          </div>
-        </div>`;
-      }).join('')}
-    </div>`).join('');
-
-  const jaEnviado = !!_onbData?.data_envio;
-  document.getElementById('onb-tab-checklist').innerHTML = `
-    <div style="max-height:420px;overflow-y:auto;margin-bottom:16px">${cats || '<p style="color:var(--muted);font-size:13px">Nenhum item no catálogo.</p>'}</div>
-    <div class="form-actions">
-      <button class="btn btn-ghost" onclick="closeModal('modal-onboarding')">Cancelar</button>
-      <button class="btn btn-primary" onclick="salvarSelecaoItens()">${_onbData ? 'Atualizar seleção' : 'Criar onboarding'}</button>
-      ${!_onbData ? '' : `<button class="btn btn-primary" style="background:#27AE60;border-color:#27AE60" onclick="enviarLinkOnboarding()">${jaEnviado ? 'Reenviar link' : 'Enviar link ao cliente'}</button>`}
-    </div>
-  `;
-}
-
-function onbToggleItemRow(itemId) {
-  const ck = document.getElementById('onb-ck-' + itemId);
-  const wrap = document.getElementById('onb-obrig-wrap-' + itemId);
-  if (wrap) wrap.style.display = ck?.checked ? '' : 'none';
-}
-
-function renderOnbAcompTab() {
-  if (!_onbData) { document.getElementById('onb-tab-acomp').innerHTML = '<p style="color:var(--muted);font-size:13px;padding:8px 0">Onboarding não iniciado.</p>'; return; }
-  const prog = _onbData.progresso || 0;
-  const grouped = {};
-  (_onbData.itens || []).forEach(i => {
-    const cat = i.catalogo?.categoria || 'Outros';
-    if (!grouped[cat]) grouped[cat] = [];
-    grouped[cat].push(i);
-  });
-
-  const linkUrl = _onbData.data_envio ? (window.location.origin + '/onboarding/' + _onbData.token_publico) : null;
-
-  const itensHtml = Object.entries(grouped).map(([cat, itens]) => `
-    <div style="margin-bottom:14px">
-      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);padding:6px 0 4px;border-bottom:1px solid var(--border);margin-bottom:6px">${cat}</div>
-      ${itens.map(i => {
-        const r = i.respostas?.[0];
-        const stColor = ONB_ITEM_STATUS_COLORS[i.status] || '';
-        const respostaHtml = r ? (
-          r.tipo_resposta === 'arquivo' ? `<a href="${r.arquivo_url}" target="_blank" style="font-size:11px;color:var(--primary);font-weight:600">📎 ${r.arquivo_nome || 'Arquivo'}</a>` :
-          r.tipo_resposta === 'checkbox' ? `<span style="font-size:11px">${r.valor_checkbox ? '✓ Confirmado' : 'Não confirmado'}</span>` :
-          `<span style="font-size:11px;white-space:pre-wrap">${r.valor_texto || ''}</span>`
-        ) : '<span style="font-size:11px;color:var(--muted)">Sem resposta</span>';
-        return `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <span style="font-size:12px;font-weight:600;flex:1">${i.catalogo?.label || ''}${i.obrigatorio ? '' : ' <span style="font-size:10px;color:var(--muted)">(opcional)</span>'}</span>
-            <span style="padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;${stColor}">${ONB_ITEM_STATUS_LABELS[i.status]||i.status}</span>
-          </div>
-          <div style="margin-bottom:8px">${respostaHtml}</div>
-          ${i.status === 'recebido' ? `<div style="display:flex;gap:6px;margin-bottom:8px">
-            <button class="btn btn-ghost btn-sm" style="color:#065F46;border-color:#6EE7B7" onclick="onbAprovarItem('${i.id}')">Aprovar</button>
-            <button class="btn btn-ghost btn-sm" style="color:#991B1B;border-color:#FECACA" onclick="onbReprovarItem('${i.id}')">Reprovar</button>
-          </div>` : ''}
-          <div style="display:flex;gap:6px">
-            <input class="form-input" type="text" id="onb-obs-${i.id}" value="${(i.observacao_interna||'').replace(/"/g,'&quot;')}" placeholder="Obs. interna..." style="font-size:11px;padding:5px 8px">
-            <button class="btn btn-ghost btn-sm" onclick="onbSalvarObs('${i.id}')">OK</button>
-          </div>
-        </div>`;
-      }).join('')}
-    </div>`).join('');
-
-  const allObrigOk = (_onbData.itens || []).filter(i => i.obrigatorio).every(i => ['recebido','aprovado'].includes(i.status));
-
-  document.getElementById('onb-tab-acomp').innerHTML = `
-    <div style="margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-        <span style="font-size:12px;font-weight:600">${_onbData.itens_respondidos || 0} de ${_onbData.total_itens || 0} respondidos</span>
-        <span style="font-size:11px;color:var(--muted)">${prog}%</span>
-      </div>
-      <div style="height:8px;background:var(--surface2);border-radius:100px;overflow:hidden">
-        <div style="height:100%;width:${prog}%;background:#27AE60;border-radius:100px"></div>
-      </div>
-    </div>
-    ${linkUrl ? `<div style="margin-bottom:12px;padding:10px 12px;background:var(--surface2);border-radius:var(--r-sm);border:1px solid var(--border);font-size:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-      <span style="font-weight:600">Link:</span>
-      <a href="${linkUrl}" target="_blank" style="color:var(--primary);flex:1;word-break:break-all;font-size:11px">${linkUrl}</a>
-      <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText('${linkUrl}');toast('Link copiado!')">Copiar</button>
-    </div>` : `<div style="margin-bottom:12px"><button class="btn btn-primary btn-sm" onclick="enviarLinkOnboarding()">Gerar e enviar link ao cliente</button></div>`}
-    <div style="max-height:380px;overflow-y:auto;margin-bottom:16px">${itensHtml}</div>
-    <div class="form-actions">
-      <button class="btn btn-danger btn-sm" onclick="excluirOnboardingCliente()" style="margin-right:auto">Excluir onboarding</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-onboarding')">Fechar</button>
-      ${allObrigOk && _onbData.status !== 'concluido' ? `<button class="btn btn-primary" style="background:#27AE60;border-color:#27AE60" onclick="concluirOnboarding()">✓ Concluir onboarding</button>` : ''}
-    </div>
-  `;
-}
-
-function renderOnbCatalogoTab() {
-  const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
-  if (u.papel !== 'admin') { document.getElementById('onb-tab-catalogo').innerHTML = ''; return; }
-  const tipos = ['upload','texto','link','checkbox'];
-  const rows = _onbCatalogo.map(i => `
-    <tr style="${i.ativo ? '' : 'opacity:0.45'}">
-      <td>${i.categoria}</td>
-      <td>${i.label}</td>
-      <td style="color:var(--muted)">${i.tipo}</td>
-      <td style="text-align:center">${i.ativo ? '✓' : '—'}</td>
-      <td><div class="row-actions">
-        <button class="btn btn-ghost btn-sm" onclick="onbEditCatItem('${i.id}')">Editar</button>
-        <button class="btn btn-danger btn-sm" onclick="onbExcluirCatItem('${i.id}','${i.label.replace(/'/g,"\\'").replace(/`/g,"\\`")}')">Excluir</button>
-      </div></td>
-    </tr>`).join('') || `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">Nenhum item.</td></tr>`;
-
-  document.getElementById('onb-tab-catalogo').innerHTML = `
-    <div style="margin-bottom:12px"><button class="btn btn-primary btn-sm" onclick="onbNovoCatItem()">+ Novo item</button></div>
-    <div id="onb-cat-form"></div>
-    <div class="table-wrap" style="overflow-x:auto">
-      <table><thead><tr><th>Categoria</th><th>Label</th><th>Tipo</th><th>Ativo</th><th></th></tr></thead>
-      <tbody>${rows}</tbody></table>
-    </div>
-  `;
-}
-
-async function onbNovoCatItem(editId) {
-  const item = editId ? _onbCatalogo.find(i => i.id === editId) : null;
-  const tipos = ['upload','texto','link','checkbox'];
-  const catsRes = await API.get('/onboarding/categorias');
-  const categorias = (Array.isArray(catsRes) ? catsRes : []).map(c => typeof c === 'object' ? c.nome : c);
-  const catOpts = categorias.map(c =>
-    `<option value="${c}" ${item?.categoria === c ? 'selected' : ''}>${c}</option>`
-  ).join('');
-  const isNova = item && !categorias.includes(item.categoria);
-  document.getElementById('onb-cat-form').innerHTML = `
-    <div style="padding:14px;background:var(--surface2);border-radius:var(--r);border:1px solid var(--border);margin-bottom:12px">
-      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;margin-bottom:12px">${editId ? 'Editar item' : 'Novo item'}</div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Categoria</label>
-          <select class="form-select" id="onbCatCategoriaSelect" onchange="onbCatToggleModalCatInput(this)">
-            <option value="">Selecione...</option>
-            ${catOpts}
-            <option value="__nova__" ${isNova ? 'selected' : ''}>+ Nova categoria...</option>
-          </select>
-          <input class="form-input" id="onbCatCategoriaNova" style="margin-top:6px;${(categorias.length === 0 || isNova) ? '' : 'display:none'}" placeholder="Nome da nova categoria" value="${isNova ? (item?.categoria||'') : ''}">
-        </div>
-        <div class="form-group"><label class="form-label">Label</label>
-          <input class="form-input" id="onbCatLabel" value="${item?.label||''}" placeholder="Ex: Logo em alta resolução"></div>
-      </div>
-      <div class="form-group"><label class="form-label">Descrição (instrução ao cliente)</label>
-        <textarea class="form-textarea" id="onbCatDesc" rows="2">${item?.descricao||''}</textarea></div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Tipo</label>
-          <select class="form-select" id="onbCatTipo">
-            ${tipos.map(t => `<option value="${t}" ${(item?.tipo||'upload')===t?'selected':''}>${t}</option>`).join('')}
-          </select></div>
-        <div class="form-group"><label class="form-label">Ordem</label>
-          <input class="form-input" type="number" id="onbCatOrdem" value="${item?.ordem||0}"></div>
-      </div>
-      <div class="form-actions">
-        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('onb-cat-form').innerHTML=''">Cancelar</button>
-        <button class="btn btn-primary btn-sm" onclick="onbSalvarCatItem('${editId||''}')">${editId ? 'Salvar' : 'Criar'}</button>
-      </div>
-    </div>`;
-}
-
-function onbCatToggleModalCatInput(sel) {
-  const novaInput = document.getElementById('onbCatCategoriaNova');
-  if (!novaInput) return;
-  novaInput.style.display = sel.value === '__nova__' ? '' : 'none';
-  if (sel.value !== '__nova__') novaInput.value = '';
-}
-
-function onbEditCatItem(id) { onbNovoCatItem(id); }
-
-async function onbSalvarCatItem(editId) {
-  const sel = document.getElementById('onbCatCategoriaSelect');
-  const categoriaVal = sel?.value === '__nova__' || sel?.value === ''
-    ? document.getElementById('onbCatCategoriaNova')?.value?.trim()
-    : sel?.value;
-  const body = {
-    categoria: categoriaVal,
-    label: document.getElementById('onbCatLabel')?.value?.trim(),
-    descricao: document.getElementById('onbCatDesc')?.value?.trim() || null,
-    tipo: document.getElementById('onbCatTipo')?.value,
-    ordem: parseInt(document.getElementById('onbCatOrdem')?.value) || 0
-  };
-  if (!body.categoria || !body.label) { toast('Preencha categoria e label.'); return; }
-  let res;
-  if (editId) {
-    res = await API.patch('/onboarding/catalogo/' + editId, body);
-    if (!res.erro) { const i = _onbCatalogo.findIndex(x => x.id === editId); if (i >= 0) _onbCatalogo[i] = { ..._onbCatalogo[i], ...res }; }
-  } else {
-    res = await API.post('/onboarding/catalogo', body);
-    if (!res.erro) _onbCatalogo.push(res);
-  }
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  toast(editId ? 'Item atualizado!' : 'Item criado!');
-  renderOnbCatalogoTab();
-}
-
-async function onbExcluirCatItem(id, label) {
-  if (!confirm(`Excluir permanentemente "${label}"?`)) return;
-  const res = await API.del('/onboarding/catalogo/' + id);
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  _onbCatalogo = _onbCatalogo.filter(x => x.id !== id);
-  toast('Item excluído.');
-  renderOnbCatalogoTab();
-}
-
-async function salvarSelecaoItens() {
-  const itens = _onbCatalogo
-    .filter(item => document.getElementById('onb-ck-' + item.id)?.checked)
-    .map(item => ({
-      catalogo_id: item.id,
-      obrigatorio: document.getElementById('onb-obrig-' + item.id)?.checked ?? true
-    }));
-  if (!itens.length) { toast('Selecione ao menos um item.'); return; }
-
-  let res;
-  if (_onbData) {
-    const todosItens = _onbCatalogo.map(item => ({
-      catalogo_id: item.id,
-      obrigatorio: document.getElementById('onb-obrig-' + item.id)?.checked ?? true,
-      ativo: document.getElementById('onb-ck-' + item.id)?.checked ?? false
-    }));
-    res = await API.patch('/onboarding/cliente/' + _onbClienteId + '/itens', { itens: todosItens });
-  } else {
-    res = await API.post('/onboarding/cliente/' + _onbClienteId, { itens });
-  }
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  toast(_onbData ? 'Seleção atualizada!' : 'Onboarding criado!');
-  const onbRes = await API.get('/onboarding/cliente/' + _onbClienteId);
-  if (!onbRes.erro) _onbData = onbRes;
-  document.getElementById('ctab-onb-acomp').style.display = '';
-  onbSwitchTab('acomp');
-}
-
-async function enviarLinkOnboarding() {
-  const res = await API.post('/onboarding/cliente/' + _onbClienteId + '/enviar', {});
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  toast('Link gerado!');
-  navigator.clipboard.writeText(res.url).catch(() => {});
-  const onbRes = await API.get('/onboarding/cliente/' + _onbClienteId);
-  if (!onbRes.erro) _onbData = onbRes;
-  renderOnbAcompTab();
-}
-
-async function onbAprovarItem(itemId) {
-  const res = await API.patch('/onboarding/itens/' + itemId, { status: 'aprovado' });
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  const i = (_onbData?.itens || []).findIndex(x => x.id === itemId);
-  if (i >= 0) _onbData.itens[i].status = 'aprovado';
-  toast('Item aprovado!');
-  renderOnbAcompTab();
-}
-
-async function onbReprovarItem(itemId) {
-  const res = await API.patch('/onboarding/itens/' + itemId, { status: 'reprovado' });
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  const i = (_onbData?.itens || []).findIndex(x => x.id === itemId);
-  if (i >= 0) _onbData.itens[i].status = 'reprovado';
-  toast('Item reprovado.');
-  renderOnbAcompTab();
-}
-
-async function onbSalvarObs(itemId) {
-  const obs = document.getElementById('onb-obs-' + itemId)?.value?.trim() || null;
-  const res = await API.patch('/onboarding/itens/' + itemId, { observacao_interna: obs });
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  toast('Observação salva.');
-}
-
-async function excluirOnboardingCliente() {
-  if (!confirm('Excluir este onboarding e todos os dados enviados pelo cliente?')) return;
-  const res = await API.del('/onboarding/cliente/' + _onbClienteId);
-  if (res.erro) { toast('Erro ao excluir: ' + res.erro); return; }
-  _onbData = null;
-  toast('Onboarding excluído.');
-  closeModal('modal-onboarding');
-  if (currentPage === 'onboarding') carregarPainelOnboarding();
-}
-
-async function excluirOnboardingPainel(clienteId, clienteNome) {
-  if (!confirm(`Excluir o onboarding de "${clienteNome}"?`)) return;
-  const res = await API.del('/onboarding/cliente/' + clienteId);
-  if (res.erro) { toast('Erro ao excluir: ' + res.erro); return; }
-  _onbPainel = _onbPainel.filter(o => o.cliente_id !== clienteId);
-  toast('Onboarding excluído.');
-  renderPainelOnboarding();
-}
-
-async function concluirOnboarding() {
-  if (!confirm('Marcar este onboarding como concluído?')) return;
-  const res = await API.patch('/onboarding/cliente/' + _onbClienteId + '/status', { status: 'concluido' });
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  if (_onbData) _onbData.status = 'concluido';
-  toast('Onboarding concluído!');
-  renderOnbAcompTab();
-}
-
-async function carregarPainelOnboarding() {
-  document.getElementById('onboardingPainelTable').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">Carregando...</td></tr>';
-  const res = await API.get('/onboarding/resumo');
-  if (res.erro) { toast('Erro ao carregar painel: ' + res.erro); return; }
-  _onbPainel = Array.isArray(res) ? res : [];
-  renderPainelOnboarding();
-}
-
-function renderPainelOnboarding() {
-  const filtro = document.getElementById('onbFiltroStatus')?.value || '';
-  const lista = filtro ? _onbPainel.filter(o => o.status === filtro) : _onbPainel;
-
-  // Metrics
-  const ativos = _onbPainel.filter(o => o.status !== 'concluido').length;
-  const aguardando = _onbPainel.filter(o => o.status === 'aguardando_cliente').length;
-  const mesAtual = new Date().toISOString().slice(0, 7);
-  const concluidos = _onbPainel.filter(o => o.status === 'concluido' && o.data_conclusao?.slice(0, 7) === mesAtual).length;
-  document.getElementById('onboardingPainelMetrics').innerHTML = [
-    ['Ativos', ativos, '#DBEAFE','#1E40AF'],
-    ['Aguardando cliente', aguardando, '#FEF3C7','#92400E'],
-    ['Concluídos no mês', concluidos, '#D1FAE5','#065F46']
-  ].map(([lbl, val, bg, color]) => `
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px">
-      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;color:${color}">${val}</div>
-      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-top:2px">${lbl}</div>
-    </div>`).join('');
-
-  document.getElementById('onboardingPainelSub').textContent = `${_onbPainel.length} onboarding${_onbPainel.length !== 1 ? 's' : ''} cadastrado${_onbPainel.length !== 1 ? 's' : ''}`;
-
-  if (!lista.length) {
-    document.getElementById('onboardingPainelTable').innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">Nenhum onboarding encontrado.</td></tr>`;
-    return;
-  }
-
-  document.getElementById('onboardingPainelTable').innerHTML = lista.map(o => {
-    const stColor = ONB_STATUS_COLORS[o.status] || '';
-    const envio = o.data_envio ? new Date(o.data_envio).toLocaleDateString('pt-BR') : '—';
-    return `<tr>
-      <td><strong>${o.cliente_nome}</strong></td>
-      <td style="min-width:120px">
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="flex:1;height:6px;background:var(--surface2);border-radius:100px;overflow:hidden">
-            <div style="height:100%;width:${o.progresso}%;background:#27AE60;border-radius:100px"></div>
-          </div>
-          <span style="font-size:11px;color:var(--muted);white-space:nowrap">${o.progresso}%</span>
-        </div>
-      </td>
-      <td><span style="padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;${stColor}">${ONB_STATUS_LABELS[o.status]||o.status}</span></td>
-      <td style="color:var(--muted);font-size:12px">${envio}</td>
-      <td><div class="row-actions">
-        <button class="btn btn-ghost btn-sm" onclick="abrirModalOnboarding('${o.cliente_id}')">Ver</button>
-        <button class="btn btn-danger btn-sm" onclick="excluirOnboardingPainel('${o.cliente_id}','${o.cliente_nome}')">Excluir</button>
-      </div></td>
-    </tr>`;
-  }).join('');
-}
-
-// ═══════════════════════════════════════
 //  MÓDULO FINANCEIRO
 // ═══════════════════════════════════════
 let _finClienteId = null;
@@ -7203,395 +6579,1015 @@ async function excluirPagamento(pagamentoId) {
 }
 
 // ═══════════════════════════════════════
-//  MÓDULO JORNADA DE ONBOARDING
+//  MÓDULO ONBOARDING
 // ═══════════════════════════════════════
-let _jorLista = [];
-let _jorClienteId = null;
-let _jorData = null;
-let _jorFaseAtiva = 0;
-let _jorEditingEtapaId = null;
+let onbLista = [];
+let onbUsuarios = [];
+let onbTemplates = [];
+let onbFiltroAtivo = 'todos';
+let _onbData = null;
+let _onbModeloEditando = null;
+let _onbModeloData = null;
 
-const JOR_TEAM = ['Gabriela', 'Maitê', 'Laura', 'Carol', 'Mikael'];
-const JOR_STATUS_META = {
-  pendente:  { label: 'Pendente',      bg: 'var(--surface2)', color: 'var(--muted)' },
-  andamento: { label: 'Em andamento',  bg: '#FEF3C7', color: '#92400E' },
-  concluido: { label: 'Concluído',     bg: '#D1FAE5', color: '#065F46' },
-  bloqueado: { label: 'Bloqueado',     bg: '#FEE2E2', color: '#B91C1C' },
-};
-
-function escapeHtmlJor(str) {
-  const div = document.createElement('div');
-  div.textContent = str == null ? '' : String(str);
-  return div.innerHTML;
+async function onbCarregarUsuarios() {
+  if (!onbUsuarios.length) {
+    const u = await API.get('/usuarios');
+    if (!u.erro) onbUsuarios = u;
+  }
 }
-function escapeAttrJor(str) { return escapeHtmlJor(str); }
 
-// ── Tela 1: Lista ────────────────────────────────────────
+async function onbCarregarTemplates() {
+  const t = await API.get('/onboarding/templates');
+  if (!t.erro) onbTemplates = t;
+}
 
-async function carregarListaJornadas() {
-  document.getElementById('jornadaListaGrid').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--muted)">Carregando...</div>';
-  const res = await API.get('/jornada');
+function onbFmtData(iso) {
+  if (!iso) return '—';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function onbStatusInfo(status) {
+  const map = {
+    pendente:  { label: 'Pendente',     color: '#8C8878' },
+    andamento: { label: 'Em andamento', color: '#3498DB' },
+    concluida: { label: 'Concluída',    color: '#27AE60' },
+    bloqueada: { label: 'Bloqueada',    color: '#E74C3C' },
+  };
+  return map[status] || map.pendente;
+}
+
+function onbOnboardingStatusInfo(status) {
+  const map = {
+    em_andamento: { label: 'Em andamento', color: '#3498DB' },
+    concluido:    { label: 'Concluído',    color: '#27AE60' },
+    cancelado:    { label: 'Cancelado',    color: '#E74C3C' },
+  };
+  return map[status] || map.em_andamento;
+}
+
+// ── Visão Geral ─────────────────────────────────────────────────────
+
+async function renderOnboardingVisaoGeral() {
+  await onbCarregarUsuarios();
+  const res = await API.get('/onboarding');
   if (res.erro) { toast('Erro ao carregar onboardings: ' + res.erro); return; }
-  _jorLista = Array.isArray(res) ? res : [];
-  renderListaJornadas();
+  onbLista = res;
+  onbRenderVisaoGeralConteudo();
 }
 
-const JOR_FILTROS = [
-  { key: 'todos', label: 'Todos' },
-  { key: 'ativos', label: 'Ativos' },
-  { key: 'atrasados', label: 'Atrasados' },
-  { key: 'concluidos', label: 'Concluídos' },
-];
-let _jorFiltroAtivo = 'todos';
-
-function jorSetFiltro(key) {
-  _jorFiltroAtivo = key;
-  renderListaJornadas();
+function onbSetFiltro(f) {
+  onbFiltroAtivo = f;
+  document.querySelectorAll('[data-onbf]').forEach(el => el.classList.toggle('active', el.dataset.onbf === f));
+  onbRenderVisaoGeralConteudo();
 }
 
-function renderListaJornadas() {
-  document.getElementById('jornadaListaFiltros').innerHTML = JOR_FILTROS.map((f) => {
-    const active = f.key === _jorFiltroAtivo;
-    return `<button onclick="jorSetFiltro('${f.key}')" style="padding:7px 14px;border-radius:100px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid ${active ? 'var(--primary)' : 'var(--border)'};background:${active ? 'var(--primary)' : 'var(--surface)'};color:${active ? '#fff' : 'var(--text)'}">${f.label}</button>`;
-  }).join('');
+function onbRenderVisaoGeralConteudo() {
+  const total = onbLista.length;
+  const andamento = onbLista.filter(o => o.status === 'em_andamento').length;
+  const atrasados = onbLista.filter(o => o.atrasado).length;
+  const concluidos = onbLista.filter(o => o.status === 'concluido').length;
 
-  let lista = _jorLista;
-  if (_jorFiltroAtivo === 'ativos') lista = lista.filter((j) => j.status !== 'concluido');
-  else if (_jorFiltroAtivo === 'atrasados') lista = lista.filter((j) => j.status !== 'concluido' && j.etapas_atrasadas > 0);
-  else if (_jorFiltroAtivo === 'concluidos') lista = lista.filter((j) => j.status === 'concluido');
+  document.getElementById('onboardingStats').innerHTML = `
+    <div class="onb-stat-card"><div class="num">${total}</div><div class="lbl">Total</div></div>
+    <div class="onb-stat-card"><div class="num">${andamento}</div><div class="lbl">Em andamento</div></div>
+    <div class="onb-stat-card"><div class="num" style="color:#E74C3C">${atrasados}</div><div class="lbl">Atrasados</div></div>
+    <div class="onb-stat-card"><div class="num" style="color:#27AE60">${concluidos}</div><div class="lbl">Concluídos</div></div>
+  `;
+  document.getElementById('onboardingSub').textContent = `${total} onboarding${total !== 1 ? 's' : ''} cadastrado${total !== 1 ? 's' : ''}`;
 
-  document.getElementById('jornadaListaSub').textContent = `${_jorLista.length} onboarding${_jorLista.length !== 1 ? 's' : ''} cadastrado${_jorLista.length !== 1 ? 's' : ''}`;
+  const busca = (document.getElementById('onbBusca')?.value || '').toLowerCase();
+  let filtrados = [...onbLista];
+  if (onbFiltroAtivo === 'andamento') filtrados = filtrados.filter(o => o.status === 'em_andamento');
+  if (onbFiltroAtivo === 'atrasados') filtrados = filtrados.filter(o => o.atrasado);
+  if (onbFiltroAtivo === 'concluidos') filtrados = filtrados.filter(o => o.status === 'concluido');
+  if (busca) filtrados = filtrados.filter(o => o.cliente_nome.toLowerCase().includes(busca));
 
-  const grid = document.getElementById('jornadaListaGrid');
-  if (!lista.length) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">Nenhum onboarding encontrado.</div>`;
+  const tbody = document.getElementById('onboardingTable');
+  if (!filtrados.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted)">Nenhum onboarding encontrado.</td></tr>`;
     return;
   }
-
-  grid.innerHTML = lista.map((j) => {
-    const totalFases = j.total_fases || 4;
-    const dots = Array.from({ length: totalFases }, (_, i) => {
-      const filled = i < j.fases_concluidas;
-      const isCurrent = !filled && i === j.fases_concluidas && j.status !== 'concluido';
-      const cor = filled ? 'var(--primary)' : isCurrent ? '#E67E22' : 'var(--surface2)';
-      return `<span style="width:7px;height:7px;border-radius:50%;background:${cor};display:inline-block;flex-shrink:0"></span>`
-        + (i < totalFases - 1 ? `<span style="width:10px;height:2px;background:${filled ? 'var(--primary)' : 'var(--border)'};display:inline-block"></span>` : '');
-    }).join('');
-
-    let faltaTexto;
-    if (j.status === 'concluido') faltaTexto = '✓ Onboarding concluído';
-    else if (!j.proximas_etapas?.length) faltaTexto = 'Tudo em dia';
-    else {
-      const extra = j.total_pendentes - j.proximas_etapas.length;
-      faltaTexto = 'Falta: ' + j.proximas_etapas.map(escapeHtmlJor).join(', ') + (extra > 0 ? ` +${extra}` : '');
-    }
-
-    return `
-      <div onclick="abrirModalJornada('${j.cliente_id}')" style="cursor:pointer;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px" onmouseover="this.style.boxShadow='var(--shadow)'" onmouseout="this.style.boxShadow='none'">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-          <strong style="font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtmlJor(j.cliente_nome)}</strong>
-          ${j.etapas_atrasadas > 0 ? `<span title="${j.etapas_atrasadas} etapa(s) atrasada(s)" style="color:#B91C1C;font-size:11.5px;font-weight:700;flex-shrink:0">⚠ ${j.etapas_atrasadas}</span>` : ''}
+  const editOnb = canEdit('onboarding');
+  tbody.innerHTML = filtrados.map(o => {
+    const st = onbOnboardingStatusInfo(o.status);
+    return `<tr style="cursor:pointer" onclick="onbAbrirDetalhe('${o.id}')">
+      <td><strong>${o.cliente_nome}</strong></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;min-width:140px">
+          <div class="progress-track sm"><div class="progress-fill ${o.progresso>=100?'done':''}" style="width:${o.progresso}%"></div></div>
+          <span style="font-size:11px;color:var(--muted);flex-shrink:0">${o.progresso}%</span>
         </div>
-        <div style="display:flex;align-items:center">${dots}</div>
-        <div style="font-size:12px;color:var(--muted)">${escapeHtmlJor(j.fase_atual)}</div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="flex:1;height:6px;background:var(--surface2);border-radius:100px;overflow:hidden">
-            <div style="height:100%;width:${j.progresso}%;background:#27AE60;border-radius:100px"></div>
-          </div>
-          <span style="font-size:11px;color:var(--muted);white-space:nowrap">${j.progresso}%</span>
-        </div>
-        <div style="font-size:12.5px;color:var(--text);border-top:1px solid var(--border);padding-top:9px">${faltaTexto}</div>
-      </div>`;
+      </td>
+      <td style="color:var(--muted)">${o.responsavel_nome || 'Definir depois'}</td>
+      <td>
+        <span class="badge" style="background:${st.color}22;color:${st.color}"><span class="dot" style="background:${st.color}"></span>${st.label}</span>
+        ${o.atrasado ? `<span class="badge" style="background:#E74C3C22;color:#E74C3C;margin-left:4px">🔴 Atrasado</span>` : ''}
+      </td>
+      <td onclick="event.stopPropagation()"><div class="row-actions">
+        <button class="btn btn-ghost btn-sm" onclick="onbAbrirDetalhe('${o.id}')">Abrir</button>
+        ${editOnb ? `<button class="btn btn-danger btn-sm" onclick="onbExcluirOnboarding('${o.id}','${o.cliente_nome}')">Excluir</button>` : ''}
+      </div></td>
+    </tr>`;
   }).join('');
 }
 
-function abrirNovaJornadaPicker() {
-  const jaTem = new Set(_jorLista.map((j) => j.cliente_id));
-  const disponiveis = (typeof clients !== 'undefined' ? clients : []).filter((c) => !jaTem.has(c.id));
-  const select = document.getElementById('jorNovoClienteSelect');
-  select.innerHTML = disponiveis.length
-    ? disponiveis.map((c) => `<option value="${c.id}">${escapeHtmlJor(c.name)}</option>`).join('')
-    : '<option value="">Nenhum cliente disponível</option>';
-  openModal('modal-jornada-nova');
-}
+// ── Novo onboarding ──────────────────────────────────────────────────
 
-async function jorCriarNova() {
-  const clienteId = document.getElementById('jorNovoClienteSelect').value;
-  if (!clienteId) return;
-  const res = await API.post('/jornada/cliente/' + clienteId, {});
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  closeModal('modal-jornada-nova');
-  toast('Onboarding criado!');
-  await carregarListaJornadas();
-  abrirModalJornada(clienteId);
-}
+function onbHojeISO() { return new Date().toISOString().slice(0, 10); }
 
-// ── Tela 2 e 3: modal de detalhe (abas Etapas / Checklist) ──
+async function onbAbrirNovo() {
+  await onbCarregarUsuarios();
+  await onbCarregarTemplates();
+  const clientesOpts = clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  const templatesOpts = onbTemplates.filter(t => t.ativo)
+    .map(t => `<option value="${t.id}">${t.nome} (${t.total_etapas} etapas · ${t.total_tarefas} tarefas)</option>`).join('');
+  const respOpts = onbUsuarios.filter(isRespUser).map(u => `<option value="${u.id}">${u.nome}</option>`).join('');
 
-async function abrirModalJornada(clienteId) {
-  _jorClienteId = clienteId;
-  _jorData = null;
-  _jorFaseAtiva = 0;
-  _jorEditingEtapaId = null;
-  document.getElementById('jor-modal-title').textContent = 'Onboarding';
-  document.getElementById('jor-link-box').style.display = 'none';
-  document.getElementById('jor-tab-etapas').innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Carregando...</div>';
-  document.getElementById('jor-tab-checklist').innerHTML = '';
-  openModal('modal-jornada');
-
-  const res = await API.get('/jornada/cliente/' + clienteId);
-  if (res.erro || !res) { toast('Erro ao carregar onboarding.'); closeModal('modal-jornada'); return; }
-  _jorData = res;
-  document.getElementById('jor-modal-title').textContent = 'Onboarding — ' + (res.clientes?.nome || '');
-  if (res.token_publico) {
-    document.getElementById('jor-link-box').style.display = 'flex';
-    document.getElementById('jor-link-texto').textContent = window.location.origin + '/jornada/' + res.token_publico;
-  }
-  jorSwitchTab('etapas');
-}
-
-async function jorRecarregar() {
-  const res = await API.get('/jornada/cliente/' + _jorClienteId);
-  if (res && !res.erro) _jorData = res;
-  renderJorEtapasTab();
-  renderJorChecklistTab();
-  carregarListaJornadas();
-}
-
-function jorSwitchTab(tab) {
-  ['etapas', 'checklist'].forEach((t) => {
-    document.getElementById('jor-tab-' + t).style.display = t === tab ? '' : 'none';
-    const btn = document.getElementById('ctab-jor-' + t);
-    if (btn) btn.classList.toggle('ctab-active', t === tab);
-  });
-  if (tab === 'etapas') renderJorEtapasTab();
-  if (tab === 'checklist') renderJorChecklistTab();
-}
-
-function jorCopiarLink() {
-  const texto = document.getElementById('jor-link-texto').textContent;
-  if (!texto) return;
-  navigator.clipboard.writeText(texto);
-  toast('Link copiado!');
-}
-
-async function jorExcluirJornada() {
-  if (!confirm('Excluir este onboarding e todas as suas etapas? Essa ação não pode ser desfeita.')) return;
-  const res = await API.del('/jornada/cliente/' + _jorClienteId);
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  closeModal('modal-jornada');
-  toast('Onboarding excluído.');
-  carregarListaJornadas();
-}
-
-// ── Aba Etapas ───────────────────────────────────────────
-
-function jorSetFaseAtiva(idx) {
-  _jorEditingEtapaId = null;
-  _jorFaseAtiva = idx;
-  renderJorEtapasTab();
-}
-
-function renderJorEtapasTab() {
-  if (!_jorData) return;
-  const fases = _jorData.fases || [];
-  if (_jorFaseAtiva >= fases.length) _jorFaseAtiva = 0;
-
-  const stepperHtml = fases.map((f, i) => {
-    const total = (f.etapas || []).length;
-    const done = (f.etapas || []).filter((e) => e.status === 'concluido').length;
-    const isDone = total > 0 && done === total;
-    const isActive = i === _jorFaseAtiva;
-    return `
-      <div style="display:flex;align-items:center;${i < fases.length - 1 ? 'flex:1' : ''}">
-        <div onclick="jorSetFaseAtiva(${i})" style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;flex-shrink:0">
-          <div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;background:${isDone ? 'var(--primary)' : isActive ? 'var(--surface)' : 'var(--surface2)'};color:${isDone ? '#fff' : isActive ? 'var(--text)' : 'var(--muted)'};border:2px solid ${isActive ? 'var(--primary)' : 'transparent'};box-sizing:border-box">${isDone ? '✓' : i + 1}</div>
-          <div style="font-size:10.5px;color:${isActive ? 'var(--text)' : 'var(--muted)'};font-weight:${isActive ? 600 : 400};white-space:nowrap">${escapeHtmlJor(f.nome)}</div>
-        </div>
-        ${i < fases.length - 1 ? `<div style="flex:1;height:2px;background:${isDone ? 'var(--primary)' : 'var(--border)'};margin:0 4px 18px"></div>` : ''}
-      </div>`;
-  }).join('');
-
-  const faseAtiva = fases[_jorFaseAtiva];
-  const todasEtapas = faseAtiva?.etapas || [];
-  const pendentes = todasEtapas.filter((e) => e.status !== 'concluido');
-  const feitas = todasEtapas.filter((e) => e.status === 'concluido');
-
-  const pendentesHtml = pendentes.map((e) => (_jorEditingEtapaId === e.id ? jorEtapaEditRow(e) : jorEtapaViewRow(e))).join('');
-  const feitasHtml = feitas.map((e) => (_jorEditingEtapaId === e.id ? jorEtapaEditRow(e) : jorEtapaViewRow(e))).join('');
-  const concluidasBlock = !feitas.length ? '' : `
-    <details style="margin-top:8px">
-      <summary style="cursor:pointer;font-size:12px;color:var(--muted);padding:6px 4px;font-weight:600">${feitas.length} concluída${feitas.length !== 1 ? 's' : ''}</summary>
-      <div style="display:flex;flex-direction:column;margin-top:2px">${feitasHtml}</div>
-    </details>`;
-
-  document.getElementById('jor-tab-etapas').innerHTML = `
-    <div style="display:flex;align-items:center;margin-bottom:16px">${stepperHtml}</div>
-    <div style="display:flex;flex-direction:column;max-height:380px;overflow-y:auto">
-      ${pendentesHtml || '<p style="color:var(--muted);font-size:13px;padding:8px 4px">Nenhuma etapa pendente nesta fase. 🎉</p>'}
-      ${concluidasBlock}
+  document.getElementById('onb-novo-body').innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Cliente</label>
+      <select class="form-select" id="onbNovoCliente" onchange="onbNovoClienteChange()">
+        <option value="">Selecione...</option>
+        ${clientesOpts}
+      </select>
     </div>
-    <button class="btn btn-ghost" style="width:100%;margin-top:14px;border:1px dashed var(--border)" onclick="jorAdicionarStep()">+ Adicionar etapa</button>
-  `;
-}
-
-async function jorToggleEtapaConcluida(etapaId, statusAtual) {
-  const novoStatus = statusAtual === 'concluido' ? 'pendente' : 'concluido';
-  const res = await API.patch('/jornada/etapas/' + etapaId, { status: novoStatus });
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  await jorRecarregar();
-}
-
-function jorEtapaViewRow(e) {
-  const isDone = e.status === 'concluido';
-  const isEspecial = e.status === 'andamento' || e.status === 'bloqueado';
-  const meta = JOR_STATUS_META[e.status] || JOR_STATUS_META.pendente;
-  const preview = e.mensagem_modelo ? (e.mensagem_modelo.length > 70 ? e.mensagem_modelo.slice(0, 70) + '…' : e.mensagem_modelo) : '';
-  return `
-    <div style="display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--border)">
-      <button onclick="jorToggleEtapaConcluida('${e.id}', '${e.status}')" title="${isDone ? 'Marcar como pendente' : 'Marcar como concluída'}" style="width:20px;height:20px;flex-shrink:0;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;border:2px solid ${isDone ? 'var(--primary)' : 'var(--border)'};background:${isDone ? 'var(--primary)' : 'transparent'};padding:0">${isDone ? '✓' : ''}</button>
-      <div style="flex:1;min-width:0;${isDone ? 'opacity:.5' : ''}">
-        <div style="font-size:13.5px;${isDone ? 'text-decoration:line-through' : ''}">${escapeHtmlJor(e.titulo)}</div>
-        <div style="font-size:11.5px;color:var(--muted);display:flex;gap:6px;align-items:center;margin-top:1px;flex-wrap:wrap">
-          <span>${escapeHtmlJor(e.responsavel)}${e.prazo_label ? ' · ' + escapeHtmlJor(e.prazo_label) : ''}</span>
-          ${isEspecial ? `<span style="padding:1px 7px;border-radius:100px;font-size:10px;font-weight:600;background:${meta.bg};color:${meta.color}">${meta.label}</span>` : ''}
-        </div>
-        ${preview ? `<div style="font-size:11px;color:var(--muted);font-style:italic;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">💬 "${escapeHtmlJor(preview)}"</div>` : ''}
+    <div class="form-group">
+      <label class="form-label">Modelo</label>
+      <select class="form-select" id="onbNovoModelo">
+        <option value="">Selecione...</option>
+        ${templatesOpts}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Responsável pelo onboarding</label>
+      <select class="form-select" id="onbNovoResponsavel">
+        <option value="">Definir depois</option>
+        ${respOpts}
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Data de início</label>
+        <input class="form-input" type="date" id="onbNovoInicio" value="${onbHojeISO()}">
       </div>
-      ${e.mensagem_modelo ? `<button onclick="jorCopiarMensagem('${e.id}')" title="${e.mensagem_enviada ? 'Copiar de novo' : 'Copiar e marcar como enviada'}" class="btn btn-sm" style="padding:5px 10px;flex-shrink:0;border:none;font-weight:600;background:${e.mensagem_enviada ? '#D1FAE5' : 'var(--surface2)'};color:${e.mensagem_enviada ? '#065F46' : 'var(--text)'}">${e.mensagem_enviada ? '✓ Enviada' : 'Copiar'}</button>` : ''}
-      <button onclick="jorEditStep('${e.id}')" title="Editar" class="btn btn-ghost btn-sm" style="padding:5px 8px;flex-shrink:0;opacity:.6">✎</button>
-    </div>`;
-}
-
-function jorEtapaEditRow(e) {
-  return `
-    <div style="border:1px solid var(--primary);border-radius:9px;padding:12px;background:var(--surface)">
-      <input class="form-input" id="jorEditTitulo" value="${escapeAttrJor(e.titulo)}" style="margin-bottom:8px">
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-        <select class="form-select" id="jorEditResponsavel" style="width:auto">
-          ${JOR_TEAM.map((t) => `<option value="${t}" ${t === e.responsavel ? 'selected' : ''}>${t}</option>`).join('')}
-        </select>
-        <select class="form-select" id="jorEditStatus" style="width:auto">
-          ${Object.entries(JOR_STATUS_META).map(([k, v]) => `<option value="${k}" ${k === e.status ? 'selected' : ''}>${v.label}</option>`).join('')}
-        </select>
-        <input class="form-input" id="jorEditPrazo" placeholder="Prazo (ex: Dia 25)" value="${escapeAttrJor(e.prazo_label || '')}" style="width:150px">
+      <div class="form-group">
+        <label class="form-label">Previsão de conclusão</label>
+        <input class="form-input" type="date" id="onbNovoPrevisao">
       </div>
-      <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Mensagem pronta (opcional — use {{cliente}} pro nome do cliente)</label>
-      <textarea class="form-input" id="jorEditMensagem" rows="3" placeholder="Texto pra copiar e colar no WhatsApp" style="margin-bottom:10px;resize:vertical;font-family:inherit">${escapeHtmlJor(e.mensagem_modelo || '')}</textarea>
-      <div style="display:flex;justify-content:flex-end;gap:8px">
-        <button class="btn btn-danger btn-sm" onclick="jorRemoverStep('${e.id}')" style="margin-right:auto">Remover</button>
-        <button class="btn btn-ghost btn-sm" onclick="jorCancelEdit()">Cancelar</button>
-        <button class="btn btn-primary btn-sm" onclick="jorSalvarStep('${e.id}')">Salvar</button>
-      </div>
-    </div>`;
-}
-
-function jorEditStep(etapaId) { _jorEditingEtapaId = etapaId; renderJorEtapasTab(); }
-function jorCancelEdit() { _jorEditingEtapaId = null; renderJorEtapasTab(); }
-
-async function jorSalvarStep(etapaId) {
-  const titulo = document.getElementById('jorEditTitulo').value.trim();
-  const responsavel = document.getElementById('jorEditResponsavel').value;
-  const status = document.getElementById('jorEditStatus').value;
-  const prazo_label = document.getElementById('jorEditPrazo').value.trim();
-  const mensagem_modelo = document.getElementById('jorEditMensagem').value.trim();
-  if (!titulo) { toast('Título não pode ficar vazio.'); return; }
-  const res = await API.patch('/jornada/etapas/' + etapaId, { titulo, responsavel, status, prazo_label, mensagem_modelo: mensagem_modelo || null });
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  _jorEditingEtapaId = null;
-  await jorRecarregar();
-  toast('Etapa atualizada!');
-}
-
-async function jorRemoverStep(etapaId) {
-  if (!confirm('Remover esta etapa?')) return;
-  const res = await API.del('/jornada/etapas/' + etapaId);
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  _jorEditingEtapaId = null;
-  await jorRecarregar();
-  toast('Etapa removida.');
-}
-
-async function jorAdicionarStep() {
-  const fase = (_jorData.fases || [])[_jorFaseAtiva];
-  if (!fase) return;
-  const res = await API.post('/jornada/fases/' + fase.id + '/etapas', { titulo: 'Nova etapa', responsavel: JOR_TEAM[0] });
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  await jorRecarregar();
-  jorEditStep(res.id);
-}
-
-async function jorCopiarMensagem(etapaId) {
-  const fase = (_jorData.fases || [])[_jorFaseAtiva];
-  const etapa = (fase?.etapas || []).find((e) => e.id === etapaId);
-  if (!etapa || !etapa.mensagem_modelo) return;
-  const nome = _jorData.clientes?.nome || '';
-  const texto = etapa.mensagem_modelo.replace(/\{\{cliente\}\}/g, nome);
-  navigator.clipboard.writeText(texto);
-  toast('Mensagem copiada!');
-  if (!etapa.mensagem_enviada) {
-    await API.patch('/jornada/etapas/' + etapaId, { mensagem_enviada: true });
-    await jorRecarregar();
-  }
-}
-
-// ── Aba Checklist de encerramento ───────────────────────
-
-function renderJorChecklistTab() {
-  if (!_jorData) return;
-  const grupos = {
-    contrato_estrutura:  'Contrato e estrutura',
-    estrategia:           'Estratégia',
-    ambientacao:           'Ambientação do cliente',
-    primeiro_calendario:   'Primeiro calendário',
-    conferencia_final:     'Conferência final',
-  };
-  const itens = _jorData.checklist || [];
-  const porGrupo = {};
-  itens.forEach((i) => { (porGrupo[i.grupo] = porGrupo[i.grupo] || []).push(i); });
-
-  const html = Object.entries(grupos).map(([key, label]) => {
-    const lista = porGrupo[key] || [];
-    if (!lista.length) return '';
-    return `
-      <div style="margin-bottom:16px">
-        <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);padding:6px 0 4px;border-bottom:1px solid var(--border);margin-bottom:6px">${label}</div>
-        ${lista.map((i) => `
-          <label style="display:flex;align-items:center;gap:10px;padding:7px 0;font-size:13.5px;cursor:pointer">
-            <input type="checkbox" ${i.concluido ? 'checked' : ''} onchange="jorToggleChecklist('${i.id}', this.checked)">
-            ${escapeHtmlJor(i.label)}
-          </label>`).join('')}
-      </div>`;
-  }).join('');
-
-  const total = itens.length;
-  const done = itens.filter((i) => i.concluido).length;
-  const jaConcluida = _jorData.status === 'concluido';
-
-  document.getElementById('jor-tab-checklist').innerHTML = `
-    <div style="max-height:380px;overflow-y:auto;margin-bottom:16px">${html}</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:12px">${done} de ${total} itens marcados</div>
+    </div>
     <div class="form-actions">
-      <button class="btn btn-danger btn-sm" onclick="jorExcluirJornada()" style="margin-right:auto">Excluir onboarding</button>
-      ${jaConcluida
-        ? `<span style="font-size:12px;color:#065F46;font-weight:600">✓ Onboarding concluído</span>`
-        : `<button class="btn btn-primary" ${done < total ? 'disabled' : ''} style="${done < total ? 'opacity:.5;cursor:not-allowed' : 'background:#27AE60;border-color:#27AE60'}" onclick="jorConcluirJornada()">Concluir onboarding</button>`}
+      <button class="btn btn-ghost" onclick="closeModal('modal-onboarding-novo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="onbCriarOnboarding()">Criar onboarding</button>
     </div>
+  `;
+  openModal('modal-onboarding-novo');
+}
+
+function onbNovoClienteChange() {
+  const cId = document.getElementById('onbNovoCliente').value;
+  const cliente = clients.find(c => c.id === cId);
+  const sel = document.getElementById('onbNovoResponsavel');
+  if (cliente?.responsavelId && sel) sel.value = cliente.responsavelId;
+}
+
+async function onbCriarOnboarding() {
+  const cliente_id = document.getElementById('onbNovoCliente').value;
+  const template_id = document.getElementById('onbNovoModelo').value;
+  const responsavel_id = document.getElementById('onbNovoResponsavel').value || null;
+  const data_inicio = document.getElementById('onbNovoInicio').value || onbHojeISO();
+  const previsao_conclusao = document.getElementById('onbNovoPrevisao').value || null;
+  if (!cliente_id || !template_id) { toast('Selecione o cliente e o modelo.'); return; }
+
+  const res = await API.post('/onboarding', { cliente_id, template_id, responsavel_id, data_inicio, previsao_conclusao });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  closeModal('modal-onboarding-novo');
+  toast('Onboarding criado!');
+  await renderOnboardingVisaoGeral();
+  onbAbrirDetalhe(res.id);
+}
+
+async function onbExcluirOnboarding(id, nome) {
+  if (!confirm(`Excluir o onboarding de "${nome}"? Essa ação não pode ser desfeita.`)) return;
+  const res = await API.del('/onboarding/' + id);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast('Onboarding excluído.');
+  renderOnboardingVisaoGeral();
+}
+
+// ── Detalhe do onboarding do cliente ─────────────────────────────────
+
+async function onbAbrirDetalhe(id) {
+  await onbCarregarUsuarios();
+  const res = await API.get('/onboarding/' + id);
+  if (res.erro || !res) { toast('Erro ao carregar onboarding.'); return; }
+  _onbData = res;
+  document.getElementById('onb-modal-title').textContent = 'Onboarding — ' + (res.cliente_nome || '');
+  onbSwitchTab('etapas');
+  onbRenderResumo();
+  onbRenderEtapas();
+  onbRenderAtividades();
+  openModal('modal-onboarding');
+}
+
+async function onbRecarregar() {
+  if (!_onbData) return;
+  const res = await API.get('/onboarding/' + _onbData.id);
+  if (res.erro) return;
+  _onbData = res;
+  onbRenderResumo();
+  onbRenderEtapas();
+  onbRenderAtividades();
+  renderOnboardingVisaoGeral();
+}
+
+function onbSwitchTab(tab) {
+  document.querySelectorAll('#modal-onboarding .ctab').forEach(b => b.classList.remove('ctab-active'));
+  document.getElementById('ctab-onb-' + tab).classList.add('ctab-active');
+  document.getElementById('onb-tab-etapas').style.display = tab === 'etapas' ? '' : 'none';
+  document.getElementById('onb-tab-atividades').style.display = tab === 'atividades' ? '' : 'none';
+}
+
+function onbRenderResumo() {
+  const o = _onbData;
+  const st = onbOnboardingStatusInfo(o.status);
+  const editOnb = canEdit('onboarding');
+  document.getElementById('onb-modal-resumo').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+      <span class="badge" style="background:${st.color}22;color:${st.color}"><span class="dot" style="background:${st.color}"></span>${st.label}</span>
+      ${o.tarefas_atrasadas > 0 && o.status !== 'concluido' ? `<span class="badge" style="background:#E74C3C22;color:#E74C3C">🔴 ${o.tarefas_atrasadas} tarefa${o.tarefas_atrasadas!==1?'s':''} atrasada${o.tarefas_atrasadas!==1?'s':''}</span>` : ''}
+      <span style="font-size:12px;color:var(--muted)">${o.tarefas_concluidas} de ${o.total_tarefas} tarefas concluídas</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div class="progress-track"><div class="progress-fill ${o.progresso>=100?'done':''}" style="width:${o.progresso}%"></div></div>
+      <span style="font-size:13px;font-weight:700;flex-shrink:0">${o.progresso}%</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;font-size:12px;margin-bottom:6px">
+      <div><div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px">Início</div>${onbFmtData(o.data_inicio)}</div>
+      <div><div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px">Previsão</div>${onbFmtData(o.previsao_conclusao)}</div>
+      <div><div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px">Responsável</div>${o.responsavel_nome || 'Definir depois'}</div>
+    </div>
+    ${editOnb ? `<div class="row-actions" style="margin-top:8px">
+      <button class="btn btn-ghost btn-sm" onclick="onbEditarOnboarding()">Editar</button>
+      ${o.status !== 'concluido' ? `<button class="btn btn-primary btn-sm" onclick="onbConcluirOnboarding()">✓ Concluir onboarding</button>` : `<button class="btn btn-ghost btn-sm" onclick="onbReabrirOnboarding()">Reabrir</button>`}
+    </div>` : ''}
   `;
 }
 
-async function jorToggleChecklist(itemId, checked) {
-  const res = await API.patch('/jornada/checklist/' + itemId, { concluido: checked });
-  if (res.erro) { toast('Erro: ' + res.erro); return; }
-  await jorRecarregar();
+function onbEditarOnboarding() {
+  const o = _onbData;
+  const respOpts = onbUsuarios.filter(isRespUser).map(u => `<option value="${u.id}" ${o.responsavel_id===u.id?'selected':''}>${u.nome}</option>`).join('');
+  document.getElementById('formTitle').textContent = 'Editar onboarding';
+  document.getElementById('formBody').innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Responsável</label>
+      <select class="form-select" id="fOnbResponsavel">
+        <option value="">Definir depois</option>
+        ${respOpts}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Previsão de conclusão</label>
+      <input class="form-input" type="date" id="fOnbPrevisao" value="${o.previsao_conclusao || ''}">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="onbSalvarEdicao()">Salvar</button>
+    </div>
+  `;
+  openModal('formModal');
 }
 
-async function jorConcluirJornada() {
-  if (!confirm('Marcar este onboarding como concluído?')) return;
-  const res = await API.patch('/jornada/' + _jorData.id + '/status', { status: 'concluido' });
+async function onbSalvarEdicao() {
+  const responsavel_id = document.getElementById('fOnbResponsavel').value || null;
+  const previsao_conclusao = document.getElementById('fOnbPrevisao').value || null;
+  const res = await API.patch('/onboarding/' + _onbData.id, { responsavel_id, previsao_conclusao });
   if (res.erro) { toast('Erro: ' + res.erro); return; }
-  await jorRecarregar();
+  closeModal('formModal');
+  toast('Onboarding atualizado!');
+  onbRecarregar();
+}
+
+async function onbConcluirOnboarding() {
+  if (!confirm('Marcar este onboarding como concluído?')) return;
+  const res = await API.patch('/onboarding/' + _onbData.id, { status: 'concluido' });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
   toast('Onboarding concluído! 🎉');
+  onbRecarregar();
+}
+
+async function onbReabrirOnboarding() {
+  const res = await API.patch('/onboarding/' + _onbData.id, { status: 'em_andamento' });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast('Onboarding reaberto.');
+  onbRecarregar();
+}
+
+// ── Etapas / tarefas do onboarding do cliente ────────────────────────
+
+function onbRenderEtapas() {
+  const editOnb = canEdit('onboarding');
+  const etapas = _onbData.etapas || [];
+  const el = document.getElementById('onb-tab-etapas');
+  let html = etapas.map(e => `
+    <div class="onb-stage-block" data-onb-etapa="${e.id}"
+      ${editOnb ? `draggable="true" ondragstart="onbEtapaDragStart(event,'${e.id}')" ondragover="onbEtapaDragOver(event,'${e.id}')" ondragleave="onbEtapaDragLeave(event)" ondrop="onbEtapaDrop(event,'${e.id}')" ondragend="onbEtapaDragEnd(event)"` : ''}>
+      <div class="onb-stage-head">
+        ${editOnb ? `<span class="onb-drag-handle">⋮⋮</span>` : ''}
+        <input class="onb-stage-title" value="${e.nome}" style="border:none;background:transparent;font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:var(--text);flex:1;min-width:0;outline:none"
+          ${editOnb ? `onblur="onbRenomearEtapa('${e.id}', this.value)"` : 'readonly'}>
+        <span class="onb-stage-sub">${e.tarefas_concluidas}/${e.total_tarefas} · ${e.progresso}%</span>
+        ${editOnb ? `<button class="btn btn-ghost btn-sm" onclick="onbExcluirEtapa('${e.id}','${e.nome}')" title="Excluir etapa">🗑</button>` : ''}
+      </div>
+      <div style="padding:10px 16px 0"><div class="progress-track sm"><div class="progress-fill ${e.progresso>=100?'done':''}" style="width:${e.progresso}%"></div></div></div>
+      <div class="onb-stage-body">
+        ${(e.tarefas || []).map(t => onbTarefaRowHtml(t, editOnb)).join('')}
+        ${editOnb ? `<div style="display:flex;gap:8px;padding:8px 10px">
+          <input class="form-input" type="text" placeholder="+ Adicionar tarefa" style="font-size:12px;padding:7px 10px"
+            id="onbNovaTarefaInput-${e.id}" onkeydown="if(event.key==='Enter')onbAdicionarTarefa('${e.id}')">
+          <button class="btn btn-ghost btn-sm" onclick="onbAdicionarTarefa('${e.id}')">Adicionar</button>
+        </div>` : ''}
+      </div>
+    </div>
+  `).join('');
+
+  if (editOnb) {
+    html += `
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <input class="form-input" type="text" placeholder="Nome da nova etapa" id="onbNovaEtapaInput" onkeydown="if(event.key==='Enter')onbAdicionarEtapa()">
+        <button class="btn btn-ghost" onclick="onbAdicionarEtapa()">+ Adicionar etapa</button>
+      </div>`;
+  }
+  if (!etapas.length) {
+    html = `<div class="empty-state">Nenhuma etapa cadastrada.${editOnb ? ' Adicione a primeira etapa abaixo.' : ''}</div>` + html;
+  }
+  el.innerHTML = html;
+}
+
+function onbTarefaRowHtml(t, editOnb) {
+  const hoje = new Date().toISOString().slice(0, 10);
+  const atrasada = t.status !== 'concluida' && t.prazo && t.prazo < hoje;
+  const responsavel = t.responsavel?.nome || 'Definir depois';
+  const done = t.status === 'concluida';
+  return `
+    <div class="onb-task-row" data-onb-tarefa="${t.id}"
+      ${editOnb ? `draggable="true" ondragstart="onbTarefaDragStart(event,'${t.id}','${t.etapa_id}')" ondragover="onbTarefaDragOver(event,'${t.id}')" ondragleave="onbTarefaDragLeave(event)" ondrop="onbTarefaDrop(event,'${t.id}')" ondragend="onbTarefaDragEnd(event)"` : ''}>
+      ${editOnb ? `<span class="onb-drag-handle">⋮⋮</span>` : ''}
+      <div class="onb-task-check ${done?'done':''}" ${editOnb ? `onclick="onbToggleTarefa('${t.id}','${t.status}')"` : ''}>
+        <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="onb-task-info" onclick="onbAbrirTarefa('${t.id}')">
+        <div class="onb-task-title ${done?'done':''}">${t.titulo}${t.obrigatoria ? '' : ' <span style="color:var(--muted);font-weight:400">(opcional)</span>'}</div>
+        <div class="onb-task-meta">
+          <span>${responsavel}</span>
+          ${t.prazo ? `<span>· ${onbFmtData(t.prazo)}</span>` : ''}
+          ${atrasada ? `<span style="color:#E74C3C;font-weight:600">🔴 Atrasada</span>` : ''}
+        </div>
+      </div>
+      ${editOnb ? `<button class="btn btn-ghost btn-sm" onclick="onbExcluirTarefa('${t.id}')" title="Excluir">🗑</button>` : ''}
+    </div>`;
+}
+
+async function onbToggleTarefa(tarefaId, status) {
+  const novoStatus = status === 'concluida' ? 'pendente' : 'concluida';
+  const res = await API.patch('/onboarding/tarefas/' + tarefaId, { status: novoStatus });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  onbRecarregar();
+}
+
+function onbAbrirTarefa(tarefaId) {
+  let tarefa = null;
+  for (const e of (_onbData.etapas || [])) { const f = (e.tarefas || []).find(x => x.id === tarefaId); if (f) tarefa = f; }
+  if (!tarefa) return;
+  const respOpts = onbUsuarios.filter(isRespUser).map(u => `<option value="${u.id}" ${tarefa.responsavel_usuario_id===u.id?'selected':''}>${u.nome}</option>`).join('');
+  document.getElementById('formTitle').textContent = 'Editar tarefa';
+  document.getElementById('formBody').innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Título</label>
+      <input class="form-input" type="text" id="fTarefaTitulo" value="${tarefa.titulo}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descrição</label>
+      <textarea class="form-textarea" id="fTarefaDescricao">${tarefa.descricao || ''}</textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Responsável</label>
+        <select class="form-select" id="fTarefaResponsavel">
+          <option value="">Definir depois</option>
+          ${respOpts}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-select" id="fTarefaStatus">
+          <option value="pendente" ${tarefa.status==='pendente'?'selected':''}>Pendente</option>
+          <option value="andamento" ${tarefa.status==='andamento'?'selected':''}>Em andamento</option>
+          <option value="concluida" ${tarefa.status==='concluida'?'selected':''}>Concluída</option>
+          <option value="bloqueada" ${tarefa.status==='bloqueada'?'selected':''}>Bloqueada</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Prazo</label>
+        <input class="form-input" type="date" id="fTarefaPrazo" value="${tarefa.prazo || ''}">
+      </div>
+      <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:10px;gap:8px">
+        <input type="checkbox" id="fTarefaObrigatoria" ${tarefa.obrigatoria?'checked':''} style="width:16px;height:16px">
+        <label for="fTarefaObrigatoria" style="font-size:13px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--text);margin:0">Obrigatória</label>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="onbSalvarTarefa('${tarefaId}')">Salvar</button>
+    </div>
+  `;
+  openModal('formModal');
+}
+
+async function onbSalvarTarefa(tarefaId) {
+  const titulo = document.getElementById('fTarefaTitulo').value.trim();
+  if (!titulo) { toast('Informe o título da tarefa.'); return; }
+  const body = {
+    titulo,
+    descricao: document.getElementById('fTarefaDescricao').value || null,
+    responsavel_usuario_id: document.getElementById('fTarefaResponsavel').value || null,
+    status: document.getElementById('fTarefaStatus').value,
+    prazo: document.getElementById('fTarefaPrazo').value || null,
+    obrigatoria: document.getElementById('fTarefaObrigatoria').checked,
+  };
+  const res = await API.patch('/onboarding/tarefas/' + tarefaId, body);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  closeModal('formModal');
+  toast('Tarefa atualizada!');
+  onbRecarregar();
+}
+
+async function onbAdicionarTarefa(etapaId) {
+  const input = document.getElementById('onbNovaTarefaInput-' + etapaId);
+  const titulo = input.value.trim();
+  if (!titulo) return;
+  const res = await API.post('/onboarding/etapas/' + etapaId + '/tarefas', { titulo });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  input.value = '';
+  onbRecarregar();
+}
+
+async function onbExcluirTarefa(tarefaId) {
+  if (!confirm('Excluir esta tarefa?')) return;
+  const res = await API.del('/onboarding/tarefas/' + tarefaId);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast('Tarefa excluída.');
+  onbRecarregar();
+}
+
+async function onbAdicionarEtapa() {
+  const input = document.getElementById('onbNovaEtapaInput');
+  const nome = input.value.trim() || 'Nova etapa';
+  const res = await API.post('/onboarding/' + _onbData.id + '/etapas', { nome });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  input.value = '';
+  onbRecarregar();
+}
+
+async function onbRenomearEtapa(etapaId, nome) {
+  nome = nome.trim();
+  if (!nome) return;
+  await API.patch('/onboarding/etapas/' + etapaId, { nome });
+}
+
+async function onbExcluirEtapa(etapaId, nome) {
+  if (!confirm(`Excluir a etapa "${nome}" e todas as suas tarefas?`)) return;
+  const res = await API.del('/onboarding/etapas/' + etapaId);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast('Etapa excluída.');
+  onbRecarregar();
+}
+
+function onbRenderAtividades() {
+  const atividades = _onbData.atividades || [];
+  const el = document.getElementById('onb-tab-atividades');
+  if (!atividades.length) {
+    el.innerHTML = `<div class="empty-state">Nenhuma atividade registrada ainda.</div>`;
+    return;
+  }
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:2px">
+    ${atividades.map(a => {
+      const d = new Date(a.criado_em);
+      const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      const data = d.toLocaleDateString('pt-BR');
+      return `<div class="demand-row" style="cursor:default">
+        <div class="demand-info">
+          <div class="demand-date">${data} · ${hora}</div>
+          <div class="demand-desc" style="white-space:normal">${a.usuario_nome ? `<strong>${a.usuario_nome}</strong> · ` : ''}${a.descricao}</div>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+// ── Drag & drop: etapas do onboarding do cliente ─────────────────────
+
+let onbEtapaDragId = null;
+function onbEtapaDragStart(e, id) {
+  onbEtapaDragId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => { const el = document.querySelector(`[data-onb-etapa="${id}"]`); if (el) el.style.opacity = '0.4'; }, 0);
+}
+function onbEtapaDragOver(e, id) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  if (onbEtapaDragId && onbEtapaDragId !== id) {
+    const el = document.querySelector(`[data-onb-etapa="${id}"]`);
+    if (el) el.style.borderColor = 'var(--primary)';
+  }
+}
+function onbEtapaDragLeave(e) { if (e.currentTarget) e.currentTarget.style.borderColor = ''; }
+async function onbEtapaDrop(e, id) {
+  e.preventDefault();
+  if (!onbEtapaDragId || onbEtapaDragId === id) return;
+  const el = document.querySelector(`[data-onb-etapa="${id}"]`);
+  if (el) el.style.borderColor = '';
+  const etapas = _onbData.etapas;
+  const fromIdx = etapas.findIndex(x => x.id === onbEtapaDragId);
+  const toIdx = etapas.findIndex(x => x.id === id);
+  if (fromIdx === -1 || toIdx === -1) return;
+  const novo = [...etapas];
+  const [moved] = novo.splice(fromIdx, 1);
+  novo.splice(toIdx, 0, moved);
+  _onbData.etapas = novo;
+  onbRenderEtapas();
+  for (let i = 0; i < novo.length; i++) await API.patch('/onboarding/etapas/' + novo[i].id, { ordem: i });
+  onbEtapaDragId = null;
+}
+function onbEtapaDragEnd(e) {
+  document.querySelectorAll('[data-onb-etapa]').forEach(el => { el.style.opacity = ''; el.style.borderColor = ''; });
+  onbEtapaDragId = null;
+}
+
+// ── Drag & drop: tarefas do onboarding do cliente (dentro da etapa) ──
+
+let onbTarefaDragId = null;
+let onbTarefaDragEtapaId = null;
+function onbTarefaDragStart(e, id, etapaId) {
+  onbTarefaDragId = id;
+  onbTarefaDragEtapaId = etapaId;
+  e.stopPropagation();
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => { const el = document.querySelector(`[data-onb-tarefa="${id}"]`); if (el) el.style.opacity = '0.4'; }, 0);
+}
+function onbTarefaDragOver(e, id) {
+  e.preventDefault();
+  e.stopPropagation();
+  e.dataTransfer.dropEffect = 'move';
+  if (onbTarefaDragId && onbTarefaDragId !== id) {
+    const el = document.querySelector(`[data-onb-tarefa="${id}"]`);
+    if (el) el.style.borderColor = 'var(--primary)';
+  }
+}
+function onbTarefaDragLeave(e) { e.stopPropagation(); if (e.currentTarget) e.currentTarget.style.borderColor = ''; }
+async function onbTarefaDrop(e, id) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (!onbTarefaDragId || onbTarefaDragId === id) return;
+  const el = document.querySelector(`[data-onb-tarefa="${id}"]`);
+  if (el) el.style.borderColor = '';
+  const etapa = _onbData.etapas.find(x => x.id === onbTarefaDragEtapaId);
+  if (!etapa) return;
+  const tarefas = etapa.tarefas;
+  const fromIdx = tarefas.findIndex(x => x.id === onbTarefaDragId);
+  const toIdx = tarefas.findIndex(x => x.id === id);
+  if (fromIdx === -1 || toIdx === -1) return;
+  const novo = [...tarefas];
+  const [moved] = novo.splice(fromIdx, 1);
+  novo.splice(toIdx, 0, moved);
+  etapa.tarefas = novo;
+  onbRenderEtapas();
+  for (let i = 0; i < novo.length; i++) await API.patch('/onboarding/tarefas/' + novo[i].id, { ordem: i });
+  onbTarefaDragId = null;
+}
+function onbTarefaDragEnd(e) {
+  e.stopPropagation();
+  document.querySelectorAll('[data-onb-tarefa]').forEach(el => { el.style.opacity = ''; el.style.borderColor = ''; });
+  onbTarefaDragId = null;
+}
+
+// ── Modelos: lista ────────────────────────────────────────────────────
+
+async function renderOnboardingModelos() {
+  await onbCarregarUsuarios();
+  await onbCarregarTemplates();
+  if (_onbModeloEditando) {
+    const res = await API.get('/onboarding/templates/' + _onbModeloEditando);
+    if (res.erro) { toast('Erro ao carregar modelo.'); _onbModeloEditando = null; return renderOnboardingModelos(); }
+    _onbModeloData = res;
+    onbRenderModeloEditor();
+  } else {
+    onbRenderModelosLista();
+  }
+}
+
+function onbRenderModelosLista() {
+  const editM = canEdit('onboarding_modelos');
+  const el = document.getElementById('onbModelosContent');
+  if (!onbTemplates.length) {
+    el.innerHTML = `<div class="empty-state">Nenhum modelo cadastrado.${editM ? ' Use o botão "Criar modelo" no topo da página.' : ''}</div>`;
+    return;
+  }
+  el.innerHTML = `<div class="clients-grid">
+    ${onbTemplates.map(t => `
+      <div class="client-card">
+        <div class="card-head">
+          <span class="card-name">${t.nome}</span>
+          ${!t.ativo ? `<span class="badge" style="background:#8C887822;color:#8C8878">Inativo</span>` : ''}
+        </div>
+        <div class="card-body" style="padding:14px 16px 16px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px">${t.total_etapas} etapa${t.total_etapas!==1?'s':''} · ${t.total_tarefas} tarefa${t.total_tarefas!==1?'s':''}</div>
+          <div class="row-actions">
+            <button class="btn btn-ghost btn-sm" onclick="onbModeloAbrirEditor('${t.id}')">Editar</button>
+            ${editM ? `<button class="btn btn-ghost btn-sm" onclick="onbModeloDuplicar('${t.id}')">Duplicar</button>
+            <button class="btn btn-ghost btn-sm" onclick="onbModeloToggleAtivo('${t.id}',${t.ativo})">${t.ativo?'Desativar':'Ativar'}</button>
+            <button class="btn btn-danger btn-sm" onclick="onbModeloExcluir('${t.id}','${t.nome}')">Excluir</button>` : ''}
+          </div>
+        </div>
+      </div>
+    `).join('')}
+  </div>`;
+}
+
+function onbModeloNovo() {
+  document.getElementById('formTitle').textContent = 'Criar modelo';
+  document.getElementById('formBody').innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Nome do modelo</label>
+      <input class="form-input" type="text" id="fModeloNome" placeholder="Ex: Onboarding Premium">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descrição (opcional)</label>
+      <textarea class="form-textarea" id="fModeloDescricao"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="onbModeloSalvarNovo()">Criar</button>
+    </div>
+  `;
+  openModal('formModal');
+}
+
+async function onbModeloSalvarNovo() {
+  const nome = document.getElementById('fModeloNome').value.trim();
+  if (!nome) { toast('Informe o nome do modelo.'); return; }
+  const descricao = document.getElementById('fModeloDescricao').value || null;
+  const res = await API.post('/onboarding/templates', { nome, descricao });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  closeModal('formModal');
+  toast('Modelo criado!');
+  _onbModeloEditando = res.id;
+  renderOnboardingModelos();
+}
+
+async function onbModeloDuplicar(id) {
+  const res = await API.post('/onboarding/templates/' + id + '/duplicar', {});
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast('Modelo duplicado!');
+  renderOnboardingModelos();
+}
+
+async function onbModeloToggleAtivo(id, ativo) {
+  const res = await API.patch('/onboarding/templates/' + id, { ativo: !ativo });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  renderOnboardingModelos();
+}
+
+async function onbModeloExcluir(id, nome) {
+  if (!confirm(`Excluir o modelo "${nome}"? Onboardings de clientes já criados a partir dele não são afetados.`)) return;
+  const res = await API.del('/onboarding/templates/' + id);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast('Modelo excluído.');
+  renderOnboardingModelos();
+}
+
+function onbModeloAbrirEditor(id) {
+  _onbModeloEditando = id;
+  renderOnboardingModelos();
+}
+
+function onbModeloVoltarLista() {
+  _onbModeloEditando = null;
+  _onbModeloData = null;
+  renderOnboardingModelos();
+}
+
+// ── Modelos: editor (etapas / tarefas) ────────────────────────────────
+
+function onbRenderModeloEditor() {
+  const t = _onbModeloData;
+  const el = document.getElementById('onbModelosContent');
+  const totalTarefas = (t.etapas || []).reduce((acc, e) => acc + (e.tarefas || []).length, 0);
+  const editM = canEdit('onboarding_modelos');
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+      <button class="btn btn-ghost btn-sm" onclick="onbModeloVoltarLista()">← Voltar</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;flex-wrap:wrap">
+      <input class="form-input" type="text" value="${t.nome}" style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;max-width:340px"
+        ${editM ? `onblur="onbTplRenomear(this.value)"` : 'readonly'}>
+      ${!t.ativo ? `<span class="badge" style="background:#8C887822;color:#8C8878">Inativo</span>` : `<span class="badge" style="background:#27AE6022;color:#27AE60">Ativo</span>`}
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:20px">${(t.etapas||[]).length} etapas · ${totalTarefas} tarefas</div>
+    <div id="onbTplEtapas"></div>
+  `;
+  onbRenderTplEtapas();
+}
+
+function onbRenderTplEtapas() {
+  const editM = canEdit('onboarding_modelos');
+  const etapas = _onbModeloData.etapas || [];
+  const el = document.getElementById('onbTplEtapas');
+  let html = etapas.map((e, idx) => `
+    <div class="onb-stage-block" data-onb-tpl-etapa="${e.id}"
+      ${editM ? `draggable="true" ondragstart="onbTplEtapaDragStart(event,'${e.id}')" ondragover="onbTplEtapaDragOver(event,'${e.id}')" ondragleave="onbTplEtapaDragLeave(event)" ondrop="onbTplEtapaDrop(event,'${e.id}')" ondragend="onbTplEtapaDragEnd(event)"` : ''}>
+      <div class="onb-stage-head">
+        ${editM ? `<span class="onb-drag-handle">⋮⋮</span>` : ''}
+        <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:12px;color:var(--muted);flex-shrink:0">${idx+1}.</span>
+        <input class="onb-stage-title" value="${e.nome}" style="border:none;background:transparent;font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:var(--text);flex:1;min-width:0;outline:none"
+          ${editM ? `onblur="onbTplRenomearEtapa('${e.id}', this.value)"` : 'readonly'}>
+        <span class="onb-stage-sub">${(e.tarefas||[]).length} tarefa${(e.tarefas||[]).length!==1?'s':''}</span>
+        ${editM ? `<button class="btn btn-ghost btn-sm" onclick="onbTplExcluirEtapa('${e.id}','${e.nome}')" title="Excluir etapa">🗑</button>` : ''}
+      </div>
+      <div class="onb-stage-body">
+        ${(e.tarefas || []).map(tk => onbTplTarefaRowHtml(tk, editM)).join('')}
+        ${editM ? `<div style="display:flex;gap:8px;padding:8px 10px">
+          <input class="form-input" type="text" placeholder="+ Adicionar tarefa" style="font-size:12px;padding:7px 10px"
+            id="onbTplNovaTarefaInput-${e.id}" onkeydown="if(event.key==='Enter')onbTplAdicionarTarefa('${e.id}')">
+          <button class="btn btn-ghost btn-sm" onclick="onbTplAdicionarTarefa('${e.id}')">Adicionar</button>
+        </div>` : ''}
+      </div>
+    </div>
+  `).join('');
+
+  if (editM) {
+    html += `
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <input class="form-input" type="text" placeholder="Nome da nova etapa" id="onbTplNovaEtapaInput" onkeydown="if(event.key==='Enter')onbTplAdicionarEtapa()">
+        <button class="btn btn-ghost" onclick="onbTplAdicionarEtapa()">+ Adicionar etapa</button>
+      </div>`;
+  }
+  if (!etapas.length) {
+    html = `<div class="empty-state">Nenhuma etapa cadastrada.${editM ? ' Adicione a primeira etapa abaixo.' : ''}</div>` + html;
+  }
+  el.innerHTML = html;
+}
+
+function onbTplResponsavelLabel(t) {
+  if (t.responsavel_tipo === 'pessoa') {
+    const u = onbUsuarios.find(u => u.id === t.responsavel_usuario_id);
+    return u ? u.nome : 'Pessoa a definir';
+  }
+  if (t.responsavel_tipo === 'cliente_responsavel') return 'Responsável pelo cliente';
+  return 'Definir depois';
+}
+
+function onbTplTarefaRowHtml(t, editM) {
+  return `
+    <div class="onb-task-row" data-onb-tpl-tarefa="${t.id}"
+      ${editM ? `draggable="true" ondragstart="onbTplTarefaDragStart(event,'${t.id}','${t.etapa_id}')" ondragover="onbTplTarefaDragOver(event,'${t.id}')" ondragleave="onbTplTarefaDragLeave(event)" ondrop="onbTplTarefaDrop(event,'${t.id}')" ondragend="onbTplTarefaDragEnd(event)"` : ''}>
+      ${editM ? `<span class="onb-drag-handle">⋮⋮</span>` : ''}
+      <span title="${t.obrigatoria ? 'Obrigatória' : 'Opcional — clique para alternar'}" style="cursor:${editM?'pointer':'default'};font-size:14px;flex-shrink:0" ${editM ? `onclick="onbTplToggleObrigatoria('${t.id}',${t.obrigatoria})"` : ''}>${t.obrigatoria ? '✓' : '○'}</span>
+      <div class="onb-task-info" onclick="onbTplAbrirTarefa('${t.id}')">
+        <div class="onb-task-title">${t.titulo}</div>
+        <div class="onb-task-meta">
+          <span>${onbTplResponsavelLabel(t)}</span>
+          ${t.prazo_tipo === 'dias_apos_inicio_onboarding' && t.prazo_dias != null ? `<span>· ${t.prazo_dias}d após início</span>` : ''}
+        </div>
+      </div>
+      ${editM ? `<button class="btn btn-ghost btn-sm" onclick="onbTplExcluirTarefa('${t.id}')" title="Excluir">🗑</button>` : ''}
+    </div>`;
+}
+
+function onbTplAbrirTarefa(tarefaId) {
+  let tarefa = null;
+  for (const e of (_onbModeloData.etapas || [])) { const f = (e.tarefas || []).find(x => x.id === tarefaId); if (f) tarefa = f; }
+  if (!tarefa) return;
+  const pessoaOpts = onbUsuarios.filter(isRespUser).map(u => `<option value="${u.id}" ${tarefa.responsavel_usuario_id===u.id?'selected':''}>${u.nome}</option>`).join('');
+  document.getElementById('formTitle').textContent = 'Editar tarefa do modelo';
+  document.getElementById('formBody').innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Título</label>
+      <input class="form-input" type="text" id="fTplTitulo" value="${tarefa.titulo}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descrição</label>
+      <textarea class="form-textarea" id="fTplDescricao">${tarefa.descricao || ''}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Responsável</label>
+      <select class="form-select" id="fTplResponsavelTipo" onchange="onbTplToggleCampoPessoa()">
+        <option value="definir_depois" ${tarefa.responsavel_tipo==='definir_depois'?'selected':''}>Definir depois</option>
+        <option value="pessoa" ${tarefa.responsavel_tipo==='pessoa'?'selected':''}>Pessoa específica</option>
+        <option value="cliente_responsavel" ${tarefa.responsavel_tipo==='cliente_responsavel'?'selected':''}>Responsável pelo cliente</option>
+      </select>
+    </div>
+    <div class="form-group" id="fTplPessoaWrap" style="display:${tarefa.responsavel_tipo==='pessoa'?'':'none'}">
+      <label class="form-label">Pessoa</label>
+      <select class="form-select" id="fTplResponsavelUsuario">
+        <option value="">Selecione...</option>
+        ${pessoaOpts}
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Prazo</label>
+        <select class="form-select" id="fTplPrazoTipo" onchange="onbTplTogglePrazo()">
+          <option value="sem_prazo" ${tarefa.prazo_tipo==='sem_prazo'?'selected':''}>Sem prazo</option>
+          <option value="dias_apos_inicio_onboarding" ${tarefa.prazo_tipo==='dias_apos_inicio_onboarding'?'selected':''}>Dias após início do onboarding</option>
+        </select>
+      </div>
+      <div class="form-group" id="fTplPrazoDiasWrap" style="display:${tarefa.prazo_tipo==='dias_apos_inicio_onboarding'?'':'none'}">
+        <label class="form-label">Dias</label>
+        <input class="form-input" type="number" min="0" id="fTplPrazoDias" value="${tarefa.prazo_dias ?? ''}">
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+      <input type="checkbox" id="fTplObrigatoria" ${tarefa.obrigatoria?'checked':''} style="width:16px;height:16px">
+      <label for="fTplObrigatoria" style="font-size:13px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--text);margin:0">Obrigatória</label>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="onbTplSalvarTarefa('${tarefaId}')">Salvar</button>
+    </div>
+  `;
+  openModal('formModal');
+}
+
+function onbTplToggleCampoPessoa() {
+  const tipo = document.getElementById('fTplResponsavelTipo').value;
+  document.getElementById('fTplPessoaWrap').style.display = tipo === 'pessoa' ? '' : 'none';
+}
+function onbTplTogglePrazo() {
+  const tipo = document.getElementById('fTplPrazoTipo').value;
+  document.getElementById('fTplPrazoDiasWrap').style.display = tipo === 'dias_apos_inicio_onboarding' ? '' : 'none';
+}
+
+async function onbTplSalvarTarefa(tarefaId) {
+  const titulo = document.getElementById('fTplTitulo').value.trim();
+  if (!titulo) { toast('Informe o título da tarefa.'); return; }
+  const responsavel_tipo = document.getElementById('fTplResponsavelTipo').value;
+  const prazo_tipo = document.getElementById('fTplPrazoTipo').value;
+  const body = {
+    titulo,
+    descricao: document.getElementById('fTplDescricao').value || null,
+    responsavel_tipo,
+    responsavel_usuario_id: responsavel_tipo === 'pessoa' ? (document.getElementById('fTplResponsavelUsuario').value || null) : null,
+    prazo_tipo,
+    prazo_dias: prazo_tipo === 'dias_apos_inicio_onboarding' ? (parseInt(document.getElementById('fTplPrazoDias').value, 10) || 0) : null,
+    obrigatoria: document.getElementById('fTplObrigatoria').checked,
+  };
+  const res = await API.patch('/onboarding/template-tarefas/' + tarefaId, body);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  closeModal('formModal');
+  toast('Tarefa atualizada!');
+  renderOnboardingModelos();
+}
+
+async function onbTplToggleObrigatoria(tarefaId, atual) {
+  await API.patch('/onboarding/template-tarefas/' + tarefaId, { obrigatoria: !atual });
+  renderOnboardingModelos();
+}
+
+async function onbTplAdicionarTarefa(etapaId) {
+  const input = document.getElementById('onbTplNovaTarefaInput-' + etapaId);
+  const titulo = input.value.trim();
+  if (!titulo) return;
+  const res = await API.post('/onboarding/template-etapas/' + etapaId + '/tarefas', { titulo });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  input.value = '';
+  renderOnboardingModelos();
+}
+
+async function onbTplExcluirTarefa(tarefaId) {
+  if (!confirm('Excluir esta tarefa do modelo?')) return;
+  const res = await API.del('/onboarding/template-tarefas/' + tarefaId);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast('Tarefa excluída.');
+  renderOnboardingModelos();
+}
+
+async function onbTplAdicionarEtapa() {
+  const input = document.getElementById('onbTplNovaEtapaInput');
+  const nome = input.value.trim() || 'Nova etapa';
+  const res = await API.post('/onboarding/templates/' + _onbModeloData.id + '/etapas', { nome });
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  input.value = '';
+  renderOnboardingModelos();
+}
+
+async function onbTplRenomearEtapa(etapaId, nome) {
+  nome = nome.trim();
+  if (!nome) return;
+  await API.patch('/onboarding/template-etapas/' + etapaId, { nome });
+}
+
+async function onbTplExcluirEtapa(etapaId, nome) {
+  if (!confirm(`Excluir a etapa "${nome}" e todas as suas tarefas do modelo?`)) return;
+  const res = await API.del('/onboarding/template-etapas/' + etapaId);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast('Etapa excluída.');
+  renderOnboardingModelos();
+}
+
+async function onbTplRenomear(nome) {
+  nome = nome.trim();
+  if (!nome) return;
+  await API.patch('/onboarding/templates/' + _onbModeloData.id, { nome });
+  onbTemplates = onbTemplates.map(t => t.id === _onbModeloData.id ? { ...t, nome } : t);
+}
+
+// ── Drag & drop: etapas do modelo ─────────────────────────────────────
+
+let onbTplEtapaDragId = null;
+function onbTplEtapaDragStart(e, id) {
+  onbTplEtapaDragId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => { const el = document.querySelector(`[data-onb-tpl-etapa="${id}"]`); if (el) el.style.opacity = '0.4'; }, 0);
+}
+function onbTplEtapaDragOver(e, id) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  if (onbTplEtapaDragId && onbTplEtapaDragId !== id) {
+    const el = document.querySelector(`[data-onb-tpl-etapa="${id}"]`);
+    if (el) el.style.borderColor = 'var(--primary)';
+  }
+}
+function onbTplEtapaDragLeave(e) { if (e.currentTarget) e.currentTarget.style.borderColor = ''; }
+async function onbTplEtapaDrop(e, id) {
+  e.preventDefault();
+  if (!onbTplEtapaDragId || onbTplEtapaDragId === id) return;
+  const el = document.querySelector(`[data-onb-tpl-etapa="${id}"]`);
+  if (el) el.style.borderColor = '';
+  const etapas = _onbModeloData.etapas;
+  const fromIdx = etapas.findIndex(x => x.id === onbTplEtapaDragId);
+  const toIdx = etapas.findIndex(x => x.id === id);
+  if (fromIdx === -1 || toIdx === -1) return;
+  const novo = [...etapas];
+  const [moved] = novo.splice(fromIdx, 1);
+  novo.splice(toIdx, 0, moved);
+  _onbModeloData.etapas = novo;
+  onbRenderTplEtapas();
+  for (let i = 0; i < novo.length; i++) await API.patch('/onboarding/template-etapas/' + novo[i].id, { ordem: i });
+  onbTplEtapaDragId = null;
+}
+function onbTplEtapaDragEnd(e) {
+  document.querySelectorAll('[data-onb-tpl-etapa]').forEach(el => { el.style.opacity = ''; el.style.borderColor = ''; });
+  onbTplEtapaDragId = null;
+}
+
+// ── Drag & drop: tarefas do modelo (dentro da etapa) ──────────────────
+
+let onbTplTarefaDragId = null;
+let onbTplTarefaDragEtapaId = null;
+function onbTplTarefaDragStart(e, id, etapaId) {
+  onbTplTarefaDragId = id;
+  onbTplTarefaDragEtapaId = etapaId;
+  e.stopPropagation();
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => { const el = document.querySelector(`[data-onb-tpl-tarefa="${id}"]`); if (el) el.style.opacity = '0.4'; }, 0);
+}
+function onbTplTarefaDragOver(e, id) {
+  e.preventDefault();
+  e.stopPropagation();
+  e.dataTransfer.dropEffect = 'move';
+  if (onbTplTarefaDragId && onbTplTarefaDragId !== id) {
+    const el = document.querySelector(`[data-onb-tpl-tarefa="${id}"]`);
+    if (el) el.style.borderColor = 'var(--primary)';
+  }
+}
+function onbTplTarefaDragLeave(e) { e.stopPropagation(); if (e.currentTarget) e.currentTarget.style.borderColor = ''; }
+async function onbTplTarefaDrop(e, id) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (!onbTplTarefaDragId || onbTplTarefaDragId === id) return;
+  const el = document.querySelector(`[data-onb-tpl-tarefa="${id}"]`);
+  if (el) el.style.borderColor = '';
+  const etapa = _onbModeloData.etapas.find(x => x.id === onbTplTarefaDragEtapaId);
+  if (!etapa) return;
+  const tarefas = etapa.tarefas;
+  const fromIdx = tarefas.findIndex(x => x.id === onbTplTarefaDragId);
+  const toIdx = tarefas.findIndex(x => x.id === id);
+  if (fromIdx === -1 || toIdx === -1) return;
+  const novo = [...tarefas];
+  const [moved] = novo.splice(fromIdx, 1);
+  novo.splice(toIdx, 0, moved);
+  etapa.tarefas = novo;
+  onbRenderTplEtapas();
+  for (let i = 0; i < novo.length; i++) await API.patch('/onboarding/template-tarefas/' + novo[i].id, { ordem: i });
+  onbTplTarefaDragId = null;
+}
+function onbTplTarefaDragEnd(e) {
+  e.stopPropagation();
+  document.querySelectorAll('[data-onb-tpl-tarefa]').forEach(el => { el.style.opacity = ''; el.style.borderColor = ''; });
+  onbTplTarefaDragId = null;
 }
 
 </script>

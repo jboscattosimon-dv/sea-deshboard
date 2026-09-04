@@ -17,7 +17,7 @@ const calendarioRoutes = require('./routes/calendario');
 const contratosRoutes  = require('./routes/contratos');
 const briefingRoutes   = require('./routes/briefing');
 const financeiroRoutes = require('./routes/financeiro');
-const jornadaRoutes    = require('./routes/jornada');
+const onboardingRoutes = require('./routes/onboarding');
 const portalAuthRoutes  = require('./routes/portal-auth');
 const portalRoutes      = require('./routes/portal');
 const portalAdminRoutes = require('./routes/portal-admin');
@@ -41,12 +41,11 @@ app.use('/api/calendario', calendarioRoutes);
 app.use('/api/contratos',  contratosRoutes);
 app.use('/api/briefing',   briefingRoutes);
 app.use('/api/financeiro', financeiroRoutes);
-app.use('/api/jornada', jornadaRoutes);
+app.use('/api/onboarding', onboardingRoutes);
 app.use('/api/portal/auth', portalAuthRoutes);
 app.use('/api/portal',      portalRoutes);
 app.use('/api/portal-admin', portalAdminRoutes);
 
-app.get('/jornada/:token', (req, res) => res.sendFile(path.join(__dirname, 'jornada.html')));
 app.get('/briefing/:id', (req, res) => res.sendFile('briefing.html', { root: './' }));
 app.get('/portal', (req, res) => res.sendFile(path.join(__dirname, 'portal.html')));
 

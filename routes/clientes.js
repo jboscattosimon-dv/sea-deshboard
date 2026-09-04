@@ -12,15 +12,17 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const { nome } = req.body;
-  const { data, error } = await supabase.from('clientes').insert([{ nome }]).select().single();
+  const { nome, responsavel_id } = req.body;
+  const { data, error } = await supabase.from('clientes').insert([{ nome, responsavel_id: responsavel_id || null }]).select().single();
   if (error) return res.status(400).json({ erro: error.message });
   res.status(201).json(data);
 });
 
 router.put('/:id', async (req, res) => {
-  const { nome } = req.body;
-  const { data, error } = await supabase.from('clientes').update({ nome }).eq('id', req.params.id).select().single();
+  const { nome, responsavel_id } = req.body;
+  const updates = { nome };
+  if (responsavel_id !== undefined) updates.responsavel_id = responsavel_id || null;
+  const { data, error } = await supabase.from('clientes').update(updates).eq('id', req.params.id).select().single();
   if (error) return res.status(400).json({ erro: error.message });
   res.json(data);
 });
