@@ -7204,7 +7204,7 @@ function onbRenderModelosLista() {
         </div>
         <div class="card-body" style="padding:14px 16px 16px">
           <div style="font-size:12px;color:var(--muted);margin-bottom:12px">${t.total_etapas} etapa${t.total_etapas!==1?'s':''} · ${t.total_tarefas} tarefa${t.total_tarefas!==1?'s':''}</div>
-          <div class="row-actions">
+          <div class="row-actions" style="flex-wrap:wrap;row-gap:8px">
             <button class="btn btn-ghost btn-sm" onclick="onbModeloAbrirEditor('${t.id}')">Editar</button>
             ${editM ? `<button class="btn btn-ghost btn-sm" onclick="onbModeloDuplicar('${t.id}')">Duplicar</button>
             <button class="btn btn-ghost btn-sm" onclick="onbModeloToggleAtivo('${t.id}',${t.ativo})">${t.ativo?'Desativar':'Ativar'}</button>

@@ -122,6 +122,20 @@ CREATE INDEX IF NOT EXISTS idx_onb_tarefas_responsavel   ON onboarding_tarefas (
 CREATE INDEX IF NOT EXISTS idx_onb_tarefas_prazo         ON onboarding_tarefas (prazo);
 CREATE INDEX IF NOT EXISTS idx_onb_atividades_onboarding ON onboarding_atividades (onboarding_id);
 
+-- ── Row Level Security ──────────────────────────────────────────────
+-- O backend acessa o Supabase com a chave anon (SUPABASE_KEY) e faz o controle de
+-- acesso inteiramente via Express + JWT — igual em todas as outras tabelas do projeto,
+-- que têm RLS desligado. O Supabase ativa RLS automaticamente em tabelas novas; sem
+-- isso aqui, toda escrita nas tabelas de onboarding é bloqueada ("new row violates
+-- row-level security policy").
+ALTER TABLE onboarding_templates        DISABLE ROW LEVEL SECURITY;
+ALTER TABLE onboarding_template_etapas  DISABLE ROW LEVEL SECURITY;
+ALTER TABLE onboarding_template_tarefas DISABLE ROW LEVEL SECURITY;
+ALTER TABLE onboardings                 DISABLE ROW LEVEL SECURITY;
+ALTER TABLE onboarding_etapas           DISABLE ROW LEVEL SECURITY;
+ALTER TABLE onboarding_tarefas          DISABLE ROW LEVEL SECURITY;
+ALTER TABLE onboarding_atividades       DISABLE ROW LEVEL SECURITY;
+
 -- ── SEED: modelo "Onboarding Padrão", a partir do processo atual da SEA ─
 -- Todas as tarefas nascem com responsavel_tipo = 'definir_depois' (nenhum nome fixo
 -- no código) — é só abrir o editor do modelo e escolher os responsáveis reais da equipe.
