@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Redefinir Senha</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',system-ui,sans-serif;background:#F7F5F0;min-height:100vh;color:#1a1a1a}
+  .top{background:#081542;height:6px}
+  .wrap{max-width:420px;margin:0 auto;padding:60px 20px}
+  .logo-row{display:flex;justify-content:center;margin-bottom:32px}
+  .logo-row img{height:36px}
+  .card{background:#fff;border-radius:16px;padding:32px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+  h1{font-size:20px;font-weight:700;color:#081542;margin-bottom:6px;text-align:center}
+  .subtitle{font-size:14px;color:#666;margin-bottom:28px;text-align:center}
+  label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px}
+  input{width:100%;border:1.5px solid #e5e7eb;border-radius:8px;padding:10px 12px;font-size:14px;font-family:inherit;color:#1a1a1a;background:#fff;transition:border-color .15s}
+  input:focus{outline:none;border-color:#081542}
+  .form-group{margin-bottom:18px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 28px;background:#081542;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s;width:100%}
+  .btn:hover{background:#0a1d5c}
+  .btn:disabled{background:#ccc;cursor:not-allowed}
+  .success{text-align:center;padding:20px 0}
+  .success svg{margin-bottom:16px}
+  .success h2{font-size:20px;font-weight:700;color:#081542;margin-bottom:8px}
+  .success p{font-size:14px;color:#666}
+  .loading{text-align:center;padding:60px;font-size:14px;color:#999}
+  .error-msg{text-align:center;padding:20px 0;font-size:14px;color:#e74c3c}
+  .error-msg a{color:#081542;font-weight:600}
+  .field-error{font-size:12px;color:#e74c3c;margin-top:4px;display:none}
+</style>
+</head>
+<body>
+<div class="top"></div>
+<div class="wrap">
+  <div class="logo-row"><img src="/logo.png" alt="SEA Agência"></div>
+  <div class="card">
+    <div id="root"><div class="loading">Verificando link...</div></div>
+  </div>
+</div>
+<script>
+const token = location.pathname.split('/').filter(Boolean).pop();
+
+async function load() {
+  const root = document.getElementById('root');
+  const r = await fetch('/api/auth/verificar-token-senha/' + token);
+  const { valido } = await r.json();
+
+  if (!valido) {
+    root.innerHTML = `<div class="error-msg">
+      Esse link é inválido ou já expirou.<br><br>
+      Volte à tela de login e clique em "Esqueceu sua senha?" para solicitar um novo.
+    </div>`;
+    return;
+  }
+
+  root.innerHTML = `
+    <h1>Redefinir senha</h1>
+    <p class="subtitle">Escolha uma nova senha para acessar o Dashboard.</p>
+    <div class="form-group">
+      <label>Nova senha</label>
+      <input id="novaSenha" type="password" placeholder="Mínimo 6 caracteres" onkeydown="if(event.key==='Enter')document.getElementById('confirmarSenha').focus()">
+    </div>
+    <div class="form-group">
+      <label>Confirmar nova senha</label>
+      <input id="confirmarSenha" type="password" placeholder="Repita a senha" onkeydown="if(event.key==='Enter')submit()">
+      <div class="field-error" id="fieldError"></div>
+    </div>
+    <button class="btn" id="submitBtn" onclick="submit()">Redefinir senha</button>
+  `;
+}
+
+async function submit() {
+  const novaSenha = document.getElementById('novaSenha').value;
+  const confirmarSenha = document.getElementById('confirmarSenha').value;
+  const errEl = document.getElementById('fieldError');
+  errEl.style.display = 'none';
+
+  if (novaSenha.length < 6) {
+    errEl.textContent = 'A senha precisa ter pelo menos 6 caracteres.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (novaSenha !== confirmarSenha) {
+    errEl.textContent = 'As senhas não coincidem.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Salvando...';
+
+  const r = await fetch('/api/auth/redefinir-senha', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, novaSenha })
+  });
+  const data = await r.json();
+
+  if (r.ok) {
+    document.getElementById('root').innerHTML = `
+      <div class="success">
+        <svg width="56" height="56" fill="none" viewBox="0 0 24 24" stroke="#27AE60" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
+        <h2>Senha redefinida!</h2>
+        <p>Sua senha foi alterada com sucesso.</p>
+        <a class="btn" style="display:block;text-decoration:none;margin-top:20px" href="/">Ir para o login</a>
+      </div>`;
+  } else {
+    btn.disabled = false;
+    btn.textContent = 'Redefinir senha';
+    errEl.textContent = data.erro || 'Erro ao redefinir senha.';
+    errEl.style.display = 'block';
+  }
+}
+
+load();
+</script>
+</body>
+</html>

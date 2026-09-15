@@ -48,6 +48,7 @@ app.use('/api/portal-admin', portalAdminRoutes);
 
 app.get('/briefing/:id', (req, res) => res.sendFile('briefing.html', { root: './' }));
 app.get('/portal', (req, res) => res.sendFile(path.join(__dirname, 'portal.html')));
+app.get('/redefinir-senha/:token', (req, res) => res.sendFile(path.join(__dirname, 'redefinir-senha.html')));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
