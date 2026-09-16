@@ -825,11 +825,15 @@ router.post('/demandas/:id/aprovacao-demanda', async (req, res) => {
     motivo: motivo?.trim() || null
   }]);
 
-  const novoStatusId = acao === 'aprovado' ? 's_concl' : 's_altso';
+  const novoStatusId = acao === 'aprovado' ? 's_concl' : 's4';
   const updates = { status_id: novoStatusId };
   if (acao === 'aprovado') updates.data_conclusao = new Date().toISOString().split('T')[0];
 
-  await supabase.from('demandas').update(updates).eq('id', id);
+  const { error: updErr } = await supabase.from('demandas').update(updates).eq('id', id);
+  if (updErr) {
+    console.error('[portal] erro ao atualizar status da demanda:', updErr.message);
+    return res.status(500).json({ erro: 'Erro ao registrar sua resposta. Tente novamente.' });
+  }
 
   const demandaTitulo = demanda.titulo || demanda.descricao?.slice(0, 60) || 'demanda';
   const descHist = acao === 'aprovado'
