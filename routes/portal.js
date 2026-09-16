@@ -35,6 +35,35 @@ async function registrarHistorico(tipo, entidadeId, descricao, autorNome) {
   }]);
 }
 
+async function uploadParaStorage(clienteId, demandaId, base64, nome, tipo, subpasta) {
+  const sanitized = nome.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const storagePath = `portal/${clienteId}/${demandaId}/${subpasta}/${Date.now()}_${sanitized}`;
+  const raw = base64.includes('base64,') ? base64.split('base64,')[1] : base64;
+  const buffer = Buffer.from(raw, 'base64');
+  const { error } = await supabase.storage.from('Portal').upload(storagePath, buffer, { contentType: tipo || 'application/octet-stream' });
+  if (error) return null;
+  const { data: urlData } = supabase.storage.from('Portal').getPublicUrl(storagePath);
+  return { url: urlData.publicUrl, storagePath };
+}
+
+// Alem de anexado no chat, o arquivo enviado pelo cliente tambem entra na aba
+// "Arquivos" da demanda, marcado como enviado por ele.
+async function registrarArquivoCliente({ demandaId, clienteId, clienteNome, nome, url, storagePath, tipo, tamanho }) {
+  await supabase.from('portal_arquivos').insert([{
+    id: gerarId('arq_'),
+    demanda_id: demandaId,
+    cliente_id: clienteId,
+    nome,
+    url,
+    storage_path: storagePath,
+    tipo: tipo || null,
+    tamanho: tamanho || null,
+    enviado_por_tipo: 'cliente',
+    enviado_por_id: clienteId,
+    enviado_por_nome: clienteNome
+  }]);
+}
+
 async function criarNotificacao(clienteId, tipo, titulo, mensagem, entidade, entidadeId) {
   await supabase.from('portal_notificacoes').insert([{
     id: gerarId('ntf_'),
@@ -263,18 +292,10 @@ router.post('/demandas/:id/comentarios', async (req, res) => {
   let publicUrl = null;
 
   if (arquivo_b64 && arquivo_nome) {
-    const sanitized = arquivo_nome.replace(/[^a-zA-Z0-9._-]/g, '_');
-    storagePath = `portal/${clienteId}/${id}/comentarios/${Date.now()}_${sanitized}`;
-    const base64 = arquivo_b64.includes('base64,') ? arquivo_b64.split('base64,')[1] : arquivo_b64;
-    const buffer = Buffer.from(base64, 'base64');
-
-    const { error: upErr } = await supabase.storage
-      .from('Portal')
-      .upload(storagePath, buffer, { contentType: arquivo_tipo || 'application/octet-stream' });
-
-    if (!upErr) {
-      const { data: urlData } = supabase.storage.from('Portal').getPublicUrl(storagePath);
-      publicUrl = urlData.publicUrl;
+    const up = await uploadParaStorage(clienteId, id, arquivo_b64, arquivo_nome, arquivo_tipo, 'comentarios');
+    if (up) {
+      publicUrl = up.url;
+      storagePath = up.storagePath;
       temAnexo = true;
     }
   }
@@ -306,6 +327,11 @@ router.post('/demandas/:id/comentarios', async (req, res) => {
       tipo: arquivo_tipo || null,
       tamanho: arquivo_tamanho || null
     }]);
+    await registrarArquivoCliente({
+      demandaId: id, clienteId, clienteNome: req.cliente.nome,
+      nome: arquivo_nome, url: publicUrl, storagePath,
+      tipo: arquivo_tipo, tamanho: arquivo_tamanho
+    });
   }
 
   await registrarHistorico('comentario', id, `Cliente ${req.cliente.nome} adicionou um comentário`, req.cliente.nome);
@@ -846,16 +872,10 @@ router.post('/demandas/:id/aprovacao-demanda', async (req, res) => {
   if (acao === 'alteracao_solicitada') {
     let temAnexo = false, storagePath = null, publicUrl = null;
     if (arquivo_b64 && arquivo_nome) {
-      const sanitized = arquivo_nome.replace(/[^a-zA-Z0-9._-]/g, '_');
-      storagePath = `portal/${clienteId}/${id}/comentarios/${Date.now()}_${sanitized}`;
-      const base64 = arquivo_b64.includes('base64,') ? arquivo_b64.split('base64,')[1] : arquivo_b64;
-      const buffer = Buffer.from(base64, 'base64');
-      const { error: upErr } = await supabase.storage
-        .from('Portal')
-        .upload(storagePath, buffer, { contentType: arquivo_tipo || 'application/octet-stream' });
-      if (!upErr) {
-        const { data: urlData } = supabase.storage.from('Portal').getPublicUrl(storagePath);
-        publicUrl = urlData.publicUrl;
+      const up = await uploadParaStorage(clienteId, id, arquivo_b64, arquivo_nome, arquivo_tipo, 'comentarios');
+      if (up) {
+        publicUrl = up.url;
+        storagePath = up.storagePath;
         temAnexo = true;
       }
     }
@@ -880,6 +900,11 @@ router.post('/demandas/:id/aprovacao-demanda', async (req, res) => {
         tipo: arquivo_tipo || null,
         tamanho: arquivo_tamanho || null
       }]);
+      await registrarArquivoCliente({
+        demandaId: id, clienteId, clienteNome: req.cliente.nome,
+        nome: arquivo_nome, url: publicUrl, storagePath,
+        tipo: arquivo_tipo, tamanho: arquivo_tamanho
+      });
     }
   }
 

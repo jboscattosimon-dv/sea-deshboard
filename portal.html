@@ -436,6 +436,7 @@
       background: rgba(0,0,0,0.08); padding: 5px 10px; border-radius: 6px;
     }
     .msg.client .msg-attachment a { background: rgba(255,255,255,0.15); }
+    .msg-attachment-img { max-width: 220px; max-height: 220px; width: 100%; border-radius: 8px; display: block; cursor: pointer; object-fit: cover; }
     .chat-input-area {
       border: 1px solid var(--border); border-top: none;
       border-radius: 0 0 var(--r) var(--r);
@@ -1512,7 +1513,13 @@ function renderComentarios(msgs, demandaId) {
         const isClient = m.autor_tipo === 'cliente';
         const anx = m.anexos?.length ? `
           <div class="msg-attachment">
-            ${m.anexos.map(a => `<a href="${a.url}" target="_blank">📎 ${a.nome}</a>`).join('')}
+            ${m.anexos.map(a => {
+              const isImg = (a.tipo || '').startsWith('image/');
+              const isVideo = (a.tipo || '').startsWith('video/');
+              if (isImg) return `<img src="${a.url}" alt="${a.nome}" class="msg-attachment-img" onclick="event.stopPropagation();openLightbox('${a.url}')" />`;
+              if (isVideo) return `<video src="${a.url}" controls class="msg-attachment-img"></video>`;
+              return `<a href="${a.url}" target="_blank">📎 ${a.nome}</a>`;
+            }).join('')}
           </div>` : '';
         return `
           <div class="msg ${isClient ? 'client' : 'team'}">
@@ -1605,18 +1612,21 @@ async function loadArquivos(demandaId) {
 
 function renderArquivos(arquivos, demandaId) {
   const panel = document.getElementById('panel-arquivos');
-  const fileRows = arquivos.map(f => `
+  const fileRows = arquivos.map(f => {
+    const enviadoPor = f.enviado_por_tipo === 'cliente' ? 'Você' : (f.enviado_por_nome || 'Equipe');
+    return `
     <div class="file-item">
       <div class="file-item-icon">${getFileIcon(f.tipo)}</div>
       <div style="flex:1">
         <div class="file-item-name">${f.nome}</div>
-        <div class="file-item-meta">${formatSize(f.tamanho)} · ${formatDateTime(f.criado_em)}</div>
+        <div class="file-item-meta">${formatSize(f.tamanho)} · enviado por ${enviadoPor} · ${formatDateTime(f.criado_em)}</div>
       </div>
       <div class="file-item-actions">
         <a href="${f.url}" target="_blank" download class="btn btn-sm btn-ghost">⬇ Baixar</a>
         <button class="btn btn-sm btn-danger" onclick="excluirArquivo('${demandaId}','${f.id}')">🗑</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   panel.innerHTML = `
     <div class="upload-zone" onclick="document.getElementById('fileInputDemanda').click()"
