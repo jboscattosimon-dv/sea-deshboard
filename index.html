@@ -39,6 +39,9 @@ body.dark {
   --sidebar-bg: #16171a;
   --shadow: 0 2px 12px rgba(0,0,0,0.45);
 }
+/* Sem isso, o seletor nativo de data do navegador (ícone, "dd/mm/aaaa" vazio) renderiza
+   com as cores do tema claro do sistema e some contra o fundo escuro */
+body.dark input[type="date"], body.dark input[type="time"] { color-scheme: dark; }
 body.dark .btn-primary {
   background: linear-gradient(135deg, #3a3830 0%, #2a2820 100%);
   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
@@ -716,12 +719,21 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
   .header-actions { gap: 6px; }
   .header-actions .btn { padding: 7px 11px; font-size: 10.5px; }
 
-  /* Cards de cliente (Dashboard / Painel do dia): linhas mais respiráveis e legíveis */
+  /* Cards de cliente (Dashboard / Painel do dia): linhas mais respiráveis e legíveis,
+     com uma faixa de cor no lugar do pontinho e o status como selo separado */
   .card-head { padding: 12px 14px; }
   .card-body { padding: 10px 12px 12px; gap: 6px; }
-  .demand-row { padding: 10px; gap: 12px; }
+  .demand-row { padding: 10px; gap: 12px; align-items: stretch; }
+  .demand-row::before { content: none; }
+  .demand-dot { width: 4px; height: auto; align-self: stretch; border-radius: 3px; box-shadow: none; }
   .demand-date { font-size: 11px; }
-  .demand-desc { font-size: 13px; }
+  .demand-desc { font-size: 13px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .demand-status-pill { font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 100px; }
+  .demand-check-btn { width: 28px !important; height: 28px !important; }
+
+  /* iOS dá zoom automático em qualquer campo com fonte menor que 16px */
+  .form-input, .form-select, .form-textarea, .search-input,
+  #loginScreen input, input, select, textarea { font-size: 16px !important; }
 }
 
 /* ── PAINEL DO DIA ── */
@@ -2489,10 +2501,10 @@ function renderDashboard() {
           <div class="demand-date">${fmtDate(d.date)}</div>
           <div class="demand-desc" style="${d.postado?'text-decoration:line-through;color:var(--muted)':''}">
             ${fmt ? `<span style="font-weight:600;color:var(--text)">${fmt.name}</span><span style="color:var(--muted)"> · </span>` : ''}
-            <span style="color:${d.postado?'var(--muted)':st.color}">${st.name}</span>
+            <span class="demand-status-pill" style="color:${d.postado?'var(--muted)':st.color};background:${d.postado?'transparent':st.color+'18'}">${st.name}</span>
           </div>
         </div>
-        ${canPostToday ? `<button onclick="event.stopPropagation();togglePostado('${d.id}',${!d.postado})"
+        ${canPostToday ? `<button class="demand-check-btn" onclick="event.stopPropagation();togglePostado('${d.id}',${!d.postado})"
           style="flex-shrink:0;width:22px;height:22px;border-radius:50%;border:2px solid ${d.postado?'#27AE60':'#ccc'};background:${d.postado?'#27AE60':'transparent'};cursor:pointer;display:flex;align-items:center;justify-content:center;margin-left:6px;transition:all 0.2s">
           ${d.postado?`<svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>`:''}
         </button>` : ''}
@@ -2573,7 +2585,8 @@ function openDetail(id) {
     </div>
     <div class="form-actions">
       ${canEdit('demands') ? `<button class="btn btn-danger btn-sm" onclick="deleteDemandFromDetail('${d.id}')">Excluir</button>` : ''}
-      <div style="display:flex;gap:8px;margin-left:auto">
+      <div style="display:flex;gap:8px;margin-left:auto;flex-wrap:wrap">
+        <button class="btn btn-ghost" onclick="copiarLinkDemanda('${d.id}')">🔗 Copiar link</button>
         <button class="btn btn-ghost" onclick="closeModal('detailModal')">Cancelar</button>
         ${canEdit('demands') ? `<button class="btn btn-primary" onclick="saveFromDetail('${d.id}')">Salvar alterações</button>` : ''}
       </div>
@@ -5565,6 +5578,7 @@ function updateDarkToggle() {
       await loadFromAPI();
       applyPermissions();
       document.getElementById('loginScreen').style.display = 'none';
+      abrirDemandaDaURL();
     } catch(e) {
       localStorage.removeItem('sea_token');
       load();
@@ -5580,6 +5594,19 @@ function updateDarkToggle() {
   showAlertToast();
   updateAlertBadge();
 })();
+
+// Link direto pra uma demanda (?demanda=ID) — usado pra compartilhar entre a equipe
+function abrirDemandaDaURL() {
+  const id = new URLSearchParams(location.search).get('demanda');
+  if (id) openDetail(id);
+}
+
+function copiarLinkDemanda(id) {
+  const link = `${location.origin}${location.pathname}?demanda=${id}`;
+  navigator.clipboard.writeText(link)
+    .then(() => toast('Link copiado!'))
+    .catch(() => toast('Não foi possível copiar o link.'));
+}
 
 // ═══════════════════════════════════════
 //  SDR — Base de Conhecimento
