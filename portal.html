@@ -344,6 +344,33 @@
     .approval-banner-sub { font-size: 12.5px; color: var(--muted); }
     .approval-banner .approval-btn-row { flex-wrap: nowrap; }
 
+    /* ─── REVISÃO DE APROVAÇÃO (mídia em destaque no topo) ─── */
+    .rev-card { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin-bottom: 20px; background: var(--surface); }
+    .rev-gallery { position: relative; background: #14120d; }
+    .rev-gallery img, .rev-gallery video { width: 100%; max-height: 480px; display: block; object-fit: contain; background: #14120d; }
+    .rev-gallery-file { padding: 40px 20px; text-align: center; color: #fff; background: linear-gradient(135deg, #3a3630, #181510); }
+    .rev-gallery-count { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.55); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 100px; }
+    .rev-gallery-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.85); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #081542; cursor: pointer; border: none; font-size: 16px; padding: 0; }
+    .rev-gallery-nav.prev { left: 10px; }
+    .rev-gallery-nav.next { right: 10px; }
+    .rev-gallery-dots { position: absolute; bottom: 10px; left: 0; right: 0; display: flex; justify-content: center; gap: 5px; }
+    .rev-gallery-dots span { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.45); display: inline-block; }
+    .rev-gallery-dots span.on { background: #fff; }
+    .rev-body { padding: 18px 20px; }
+    .rev-top-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+    .rev-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 15px; }
+    .rev-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    .rev-chip { background: var(--surface2); border-radius: 100px; padding: 3px 10px; font-size: 11px; color: var(--muted); font-weight: 600; }
+    .rev-objetivo-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); margin-bottom: 4px; }
+    .rev-objetivo { font-size: 13px; line-height: 1.55; margin-bottom: 18px; white-space: pre-wrap; }
+    .rev-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .rev-actions .btn { flex: 1; justify-content: center; padding: 11px; font-size: 13px; min-width: 150px; }
+    .rev-comments-link {
+      display: flex; align-items: center; justify-content: space-between; width: 100%;
+      padding: 12px 0 0; margin-top: 14px; border: none; border-top: 1px solid var(--border);
+      background: none; font-family: inherit; font-size: 12.5px; font-weight: 700; color: var(--text); cursor: pointer;
+    }
+
     /* ─── DEMAND DETAIL ─────────────────────── */
     .back-btn {
       display: inline-flex; align-items: center; gap: 6px;
@@ -574,6 +601,8 @@
       .approval-banner { flex-direction: column; align-items: stretch; }
       .approval-banner .approval-btn-row { flex-direction: row; }
       .approval-banner .approval-btn-row .btn { width: auto; }
+      .rev-gallery img, .rev-gallery video { max-height: 320px; }
+      .rev-actions .btn { min-width: 0; padding: 12px; }
       .cal-header { flex-wrap: wrap; gap: 10px; }
       .cal-header h1 { flex: 1 1 100%; font-size: 18px; }
       .cal-header-nav { display: flex; align-items: center; gap: 8px; }
@@ -592,6 +621,7 @@
       .user-chip span { display: none; }
       .approval-banner .approval-btn-row { flex-direction: column; }
       .approval-banner .approval-btn-row .btn { width: 100%; justify-content: center; }
+      .rev-actions { flex-direction: column; }
     }
   </style>
 </head>
@@ -1288,7 +1318,7 @@ async function abrirDemanda(id) {
       ${d.prioridade ? `<span class="badge ${prioClass}">${d.prioridade}</span>` : ''}
     `;
 
-    renderApprovalBanner(id, d);
+    renderApprovalBanner(id, d).catch(() => {});
 
     renderInfoPanel(d);
     loadHistorico(id);
@@ -1303,21 +1333,75 @@ async function abrirDemanda(id) {
   }
 }
 
-function renderApprovalBanner(id, demanda) {
+let _revGaleria = [];
+let _revIdx = 0;
+
+async function renderApprovalBanner(id, demanda) {
   const banner = document.getElementById('detailApprovalBanner');
   if (demanda.status?.id !== 's_awcli') { banner.style.display = 'none'; banner.innerHTML = ''; return; }
   banner.style.display = 'block';
+  banner.innerHTML = `<div class="rev-card"><div class="rev-body" style="text-align:center;color:var(--muted);padding:40px 20px">Carregando revisão...</div></div>`;
+
+  let entregaveis = { arquivos: [], artes: [] };
+  try {
+    entregaveis = await apiFetch('GET', `/demandas/${id}/entregaveis`);
+  } catch { /* segue sem entregáveis */ }
+
+  _revGaleria = [...(entregaveis.artes || []), ...(entregaveis.arquivos || [])];
+  _revIdx = 0;
+
+  const titulo = demanda.titulo || truncate(demanda.descricao, 60) || 'Demanda';
+  const chips = [
+    demanda.formato?.nome ? `<span class="rev-chip">🗂️ ${demanda.formato.nome}</span>` : '',
+    demanda.prioridade ? `<span class="rev-chip">⚡ ${demanda.prioridade}</span>` : '',
+    demanda.prazo ? `<span class="rev-chip">⏰ ${formatDate(demanda.prazo)}</span>` : '',
+    demanda.responsavel_nome ? `<span class="rev-chip">👤 ${demanda.responsavel_nome}</span>` : ''
+  ].filter(Boolean).join('');
+
   banner.innerHTML = `
-    <div class="approval-banner">
-      <div>
-        <div class="approval-banner-title">⏳ Esta demanda está aguardando sua aprovação</div>
-        <div class="approval-banner-sub">Revise os entregáveis na aba "Entregáveis" e então aprove ou solicite alterações.</div>
-      </div>
-      <div class="approval-btn-row">
-        <button class="btn btn-success" onclick="aprovarDemanda('${id}')">✅ Aprovar</button>
-        <button class="btn btn-warning" onclick="abrirModalAlteracao('${id}')">✏️ Solicitar alterações</button>
+    <div class="rev-card">
+      <div class="rev-gallery" id="revGallery">${revGaleriaFrame()}</div>
+      <div class="rev-body">
+        <div class="rev-top-row">
+          <div class="rev-title">${titulo}</div>
+          <span class="badge" style="background:#8B5CF618;color:#8B5CF6">⏳ Aguardando aprovação</span>
+        </div>
+        ${chips ? `<div class="rev-chips">${chips}</div>` : ''}
+        ${demanda.descricao ? `<div class="rev-objetivo-label">Objetivo</div><div class="rev-objetivo">${demanda.descricao}</div>` : ''}
+        ${demanda.observacao ? `<div class="rev-objetivo-label">Observação</div><div class="rev-objetivo">${demanda.observacao}</div>` : ''}
+        <div class="rev-actions">
+          <button class="btn btn-success" onclick="aprovarDemanda('${id}')">✅ Aprovar</button>
+          <button class="btn btn-warning" onclick="abrirModalAlteracao('${id}')">✏️ Solicitar alterações</button>
+        </div>
+        <button class="rev-comments-link" onclick="switchTab('comentarios')"><span>💬 Ver comentários e histórico</span><span>›</span></button>
       </div>
     </div>`;
+}
+
+function revGaleriaFrame() {
+  if (!_revGaleria.length) {
+    return `<div class="rev-gallery-file"><div style="font-size:34px">📦</div><div style="font-size:12.5px;margin-top:6px">A equipe ainda não enviou arquivos para esta demanda.</div></div>`;
+  }
+  const f = _revGaleria[_revIdx];
+  const isImg = (f.tipo || '').startsWith('image/');
+  const isVideo = (f.tipo || '').startsWith('video/');
+  const midia = isImg
+    ? `<img src="${f.url}" alt="${f.nome}">`
+    : isVideo
+      ? `<video src="${f.url}" controls></video>`
+      : `<div class="rev-gallery-file"><div style="font-size:34px">${getFileIcon(f.tipo)}</div><div style="font-size:12.5px;margin-top:6px">${f.nome}</div><a href="${f.url}" target="_blank" download class="btn btn-sm btn-ghost" style="margin-top:10px;display:inline-flex">⬇ Baixar</a></div>`;
+  const nav = _revGaleria.length > 1 ? `
+    <div class="rev-gallery-count">${_revIdx + 1}/${_revGaleria.length}</div>
+    <button class="rev-gallery-nav prev" onclick="revNav(-1)">‹</button>
+    <button class="rev-gallery-nav next" onclick="revNav(1)">›</button>
+    <div class="rev-gallery-dots">${_revGaleria.map((_, i) => `<span class="${i === _revIdx ? 'on' : ''}"></span>`).join('')}</div>` : '';
+  return midia + nav;
+}
+
+function revNav(delta) {
+  if (!_revGaleria.length) return;
+  _revIdx = (_revIdx + delta + _revGaleria.length) % _revGaleria.length;
+  document.getElementById('revGallery').innerHTML = revGaleriaFrame();
 }
 
 function switchTab(name) {
