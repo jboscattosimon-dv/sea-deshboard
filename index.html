@@ -736,6 +736,11 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
   /* iOS dá zoom automático em qualquer campo com fonte menor que 16px */
   .form-input, .form-select, .form-textarea, .search-input,
   #loginScreen input, input, select, textarea { font-size: 16px !important; }
+
+  /* Board Kanban do Mapa do onboarding: colunas mais estreitas, deixando um
+     pedacinho da próxima coluna visível (sinaliza que rola de lado) */
+  .onb-kanban-col { flex-basis: 200px; padding: 12px; }
+  .onb-kanban-card { padding: 9px 10px; }
 }
 
 /* ── PAINEL DO DIA ── */
