@@ -57,7 +57,7 @@ router.get('/dashboard', async (req, res) => {
   try {
     const { data: demandas } = await supabase
       .from('demandas')
-      .select('id, arte_pronta, status:status_id(nome)')
+      .select('id, status:status_id(id, nome)')
       .eq('cliente_id', clienteId);
 
     const hoje = new Date();
@@ -106,16 +106,15 @@ router.get('/dashboard', async (req, res) => {
       .limit(5);
     aprovacoesRecentes = ap || [];
 
-    const statusConcluidoNomes = ['concluido', 'concluída', 'aprovado', 'entregue'];
-    const emAndamento = (demandas || []).filter(d => {
-      const nome = (d.status?.nome || '').toLowerCase();
-      return !statusConcluidoNomes.includes(nome) && !d.arte_pronta;
-    }).length;
-    const aguardandoAprovacao = (demandas || []).filter(d => d.arte_pronta).length;
-    const concluidas = (demandas || []).filter(d => {
-      const nome = (d.status?.nome || '').toLowerCase();
-      return statusConcluidoNomes.includes(nome);
-    }).length;
+    // Alinhado com o resto do portal: 's_awcli' é o status que dispara o fluxo
+    // de aprovação do cliente (ver routes/demandas.js) e 's_concl' é a conclusão
+    // via aprovação. Antes isso usava o campo solto "arte_pronta" e um match de
+    // nome de status que não correspondia aos status reais, e por isso uma
+    // demanda aguardando aprovação aparecia como "Em andamento" e o contador de
+    // "Aguardando aprovação" nunca fechava.
+    const aguardandoAprovacao = (demandas || []).filter(d => d.status?.id === 's_awcli').length;
+    const concluidas = (demandas || []).filter(d => d.status?.id === 's_concl').length;
+    const emAndamento = (demandas || []).length - aguardandoAprovacao - concluidas;
 
     const atividades = [
       ...comentariosRecentes.map(c => ({
