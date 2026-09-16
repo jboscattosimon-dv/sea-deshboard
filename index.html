@@ -536,6 +536,11 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
 .onb-task-title.done { color: var(--muted); text-decoration: line-through; }
 .onb-task-meta { font-size: 10.5px; color: var(--muted); margin-top: 1px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 
+.onb-map-square { width: 34px; height: 34px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--surface); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; flex-shrink: 0; }
+.onb-map-square:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.onb-map-square.done { background: linear-gradient(135deg, #34C97A, #27AE60); border-color: #27AE60; }
+.onb-map-square.late { border-color: #E74C3C; box-shadow: 0 0 0 2px #E74C3C22; }
+
 /* ─── FORM / MODAL ─── */
 .modal-overlay {
   position: fixed; inset: 0;
@@ -1883,9 +1888,11 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     <div id="onb-modal-resumo"></div>
     <div style="display:flex;gap:8px;margin:20px 0;flex-wrap:wrap">
       <button class="ctab ctab-active" id="ctab-onb-etapas" onclick="onbSwitchTab('etapas')">Etapas</button>
+      <button class="ctab" id="ctab-onb-mapa" onclick="onbSwitchTab('mapa')">Mapa</button>
       <button class="ctab" id="ctab-onb-atividades" onclick="onbSwitchTab('atividades')">Atividades</button>
     </div>
     <div id="onb-tab-etapas"></div>
+    <div id="onb-tab-mapa" style="display:none"></div>
     <div id="onb-tab-atividades" style="display:none"></div>
   </div>
 </div>
@@ -6839,6 +6846,7 @@ async function onbAbrirDetalhe(id) {
   onbSwitchTab('etapas');
   onbRenderResumo();
   onbRenderEtapas();
+  onbRenderMapa();
   onbRenderAtividades();
   openModal('modal-onboarding');
 }
@@ -6850,6 +6858,7 @@ async function onbRecarregar() {
   _onbData = res;
   onbRenderResumo();
   onbRenderEtapas();
+  onbRenderMapa();
   onbRenderAtividades();
   renderOnboardingVisaoGeral();
 }
@@ -6858,6 +6867,7 @@ function onbSwitchTab(tab) {
   document.querySelectorAll('#modal-onboarding .ctab').forEach(b => b.classList.remove('ctab-active'));
   document.getElementById('ctab-onb-' + tab).classList.add('ctab-active');
   document.getElementById('onb-tab-etapas').style.display = tab === 'etapas' ? '' : 'none';
+  document.getElementById('onb-tab-mapa').style.display = tab === 'mapa' ? '' : 'none';
   document.getElementById('onb-tab-atividades').style.display = tab === 'atividades' ? '' : 'none';
 }
 
@@ -7138,6 +7148,36 @@ function onbRenderAtividades() {
       </div>`;
     }).join('')}
   </div>`;
+}
+
+function onbRenderMapa() {
+  const etapas = _onbData.etapas || [];
+  const el = document.getElementById('onb-tab-mapa');
+  if (!etapas.length) {
+    el.innerHTML = `<div class="empty-state">Nenhuma etapa cadastrada.</div>`;
+    return;
+  }
+  const hoje = new Date().toISOString().slice(0, 10);
+  el.innerHTML = etapas.map(e => {
+    const tarefas = e.tarefas || [];
+    return `
+      <div style="margin-bottom:22px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px">${e.nome}</span>
+          <span style="font-size:11px;color:var(--muted)">${e.tarefas_concluidas}/${e.total_tarefas}</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          ${tarefas.length ? tarefas.map(t => {
+            const done = t.status === 'concluida';
+            const atrasada = !done && t.prazo && t.prazo < hoje;
+            return `<div class="onb-map-square ${done ? 'done' : ''} ${atrasada ? 'late' : ''}"
+              onclick="onbAbrirTarefa('${t.id}')" title="${t.titulo}">
+              ${done ? `<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>` : ''}
+            </div>`;
+          }).join('') : `<span style="font-size:12px;color:var(--muted)">Sem tarefas nesta etapa.</span>`}
+        </div>
+      </div>`;
+  }).join('');
 }
 
 // ── Drag & drop: etapas do onboarding do cliente ─────────────────────
