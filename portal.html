@@ -333,6 +333,18 @@
     .demand-card.pending-approval { border-color: #8B5CF6; background: linear-gradient(135deg, #8B5CF60d, var(--surface) 60%); }
     .demand-card-approval-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 
+    /* ─── CARD DA PÁGINA "APROVAÇÕES PENDENTES" ─── */
+    .pending-approval-card {
+      cursor: pointer; margin-bottom: 14px;
+      border-color: #8B5CF6; background: linear-gradient(135deg, #8B5CF60d, var(--surface) 60%);
+      transition: all .18s;
+    }
+    .pending-approval-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.09); }
+    .pending-approval-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; margin-bottom: 10px; }
+    .pending-approval-meta { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+    .pending-approval-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pending-approval-actions .btn { white-space: nowrap; }
+
     /* ─── APPROVAL BANNER (topo do detalhe, sempre visível) ─── */
     .approval-banner {
       display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
@@ -603,6 +615,8 @@
       .approval-banner .approval-btn-row .btn { width: auto; }
       .rev-gallery img, .rev-gallery video { max-height: 320px; }
       .rev-actions .btn { min-width: 0; padding: 12px; }
+      .pending-approval-actions { flex-direction: column; align-items: stretch; }
+      .pending-approval-actions .btn { justify-content: center; }
       .cal-header { flex-wrap: wrap; gap: 10px; }
       .cal-header h1 { flex: 1 1 100%; font-size: 18px; }
       .cal-header-nav { display: flex; align-items: center; gap: 8px; }
@@ -862,13 +876,21 @@
     </div>
 
     <!-- Modal de motivo de alteração (aprovação de demanda) -->
-    <div class="modal-overlay" id="modalMotivoAprovacao" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center">
-      <div style="background:var(--surface);border-radius:var(--r);padding:28px 24px;width:100%;max-width:440px;margin:16px">
+    <div class="modal-overlay" id="modalMotivoAprovacao" style="z-index:500">
+      <div class="modal" style="max-width:440px">
         <h3 style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:16px">Solicitar alterações</h3>
-        <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Descreva o que precisa ser ajustado. Sua mensagem será registrada e a equipe será notificada.</p>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Descreva o que precisa ser ajustado. A demanda será marcada como <b>não aprovada</b> e a equipe será notificada.</p>
         <textarea id="motivoAprovacaoText" placeholder="Descreva as alterações necessárias..." rows="4"
           style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-family:inherit;font-size:13px;background:var(--bg);color:var(--text);resize:vertical;outline:none"></textarea>
-        <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end">
+        <label style="display:inline-flex;align-items:center;gap:6px;margin-top:12px;cursor:pointer;font-size:12.5px;font-weight:600;color:var(--text);padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm)">
+          📎 Anexar foto (opcional)
+          <input type="file" id="motivoAprovacaoAnexo" accept="image/*,video/*" style="display:none" onchange="motivoAnexoPreview(this)" />
+        </label>
+        <div id="motivoAnexoPreviewBox" style="display:none;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--muted)">
+          <span id="motivoAnexoNome"></span>
+          <button class="btn btn-sm btn-ghost" onclick="limparMotivoAnexo()" style="padding:2px 8px">×</button>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end">
           <button class="btn btn-ghost" onclick="fecharModalMotivo()">Cancelar</button>
           <button class="btn btn-primary" id="btnConfirmarMotivo">Confirmar</button>
         </div>
@@ -1212,10 +1234,17 @@ async function loadDemandas() {
   }
 }
 
+// No dashboard interno esse status se chama "Alteração solicitada" (s4);
+// pro cliente, "Não aprovado" comunica melhor o que aconteceu.
+function statusNomeCliente(status) {
+  if (!status) return '';
+  return status.id === 's4' ? 'Não aprovado' : status.nome;
+}
+
 function popularFiltroStatus() {
   const statuses = {};
   allDemandas.forEach(d => {
-    if (d.status) statuses[d.status.id] = d.status.nome;
+    if (d.status) statuses[d.status.id] = statusNomeCliente(d.status);
   });
   const sel = document.getElementById('demandaFiltroStatus');
   const current = sel.value;
@@ -1266,7 +1295,7 @@ function renderDemandas(list) {
           </div>
           ${d.titulo && d.descricao ? `<div class="demand-card-desc">${truncate(d.descricao, 80)}</div>` : ''}
           <div class="demand-card-meta">
-            ${d.status ? `<span>${statusDot} ${d.status.nome}</span>` : ''}
+            ${d.status ? `<span>${statusDot} ${statusNomeCliente(d.status)}</span>` : ''}
             ${d.prioridade ? `<span class="badge ${prioClass}" style="padding:2px 7px">${d.prioridade}</span>` : ''}
             ${d.prazo ? `<span>⏰ ${formatDate(d.prazo)}</span>` : ''}
             ${d.responsavel_nome ? `<span>👤 ${d.responsavel_nome}</span>` : ''}
@@ -1314,7 +1343,7 @@ async function abrirDemanda(id) {
     const statusDot = d.status?.cor ? `<span class="badge-dot" style="background:${d.status.cor};display:inline-block;width:8px;height:8px;border-radius:50%"></span>` : '';
     const prioClass = `badge-priority-${d.prioridade || 'normal'}`;
     document.getElementById('detailMeta').innerHTML = `
-      ${d.status ? `<span class="badge" style="background:${d.status.cor}18;color:${d.status.cor}">${statusDot} ${d.status.nome}</span>` : ''}
+      ${d.status ? `<span class="badge" style="background:${d.status.cor}18;color:${d.status.cor}">${statusDot} ${statusNomeCliente(d.status)}</span>` : ''}
       ${d.prioridade ? `<span class="badge ${prioClass}">${d.prioridade}</span>` : ''}
     `;
 
@@ -1701,30 +1730,62 @@ async function aprovarDemanda(demandaId) {
 }
 
 let pendingAlteracaoDemandaId = null;
+let motivoAnexoFile = null;
 
 function abrirModalAlteracao(demandaId) {
   pendingAlteracaoDemandaId = demandaId;
   document.getElementById('motivoAprovacaoText').value = '';
+  limparMotivoAnexo();
   const btn = document.getElementById('btnConfirmarMotivo');
   btn.onclick = confirmarAlteracao;
-  document.getElementById('modalMotivoAprovacao').style.display = 'flex';
+  openModal('modalMotivoAprovacao');
 }
 
 function fecharModalMotivo() {
-  document.getElementById('modalMotivoAprovacao').style.display = 'none';
+  closeModal('modalMotivoAprovacao');
   pendingAlteracaoDemandaId = null;
+  limparMotivoAnexo();
+}
+
+function motivoAnexoPreview(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 30 * 1024 * 1024) {
+    toast(`${file.name}: arquivo muito grande (max 30MB)`, 'error');
+    input.value = '';
+    return;
+  }
+  motivoAnexoFile = file;
+  document.getElementById('motivoAnexoPreviewBox').style.display = 'flex';
+  document.getElementById('motivoAnexoNome').textContent = file.name + ' (' + formatSize(file.size) + ')';
+}
+
+function limparMotivoAnexo() {
+  motivoAnexoFile = null;
+  const input = document.getElementById('motivoAprovacaoAnexo');
+  if (input) input.value = '';
+  const box = document.getElementById('motivoAnexoPreviewBox');
+  if (box) box.style.display = 'none';
 }
 
 async function confirmarAlteracao() {
   const motivo = document.getElementById('motivoAprovacaoText').value.trim();
   if (!motivo) { toast('Descreva as alterações necessárias', 'error'); return; }
+
+  const demandaId = pendingAlteracaoDemandaId;
+  const body = { acao: 'alteracao_solicitada', motivo };
+  if (motivoAnexoFile) {
+    body.arquivo_b64 = await fileToBase64(motivoAnexoFile);
+    body.arquivo_nome = motivoAnexoFile.name;
+    body.arquivo_tipo = motivoAnexoFile.type;
+    body.arquivo_tamanho = motivoAnexoFile.size;
+  }
   fecharModalMotivo();
+
   try {
-    const res = await apiFetch('POST', `/demandas/${pendingAlteracaoDemandaId}/aprovacao-demanda`, {
-      acao: 'alteracao_solicitada', motivo
-    });
+    const res = await apiFetch('POST', `/demandas/${demandaId}/aprovacao-demanda`, body);
     toast(res.mensagem || 'Solicitação enviada!', 'success');
-    document.getElementById('detailApprovalBanner').innerHTML = '<div class="approval-done alteracao_solicitada">✏️ Solicitação de alteração enviada. A equipe será notificada.</div>';
+    document.getElementById('detailApprovalBanner').innerHTML = '<div class="approval-done alteracao_solicitada">❌ Você marcou esta demanda como não aprovada. A equipe foi notificada e vai revisar suas alterações.</div>';
     if (document.getElementById('aprovacoesList')) loadAprovacoesPendentes();
     if (allDemandas.length) loadDemandas();
     checkAprovacoesBadge();
@@ -1748,20 +1809,16 @@ async function loadAprovacoesPendentes() {
     list.innerHTML = items.map(d => {
       const titulo = d.titulo || truncate(d.descricao, 70) || 'Demanda';
       return `
-        <div class="card" style="margin-bottom:14px;cursor:pointer" onclick="abrirDetalheAprovacao('${d.id}')">
-          <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
-            <div style="flex:1;min-width:0">
-              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:6px">${titulo}</div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <span class="badge" style="background:#8B5CF618;color:#8B5CF6">⏳ Aguardando aprovação</span>
-                ${d.prazo ? `<span style="font-size:12px;color:var(--muted)">📅 Prazo: ${formatDate(d.prazo)}</span>` : ''}
-                <span style="font-size:12px;color:var(--muted)">📌 ${formatDate(d.data || d.criado_em)}</span>
-              </div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;flex-shrink:0">
-              <button class="btn btn-success btn-sm" style="white-space:nowrap" onclick="event.stopPropagation();aprovarDemandaDireta('${d.id}')">✅ Aprovar</button>
-              <button class="btn btn-ghost btn-sm" style="white-space:nowrap" onclick="event.stopPropagation();abrirModalAlteracao('${d.id}')">✏️ Solicitar alterações</button>
-            </div>
+        <div class="card pending-approval-card" onclick="abrirDetalheAprovacao('${d.id}')">
+          <div class="pending-approval-title">${titulo}</div>
+          <div class="pending-approval-meta">
+            <span class="badge" style="background:#8B5CF618;color:#8B5CF6">⏳ Aguardando aprovação</span>
+            ${d.prazo ? `<span>📅 Prazo: ${formatDate(d.prazo)}</span>` : ''}
+            <span>📌 ${formatDate(d.data || d.criado_em)}</span>
+          </div>
+          <div class="pending-approval-actions" onclick="event.stopPropagation()">
+            <button class="btn btn-success btn-sm" onclick="aprovarDemandaDireta('${d.id}')">✅ Aprovar</button>
+            <button class="btn btn-ghost btn-sm" onclick="abrirModalAlteracao('${d.id}')">✏️ Solicitar alterações</button>
           </div>
         </div>`;
     }).join('');

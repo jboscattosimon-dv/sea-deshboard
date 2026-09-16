@@ -797,7 +797,7 @@ router.get('/aprovacoes-pendentes', async (req, res) => {
 router.post('/demandas/:id/aprovacao-demanda', async (req, res) => {
   const clienteId = req.cliente.cliente_id;
   const { id } = req.params;
-  const { acao, motivo } = req.body;
+  const { acao, motivo, arquivo_b64, arquivo_nome, arquivo_tipo, arquivo_tamanho } = req.body;
 
   if (!['aprovado', 'alteracao_solicitada'].includes(acao)) {
     return res.status(400).json({ erro: 'Ação inválida. Use "aprovado" ou "alteracao_solicitada"' });
@@ -841,6 +841,48 @@ router.post('/demandas/:id/aprovacao-demanda', async (req, res) => {
     : `Cliente ${req.cliente.nome} solicitou alterações: ${motivo}`;
 
   await registrarHistorico(acao, id, descHist, req.cliente.nome);
+
+  // Registra o motivo (e a foto, se houver) tambem no chat de comentarios,
+  // pra ficar visivel na conversa entre cliente e equipe, nao so no historico.
+  if (acao === 'alteracao_solicitada') {
+    let temAnexo = false, storagePath = null, publicUrl = null;
+    if (arquivo_b64 && arquivo_nome) {
+      const sanitized = arquivo_nome.replace(/[^a-zA-Z0-9._-]/g, '_');
+      storagePath = `portal/${clienteId}/${id}/comentarios/${Date.now()}_${sanitized}`;
+      const base64 = arquivo_b64.includes('base64,') ? arquivo_b64.split('base64,')[1] : arquivo_b64;
+      const buffer = Buffer.from(base64, 'base64');
+      const { error: upErr } = await supabase.storage
+        .from('Portal')
+        .upload(storagePath, buffer, { contentType: arquivo_tipo || 'application/octet-stream' });
+      if (!upErr) {
+        const { data: urlData } = supabase.storage.from('Portal').getPublicUrl(storagePath);
+        publicUrl = urlData.publicUrl;
+        temAnexo = true;
+      }
+    }
+
+    const comentId = gerarId('cmt_');
+    const { error: comentErr } = await supabase.from('portal_comentarios').insert([{
+      id: comentId,
+      demanda_id: id,
+      autor_tipo: 'cliente',
+      autor_id: clienteId,
+      autor_nome: req.cliente.nome,
+      mensagem: `✏️ Alterações solicitadas: ${motivo.trim()}`,
+      tem_anexo: temAnexo
+    }]);
+    if (!comentErr && temAnexo && publicUrl) {
+      await supabase.from('portal_comentario_anexos').insert([{
+        id: gerarId('cma_'),
+        comentario_id: comentId,
+        nome: arquivo_nome,
+        url: publicUrl,
+        storage_path: storagePath,
+        tipo: arquivo_tipo || null,
+        tamanho: arquivo_tamanho || null
+      }]);
+    }
+  }
 
   if (demanda.trello_card_id) {
     const trello = require('../trello');
