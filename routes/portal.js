@@ -853,4 +853,53 @@ router.post('/demandas/:id/aprovacao-demanda', async (req, res) => {
   res.json({ mensagem: msgCliente });
 });
 
+// ============================================================
+// ONBOARDING (visão somente leitura — só o Mapa, se o cliente tiver um)
+// ============================================================
+
+router.get('/onboarding', async (req, res) => {
+  const clienteId = req.cliente.cliente_id;
+
+  const { data: onboarding, error } = await supabase
+    .from('onboardings')
+    .select('id, nome, status, data_inicio, previsao_conclusao')
+    .eq('cliente_id', clienteId)
+    .maybeSingle();
+  if (error) return res.status(500).json({ erro: 'Erro ao buscar onboarding' });
+  if (!onboarding) return res.json(null);
+
+  const { data: etapas, error: eErr } = await supabase
+    .from('onboarding_etapas')
+    .select('id, nome, ordem, tarefas:onboarding_tarefas(id, titulo, status, prazo, ordem)')
+    .eq('onboarding_id', onboarding.id)
+    .order('ordem');
+  if (eErr) return res.status(500).json({ erro: 'Erro ao buscar etapas do onboarding' });
+
+  const etapasComProgresso = (etapas || [])
+    .sort((a, b) => a.ordem - b.ordem)
+    .map(e => {
+      const tarefas = (e.tarefas || []).sort((a, b) => a.ordem - b.ordem);
+      const total = tarefas.length;
+      const concluidas = tarefas.filter(t => t.status === 'concluida').length;
+      return {
+        id: e.id,
+        nome: e.nome,
+        progresso: total ? Math.round((concluidas / total) * 100) : 0,
+        tarefas: tarefas.map(t => ({ id: t.id, titulo: t.titulo, status: t.status, prazo: t.prazo })),
+      };
+    });
+
+  const todasTarefas = etapasComProgresso.flatMap(e => e.tarefas);
+  const total = todasTarefas.length;
+  const concluidas = todasTarefas.filter(t => t.status === 'concluida').length;
+
+  res.json({
+    ...onboarding,
+    progresso: total ? Math.round((concluidas / total) * 100) : 0,
+    total_tarefas: total,
+    tarefas_concluidas: concluidas,
+    etapas: etapasComProgresso,
+  });
+});
+
 module.exports = router;
