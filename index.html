@@ -539,23 +539,24 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
 .onb-task-title.done { color: var(--muted); text-decoration: line-through; }
 .onb-task-meta { font-size: 10.5px; color: var(--muted); margin-top: 1px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 
-.onb-map-etapa { border-bottom: 1px solid var(--border); }
-.onb-map-etapa:last-child { border-bottom: none; }
-.onb-map-bar-row { display: flex; align-items: center; gap: 12px; padding: 12px 4px; cursor: pointer; }
-.onb-map-chevron { font-size: 14px; color: var(--muted); transition: transform 0.2s; flex-shrink: 0; width: 10px; display: inline-block; }
-.onb-map-chevron.open { transform: rotate(90deg); }
-.onb-map-etapa-nome { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12.5px; flex: 0 1 130px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.onb-map-pct { font-size: 11.5px; color: var(--muted); width: 34px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
-.onb-map-tarefas { padding: 2px 4px 14px 26px; display: flex; flex-direction: column; gap: 2px; }
-.onb-map-tarefa-row { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: var(--r-sm); font-size: 12.5px; cursor: pointer; transition: background 0.15s; }
-.onb-map-tarefa-row:hover { background: var(--bg); }
-.onb-map-tarefa-dot { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--border); flex-shrink: 0; }
-.onb-map-tarefa-dot.done { background: linear-gradient(135deg, #34C97A, #27AE60); border-color: #27AE60; }
-.onb-map-tarefa-dot.late { border-color: #E74C3C; }
-.onb-map-tarefa-titulo { flex: 1; min-width: 0; }
-.onb-map-tarefa-titulo.done { color: var(--muted); text-decoration: line-through; }
-.onb-map-tarefa-late { color: #E74C3C; font-weight: 600; font-size: 10.5px; flex-shrink: 0; }
-@media (max-width: 480px) { .onb-map-etapa-nome { flex-basis: 90px; } }
+.onb-map-etapa { margin-bottom: 22px; }
+.onb-map-etapa:last-child { margin-bottom: 0; }
+.onb-map-etapa-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.onb-map-etapa-nome { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 13px; }
+.onb-map-etapa-pct { margin-left: auto; font-size: 11.5px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.onb-map-item { display: flex; gap: 14px; position: relative; }
+.onb-map-item::before { content: ''; position: absolute; left: 15px; top: 34px; bottom: -6px; width: 3px; background: var(--border); border-radius: 3px; }
+.onb-map-item:last-child::before { display: none; }
+.onb-map-item.done::before { background: linear-gradient(180deg, #34C97A, #27AE60); }
+.onb-map-node { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; z-index: 1; display: flex; align-items: center; justify-content: center; border: 2.5px solid var(--border); background: var(--surface); box-shadow: 0 2px 6px rgba(0,0,0,0.08); cursor: pointer; transition: transform 0.15s; }
+.onb-map-node:hover { transform: scale(1.08); }
+.onb-map-node.done { background: linear-gradient(135deg, #34C97A, #27AE60); border-color: #27AE60; }
+.onb-map-node.late { border-color: #E74C3C; }
+.onb-map-body { flex: 1; min-width: 0; padding: 4px 0 20px; cursor: pointer; }
+.onb-map-title { font-size: 13.5px; font-weight: 600; }
+.onb-map-title.done { color: var(--muted); text-decoration: line-through; }
+.onb-map-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.onb-map-meta.late { color: #E74C3C; font-weight: 600; }
 
 /* ─── FORM / MODAL ─── */
 .modal-overlay {
@@ -2259,7 +2260,7 @@ document.addEventListener('click', e => {
   if (!e.target.closest('.nav-group')) closeAllNavGroups();
 });
 
-function goTo(page) {
+function goTo(page, _semHistorico) {
   if (page !== 'dashboard' && !canView(page)) { toast('Sem permissão para acessar esta página.'); return; }
   currentPage = page;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -2308,7 +2309,43 @@ function goTo(page) {
   if (page === 'calendario')           renderCalendario();
   if (page === 'onboarding')           renderOnboardingVisaoGeral();
   if (page === 'onboarding_modelos')   renderOnboardingModelos();
+
+  if (!_semHistorico) atualizarURL({ page });
 }
+
+// ── Sincronização da URL com a navegação ──────────────────────────────
+function atualizarURL(params) {
+  const url = new URL(location.href);
+  url.search = '';
+  if (params.page)    url.searchParams.set('page', params.page);
+  if (params.demanda) url.searchParams.set('demanda', params.demanda);
+  history.pushState({ page: params.page, demanda: params.demanda || null }, '', url);
+}
+
+function limparDemandaDaURL() {
+  const url = new URL(location.href);
+  if (url.searchParams.has('demanda')) {
+    url.searchParams.delete('demanda');
+    history.replaceState({ page: currentPage, demanda: null }, '', url);
+  }
+}
+
+function restaurarEstadoDaURL() {
+  const params = new URLSearchParams(location.search);
+  const page = params.get('page');
+  if (page && page !== 'dashboard' && canView(page)) goTo(page, true);
+  const demandaId = params.get('demanda');
+  if (demandaId) openDetail(demandaId, true);
+}
+
+window.addEventListener('popstate', (e) => {
+  const params = new URLSearchParams(location.search);
+  const page = params.get('page') || 'dashboard';
+  if (page !== currentPage) goTo(page, true);
+  const demandaId = params.get('demanda');
+  if (demandaId) openDetail(demandaId, true);
+  else closeModal('detailModal');
+});
 
 function buildHeaderActions(page) {
   const el = document.getElementById('headerActions');
@@ -2527,9 +2564,10 @@ function setDashFilter(f) {
 // ═══════════════════════════════════════
 //  DETAIL / EDIT MODAL
 // ═══════════════════════════════════════
-function openDetail(id) {
+function openDetail(id, _semHistorico) {
   const d = demands.find(x => x.id === id);
   if (!d) return;
+  if (!_semHistorico) atualizarURL({ page: currentPage, demanda: id });
   const st = getStatus(d.statusId);
   const cl = getClient(d.clientId);
 
@@ -3825,9 +3863,15 @@ function openModal(id) {
 }
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
+  if (id === 'detailModal') limparDemandaDaURL();
 }
 document.querySelectorAll('.modal-overlay').forEach(o => {
-  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+  o.addEventListener('click', e => {
+    if (e.target === o) {
+      o.classList.remove('open');
+      if (o.id === 'detailModal') limparDemandaDaURL();
+    }
+  });
 });
 
 // ═══════════════════════════════════════
@@ -5573,12 +5617,13 @@ function updateDarkToggle() {
 (async () => {
   initDarkMode();
   const token = localStorage.getItem('sea_token');
+  let logado = false;
   if (token) {
     try {
       await loadFromAPI();
       applyPermissions();
       document.getElementById('loginScreen').style.display = 'none';
-      abrirDemandaDaURL();
+      logado = true;
     } catch(e) {
       localStorage.removeItem('sea_token');
       load();
@@ -5593,16 +5638,14 @@ function updateDarkToggle() {
   renderDashboard();
   showAlertToast();
   updateAlertBadge();
+  // Depois de tudo inicializado, restaura pagina/demanda da URL por ultimo,
+  // senao os builds acima (ex: buildHeaderActions('dashboard')) sobrescreviam
+  if (logado) restaurarEstadoDaURL();
 })();
 
 // Link direto pra uma demanda (?demanda=ID) — usado pra compartilhar entre a equipe
-function abrirDemandaDaURL() {
-  const id = new URLSearchParams(location.search).get('demanda');
-  if (id) openDetail(id);
-}
-
 function copiarLinkDemanda(id) {
-  const link = `${location.origin}${location.pathname}?demanda=${id}`;
+  const link = `${location.origin}${location.pathname}?page=demands&demanda=${id}`;
   navigator.clipboard.writeText(link)
     .then(() => toast('Link copiado!'))
     .catch(() => toast('Não foi possível copiar o link.'));
@@ -7228,8 +7271,6 @@ function onbRenderAtividades() {
   </div>`;
 }
 
-let onbMapaExpandido = {};
-
 function onbRenderMapa() {
   const etapas = _onbData.etapas || [];
   const el = document.getElementById('onb-tab-mapa');
@@ -7240,33 +7281,27 @@ function onbRenderMapa() {
   const hoje = new Date().toISOString().slice(0, 10);
   el.innerHTML = etapas.map(e => {
     const tarefas = e.tarefas || [];
-    const expandido = !!onbMapaExpandido[e.id];
     return `
       <div class="onb-map-etapa">
-        <div class="onb-map-bar-row" onclick="onbToggleMapaEtapa('${e.id}')">
-          <span class="onb-map-chevron ${expandido ? 'open' : ''}">›</span>
+        <div class="onb-map-etapa-head">
           <span class="onb-map-etapa-nome">${e.nome}</span>
-          <div class="progress-track sm"><div class="progress-fill ${e.progresso>=100?'done':''}" style="width:${e.progresso}%"></div></div>
-          <span class="onb-map-pct">${e.progresso}%</span>
+          <span class="onb-map-etapa-pct">${e.progresso}%</span>
         </div>
-        <div class="onb-map-tarefas" style="display:${expandido ? '' : 'none'}">
-          ${tarefas.length ? tarefas.map(t => {
-            const done = t.status === 'concluida';
-            const atrasada = !done && t.prazo && t.prazo < hoje;
-            return `<div class="onb-map-tarefa-row" onclick="event.stopPropagation();onbAbrirTarefa('${t.id}')">
-              <span class="onb-map-tarefa-dot ${done ? 'done' : ''} ${atrasada ? 'late' : ''}"></span>
-              <span class="onb-map-tarefa-titulo ${done ? 'done' : ''}">${t.titulo}</span>
-              ${atrasada ? `<span class="onb-map-tarefa-late">🔴 Atrasada</span>` : ''}
-            </div>`;
-          }).join('') : `<div style="font-size:12px;color:var(--muted);padding:6px 0 6px 8px">Sem tarefas nesta etapa.</div>`}
-        </div>
+        ${tarefas.length ? tarefas.map(t => {
+          const done = t.status === 'concluida';
+          const atrasada = !done && t.prazo && t.prazo < hoje;
+          return `<div class="onb-map-item ${done ? 'done' : ''}">
+            <div class="onb-map-node ${done ? 'done' : ''} ${atrasada ? 'late' : ''}" onclick="onbAbrirTarefa('${t.id}')">
+              ${done ? `<svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="3.5"><polyline points="20 6 9 17 4 12"/></svg>` : ''}
+            </div>
+            <div class="onb-map-body" onclick="onbAbrirTarefa('${t.id}')">
+              <div class="onb-map-title ${done ? 'done' : ''}">${t.titulo}</div>
+              <div class="onb-map-meta ${atrasada ? 'late' : ''}">${atrasada ? '🔴 Atrasada' : (t.responsavel?.nome || 'Definir depois')}${t.prazo ? ` · ${onbFmtData(t.prazo)}` : ''}</div>
+            </div>
+          </div>`;
+        }).join('') : `<div style="font-size:12px;color:var(--muted);padding:4px 0 8px">Sem tarefas nesta etapa.</div>`}
       </div>`;
   }).join('');
-}
-
-function onbToggleMapaEtapa(etapaId) {
-  onbMapaExpandido[etapaId] = !onbMapaExpandido[etapaId];
-  onbRenderMapa();
 }
 
 // ── Drag & drop: etapas do onboarding do cliente ─────────────────────
