@@ -707,6 +707,21 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
 
   /* Sino de alertas: caixa fixa que podia estourar em telas bem estreitas */
   #alertDropdown { min-width: 0 !important; width: calc(100vw - 24px) !important; right: 12px !important; }
+
+  /* Cabeçalho: hamburger + logo + título + ações + sino + tema não cabiam numa linha
+     só e o(s) último(s) botão(ões) saíam cortados fora da tela */
+  header { padding: 0 12px; gap: 6px; }
+  .header-logo { display: none; }
+  .header-title { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .header-actions { gap: 6px; }
+  .header-actions .btn { padding: 7px 11px; font-size: 10.5px; }
+
+  /* Cards de cliente (Dashboard / Painel do dia): linhas mais respiráveis e legíveis */
+  .card-head { padding: 12px 14px; }
+  .card-body { padding: 10px 12px 12px; gap: 6px; }
+  .demand-row { padding: 10px; gap: 12px; }
+  .demand-date { font-size: 11px; }
+  .demand-desc { font-size: 13px; }
 }
 
 /* ── PAINEL DO DIA ── */
