@@ -1437,8 +1437,14 @@ function renderComentarios(msgs, demandaId) {
 
 let chatAnexoFile = null;
 function chatAnexoPreview(input) {
-  chatAnexoFile = input.files[0];
-  if (!chatAnexoFile) return;
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 30 * 1024 * 1024) {
+    toast(`${file.name}: arquivo muito grande (max 30MB)`, 'error');
+    input.value = '';
+    return;
+  }
+  chatAnexoFile = file;
   document.getElementById('chatAnexoPreview').style.display = 'flex';
   document.getElementById('chatAnexoNome').textContent = chatAnexoFile.name + ' (' + formatSize(chatAnexoFile.size) + ')';
 }
