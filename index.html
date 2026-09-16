@@ -536,10 +536,23 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
 .onb-task-title.done { color: var(--muted); text-decoration: line-through; }
 .onb-task-meta { font-size: 10.5px; color: var(--muted); margin-top: 1px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 
-.onb-map-square { width: 34px; height: 34px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--surface); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; flex-shrink: 0; }
-.onb-map-square:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-.onb-map-square.done { background: linear-gradient(135deg, #34C97A, #27AE60); border-color: #27AE60; }
-.onb-map-square.late { border-color: #E74C3C; box-shadow: 0 0 0 2px #E74C3C22; }
+.onb-map-etapa { border-bottom: 1px solid var(--border); }
+.onb-map-etapa:last-child { border-bottom: none; }
+.onb-map-bar-row { display: flex; align-items: center; gap: 12px; padding: 12px 4px; cursor: pointer; }
+.onb-map-chevron { font-size: 14px; color: var(--muted); transition: transform 0.2s; flex-shrink: 0; width: 10px; display: inline-block; }
+.onb-map-chevron.open { transform: rotate(90deg); }
+.onb-map-etapa-nome { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12.5px; flex: 0 1 130px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.onb-map-pct { font-size: 11.5px; color: var(--muted); width: 34px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.onb-map-tarefas { padding: 2px 4px 14px 26px; display: flex; flex-direction: column; gap: 2px; }
+.onb-map-tarefa-row { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: var(--r-sm); font-size: 12.5px; cursor: pointer; transition: background 0.15s; }
+.onb-map-tarefa-row:hover { background: var(--bg); }
+.onb-map-tarefa-dot { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--border); flex-shrink: 0; }
+.onb-map-tarefa-dot.done { background: linear-gradient(135deg, #34C97A, #27AE60); border-color: #27AE60; }
+.onb-map-tarefa-dot.late { border-color: #E74C3C; }
+.onb-map-tarefa-titulo { flex: 1; min-width: 0; }
+.onb-map-tarefa-titulo.done { color: var(--muted); text-decoration: line-through; }
+.onb-map-tarefa-late { color: #E74C3C; font-weight: 600; font-size: 10.5px; flex-shrink: 0; }
+@media (max-width: 480px) { .onb-map-etapa-nome { flex-basis: 90px; } }
 
 /* ─── FORM / MODAL ─── */
 .modal-overlay {
@@ -1887,12 +1900,12 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
     <button class="modal-close" onclick="closeModal('modal-onboarding')">×</button>
     <div id="onb-modal-resumo"></div>
     <div style="display:flex;gap:8px;margin:20px 0;flex-wrap:wrap">
-      <button class="ctab ctab-active" id="ctab-onb-etapas" onclick="onbSwitchTab('etapas')">Etapas</button>
-      <button class="ctab" id="ctab-onb-mapa" onclick="onbSwitchTab('mapa')">Mapa</button>
+      <button class="ctab ctab-active" id="ctab-onb-mapa" onclick="onbSwitchTab('mapa')">Mapa</button>
+      <button class="ctab" id="ctab-onb-etapas" onclick="onbSwitchTab('etapas')">Etapas</button>
       <button class="ctab" id="ctab-onb-atividades" onclick="onbSwitchTab('atividades')">Atividades</button>
     </div>
-    <div id="onb-tab-etapas"></div>
-    <div id="onb-tab-mapa" style="display:none"></div>
+    <div id="onb-tab-mapa"></div>
+    <div id="onb-tab-etapas" style="display:none"></div>
     <div id="onb-tab-atividades" style="display:none"></div>
   </div>
 </div>
@@ -6843,7 +6856,7 @@ async function onbAbrirDetalhe(id) {
   if (res.erro || !res) { toast('Erro ao carregar onboarding.'); return; }
   _onbData = res;
   document.getElementById('onb-modal-title').textContent = 'Onboarding — ' + (res.cliente_nome || '');
-  onbSwitchTab('etapas');
+  onbSwitchTab('mapa');
   onbRenderResumo();
   onbRenderEtapas();
   onbRenderMapa();
@@ -7150,6 +7163,8 @@ function onbRenderAtividades() {
   </div>`;
 }
 
+let onbMapaExpandido = {};
+
 function onbRenderMapa() {
   const etapas = _onbData.etapas || [];
   const el = document.getElementById('onb-tab-mapa');
@@ -7160,24 +7175,33 @@ function onbRenderMapa() {
   const hoje = new Date().toISOString().slice(0, 10);
   el.innerHTML = etapas.map(e => {
     const tarefas = e.tarefas || [];
+    const expandido = !!onbMapaExpandido[e.id];
     return `
-      <div style="margin-bottom:22px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-          <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px">${e.nome}</span>
-          <span style="font-size:11px;color:var(--muted)">${e.tarefas_concluidas}/${e.total_tarefas}</span>
+      <div class="onb-map-etapa">
+        <div class="onb-map-bar-row" onclick="onbToggleMapaEtapa('${e.id}')">
+          <span class="onb-map-chevron ${expandido ? 'open' : ''}">›</span>
+          <span class="onb-map-etapa-nome">${e.nome}</span>
+          <div class="progress-track sm"><div class="progress-fill ${e.progresso>=100?'done':''}" style="width:${e.progresso}%"></div></div>
+          <span class="onb-map-pct">${e.progresso}%</span>
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <div class="onb-map-tarefas" style="display:${expandido ? '' : 'none'}">
           ${tarefas.length ? tarefas.map(t => {
             const done = t.status === 'concluida';
             const atrasada = !done && t.prazo && t.prazo < hoje;
-            return `<div class="onb-map-square ${done ? 'done' : ''} ${atrasada ? 'late' : ''}"
-              onclick="onbAbrirTarefa('${t.id}')" title="${t.titulo}">
-              ${done ? `<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>` : ''}
+            return `<div class="onb-map-tarefa-row" onclick="event.stopPropagation();onbAbrirTarefa('${t.id}')">
+              <span class="onb-map-tarefa-dot ${done ? 'done' : ''} ${atrasada ? 'late' : ''}"></span>
+              <span class="onb-map-tarefa-titulo ${done ? 'done' : ''}">${t.titulo}</span>
+              ${atrasada ? `<span class="onb-map-tarefa-late">🔴 Atrasada</span>` : ''}
             </div>`;
-          }).join('') : `<span style="font-size:12px;color:var(--muted)">Sem tarefas nesta etapa.</span>`}
+          }).join('') : `<div style="font-size:12px;color:var(--muted);padding:6px 0 6px 8px">Sem tarefas nesta etapa.</div>`}
         </div>
       </div>`;
   }).join('');
+}
+
+function onbToggleMapaEtapa(etapaId) {
+  onbMapaExpandido[etapaId] = !onbMapaExpandido[etapaId];
+  onbRenderMapa();
 }
 
 // ── Drag & drop: etapas do onboarding do cliente ─────────────────────
