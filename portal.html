@@ -884,14 +884,6 @@
   </div>
 </div>
 
-<!-- Modal: Post do calendário -->
-<div class="modal-overlay" id="modalPost">
-  <div class="modal" style="max-width:540px">
-    <button class="modal-close" onclick="closeModal('modalPost')">×</button>
-    <div class="modal-title" id="modalPostTitle"></div>
-    <div id="modalPostContent"></div>
-  </div>
-</div>
 
 <!-- Lightbox -->
 <div id="lightbox" onclick="closeLightbox()">
@@ -1708,16 +1700,17 @@ function navMes(delta) {
   loadCalendario();
 }
 
-function renderCalendario(posts) {
+function renderCalendario(demandasDoMes) {
   const grid = document.getElementById('calGrid');
   const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   document.getElementById('calMesLabel').textContent = `${meses[calMes-1]} ${calAno}`;
 
-  const postsByDay = {};
-  posts.forEach(p => {
-    const d = p.data_publicacao?.split('T')[0];
-    if (!postsByDay[d]) postsByDay[d] = [];
-    postsByDay[d].push(p);
+  const porDia = {};
+  demandasDoMes.forEach(d => {
+    const dia = d.data;
+    if (!dia) return;
+    if (!porDia[dia]) porDia[dia] = [];
+    porDia[dia].push(d);
   });
 
   const primeiroDia = new Date(calAno, calMes - 1, 1).getDay();
@@ -1735,15 +1728,19 @@ function renderCalendario(posts) {
   for (let d = 1; d <= totalDias; d++) {
     const dateStr = `${calAno}-${String(calMes).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const isToday = dateStr === hoje;
-    const dayPosts = postsByDay[dateStr] || [];
+    const dayDemandas = porDia[dateStr] || [];
     html += `
       <div class="cal-cell ${isToday ? 'today' : ''}">
         <div class="cal-date">${d}</div>
-        ${dayPosts.slice(0, 3).map(p => `
-          <div class="cal-post-chip" onclick="abrirPostModal(${JSON.stringify(p).replace(/"/g,'&quot;')})" title="${p.titulo}">
-            ${p.titulo}
-          </div>`).join('')}
-        ${dayPosts.length > 3 ? `<div style="font-size:10px;color:var(--muted);padding:1px 2px">+${dayPosts.length-3} mais</div>` : ''}
+        ${dayDemandas.slice(0, 3).map(dem => {
+          const titulo = dem.titulo || truncate(dem.descricao, 40) || 'Demanda';
+          const cor = dem.status?.cor || '#6b7280';
+          return `
+          <div class="cal-post-chip" onclick="abrirDemanda('${dem.id}')" title="${titulo}" style="background:${cor}">
+            ${dem.formato?.nome ? `${dem.formato.nome}: ` : ''}${titulo}
+          </div>`;
+        }).join('')}
+        ${dayDemandas.length > 3 ? `<div style="font-size:10px;color:var(--muted);padding:1px 2px">+${dayDemandas.length-3} mais</div>` : ''}
       </div>`;
   }
 
@@ -1754,26 +1751,6 @@ function renderCalendario(posts) {
 
   html += '</div>';
   grid.innerHTML = html;
-}
-
-function abrirPostModal(post) {
-  document.getElementById('modalPostTitle').textContent = post.titulo;
-  const statusColors = { publicado: '#16a34a', rascunho: '#6b7280', agendado: '#1d4ed8' };
-  const cor = statusColors[post.status] || '#6b7280';
-  document.getElementById('modalPostContent').innerHTML = `
-    ${post.arte_url ? `<div style="border-radius:var(--r-sm);overflow:hidden;margin-bottom:16px;max-height:300px;display:flex;align-items:center;justify-content:center;background:var(--surface2)">
-      <img src="${post.arte_url}" style="max-width:100%;max-height:300px;object-fit:contain" />
-    </div>` : ''}
-    <div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
-      <span class="badge" style="background:${cor}18;color:${cor};border-radius:100px">${post.status || 'rascunho'}</span>
-      ${post.canal ? `<span style="font-size:12px;color:var(--muted)">📡 ${post.canal}</span>` : ''}
-      ${post.data_publicacao ? `<span style="font-size:12px;color:var(--muted)">📅 ${formatDate(post.data_publicacao)}</span>` : ''}
-    </div>
-    ${post.descricao ? `<div style="font-size:13.5px;margin-bottom:12px">${post.descricao}</div>` : ''}
-    ${post.legenda ? `<div style="margin-bottom:12px"><label>Legenda</label><div style="font-size:13px;color:var(--text);white-space:pre-line">${post.legenda}</div></div>` : ''}
-    ${post.hashtags ? `<div><label>Hashtags</label><div style="font-size:13px;color:#1d4ed8">${post.hashtags}</div></div>` : ''}
-  `;
-  openModal('modalPost');
 }
 
 // ═══════════════════════════════════════════════════════

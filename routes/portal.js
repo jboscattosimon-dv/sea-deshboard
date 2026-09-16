@@ -492,22 +492,29 @@ router.post('/demandas/:id/aprovacao', async (req, res) => {
 // CALENDÁRIO EDITORIAL
 // ============================================================
 
+// Calendário Editorial do portal — reflete as demandas do cliente (mesma fonte de
+// dados do calendário do dashboard interno). Não usa mais cal_conteudos: essa tabela
+// é preenchida à parte e não tinha nenhuma relação com as demandas reais do cliente.
 router.get('/calendario', async (req, res) => {
   const clienteId = req.cliente.cliente_id;
   const { mes, ano } = req.query;
 
   let query = supabase
-    .from('cal_conteudos')
-    .select('id, titulo, data_publicacao, canal, status, descricao, legenda, hashtags, arte_url, responsavel_id')
+    .from('demandas')
+    .select(`
+      id, titulo, descricao, data, prioridade,
+      status:status_id(id, nome, cor),
+      formato:formato_id(nome)
+    `)
     .eq('cliente_id', clienteId)
-    .order('data_publicacao', { ascending: true });
+    .order('data', { ascending: true });
 
   if (mes && ano) {
-    const mesNum = mes.padStart(2, '0');
+    const mesNum = String(mes).padStart(2, '0');
     const inicio = `${ano}-${mesNum}-01`;
     const ultimoDia = new Date(parseInt(ano), parseInt(mes), 0).getDate();
     const fim = `${ano}-${mesNum}-${ultimoDia}`;
-    query = query.gte('data_publicacao', inicio).lte('data_publicacao', fim);
+    query = query.gte('data', inicio).lte('data', fim);
   }
 
   const { data, error } = await query;
