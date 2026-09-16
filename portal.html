@@ -39,6 +39,7 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
+      overflow-x: hidden;
     }
 
     /* ─── LOGIN ─────────────────────────────── */
@@ -326,6 +327,19 @@
       background: #fefce8; color: #854d0e; border: 1px solid #fef08a;
       padding: 2px 8px; border-radius: 100px; font-size: 10.5px; font-weight: 700;
     }
+    .demand-card.pending-approval { border-color: #8B5CF6; background: linear-gradient(135deg, #8B5CF60d, var(--surface) 60%); }
+    .demand-card-approval-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+    /* ─── APPROVAL BANNER (topo do detalhe, sempre visível) ─── */
+    .approval-banner {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+      background: linear-gradient(135deg, #8B5CF614, #8B5CF608);
+      border: 1.5px solid #8B5CF640; border-radius: var(--r);
+      padding: 16px 20px; margin-bottom: 20px;
+    }
+    .approval-banner-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14.5px; margin-bottom: 3px; }
+    .approval-banner-sub { font-size: 12.5px; color: var(--muted); }
+    .approval-banner .approval-btn-row { flex-wrap: nowrap; }
 
     /* ─── DEMAND DETAIL ─────────────────────── */
     .back-btn {
@@ -539,18 +553,31 @@
       aside { transform: translateX(-100%); }
       aside.open { transform: translateX(0); }
       .sidebar-overlay.open { display: block; }
-      header { left: 0; }
+      header { left: 0; padding: 0 14px; gap: 8px; }
+      .header-title { font-size: 15px; }
       main { margin-left: 0; padding: 16px; }
       .hamburger { display: flex; }
       .stat-grid { grid-template-columns: repeat(2, 1fr); }
       .info-grid { grid-template-columns: 1fr; }
-      .approval-btn-row { flex-direction: column; }
-      .tabs { overflow-x: auto; }
+      .approval-btn-row { flex-direction: column; align-items: stretch; }
+      .approval-btn-row .btn { width: 100%; justify-content: center; }
+      .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
       .lib-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+      .filter-row { flex-direction: column; align-items: stretch; }
+      .filter-row .filter-input, .filter-row .filter-select, .filter-row input[type="date"] { width: 100%; min-width: 0; }
+      .demand-card { flex-direction: column; }
+      .demand-card-arrow { display: none; }
+      .approval-banner { flex-direction: column; align-items: stretch; }
+      .approval-banner .approval-btn-row { flex-direction: row; }
+      .approval-banner .approval-btn-row .btn { width: auto; }
     }
     @media (max-width: 480px) {
       .stat-grid { grid-template-columns: 1fr 1fr; }
       .login-box { padding: 32px 24px; }
+      .header-actions { gap: 6px; }
+      .user-chip span { display: none; }
+      .approval-banner .approval-btn-row { flex-direction: column; }
+      .approval-banner .approval-btn-row .btn { width: 100%; justify-content: center; }
     }
   </style>
 </head>
@@ -706,20 +733,19 @@
         <div class="detail-title" id="detailTitle"></div>
         <div class="detail-meta" id="detailMeta"></div>
       </div>
+      <div id="detailApprovalBanner" style="display:none"></div>
       <div class="tabs">
         <button class="tab active" onclick="switchTab('info')">Informações</button>
         <button class="tab" onclick="switchTab('historico')">Histórico</button>
         <button class="tab" onclick="switchTab('comentarios')">Comentários</button>
         <button class="tab" onclick="switchTab('arquivos')">Arquivos</button>
         <button class="tab" onclick="switchTab('entregaveis')">Entregáveis</button>
-        <button class="tab" id="tabAprovacao" style="display:none" onclick="switchTab('aprovacao')">✅ Aprovação</button>
       </div>
       <div class="tab-panel active" id="panel-info"></div>
       <div class="tab-panel" id="panel-historico"></div>
       <div class="tab-panel" id="panel-comentarios"></div>
       <div class="tab-panel" id="panel-arquivos"></div>
       <div class="tab-panel" id="panel-entregaveis"></div>
-      <div class="tab-panel" id="panel-aprovacao"></div>
     </div>
 
     <!-- ── CALENDÁRIO ─────────────────────────── -->
@@ -1171,8 +1197,9 @@ function renderDemandas(list) {
     const titulo = d.titulo || truncate(d.descricao, 60) || 'Sem título';
     const statusDot = d.status?.cor ? `<span class="badge-dot" style="background:${d.status.cor}"></span>` : '';
     const prioClass = `badge-priority-${d.prioridade || 'normal'}`;
+    const pendente = d.status?.id === 's_awcli';
     return `
-      <div class="demand-card" onclick="abrirDemanda('${d.id}')">
+      <div class="demand-card ${pendente ? 'pending-approval' : ''}" onclick="abrirDemanda('${d.id}')">
         <div class="demand-card-body">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
             <span class="demand-card-title">${titulo}</span>
@@ -1186,10 +1213,28 @@ function renderDemandas(list) {
             ${d.responsavel_nome ? `<span>👤 ${d.responsavel_nome}</span>` : ''}
             ${d.data ? `<span>📅 ${formatDate(d.data)}</span>` : ''}
           </div>
+          ${pendente ? `
+            <div class="demand-card-approval-actions" onclick="event.stopPropagation()">
+              <button class="btn btn-success btn-sm" onclick="aprovarDemandaLista('${d.id}')">✅ Aprovar</button>
+              <button class="btn btn-ghost btn-sm" onclick="abrirModalAlteracao('${d.id}')">✏️ Solicitar alterações</button>
+            </div>` : ''}
         </div>
         <div class="demand-card-arrow">›</div>
       </div>`;
   }).join('');
+}
+
+async function aprovarDemandaLista(demandaId) {
+  if (!confirm('Confirmar aprovação desta demanda?')) return;
+  try {
+    const res = await apiFetch('POST', `/demandas/${demandaId}/aprovacao-demanda`, { acao: 'aprovado' });
+    toast(res.mensagem || 'Demanda aprovada!', 'success');
+    loadDemandas();
+    if (document.getElementById('aprovacoesList')) loadAprovacoesPendentes();
+    checkAprovacoesBadge();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
 }
 
 async function abrirDemanda(id) {
@@ -1197,7 +1242,8 @@ async function abrirDemanda(id) {
   goTo('detalhe');
   document.getElementById('detailTitle').textContent = 'Carregando...';
   document.getElementById('detailMeta').innerHTML = '';
-  ['info','historico','comentarios','arquivos','entregaveis','aprovacao'].forEach(t => {
+  document.getElementById('detailApprovalBanner').style.display = 'none';
+  ['info','historico','comentarios','arquivos','entregaveis'].forEach(t => {
     document.getElementById('panel-' + t).innerHTML = '<div style="padding:24px;color:var(--muted)">Carregando...</div>';
   });
 
@@ -1211,19 +1257,15 @@ async function abrirDemanda(id) {
     document.getElementById('detailMeta').innerHTML = `
       ${d.status ? `<span class="badge" style="background:${d.status.cor}18;color:${d.status.cor}">${statusDot} ${d.status.nome}</span>` : ''}
       ${d.prioridade ? `<span class="badge ${prioClass}">${d.prioridade}</span>` : ''}
-      ${d.status?.id === 's_awcli' ? '<span class="arte-badge" style="background:#8B5CF618;color:#8B5CF6;border-color:#8B5CF633">⏳ Aguardando sua aprovação</span>' : ''}
     `;
 
-    const tabAprovacao = document.getElementById('tabAprovacao');
-    const isAwaitingApproval = d.status?.id === 's_awcli';
-    if (tabAprovacao) tabAprovacao.style.display = isAwaitingApproval ? '' : 'none';
+    renderApprovalBanner(id, d);
 
     renderInfoPanel(d);
     loadHistorico(id);
     loadComentarios(id);
     loadArquivos(id);
     loadEntregaveis(id);
-    if (isAwaitingApproval) loadAprovacaoDemanda(id, d);
 
     switchTab('info');
   } catch (err) {
@@ -1232,11 +1274,28 @@ async function abrirDemanda(id) {
   }
 }
 
+function renderApprovalBanner(id, demanda) {
+  const banner = document.getElementById('detailApprovalBanner');
+  if (demanda.status?.id !== 's_awcli') { banner.style.display = 'none'; banner.innerHTML = ''; return; }
+  banner.style.display = 'block';
+  banner.innerHTML = `
+    <div class="approval-banner">
+      <div>
+        <div class="approval-banner-title">⏳ Esta demanda está aguardando sua aprovação</div>
+        <div class="approval-banner-sub">Revise os entregáveis na aba "Entregáveis" e então aprove ou solicite alterações.</div>
+      </div>
+      <div class="approval-btn-row">
+        <button class="btn btn-success" onclick="aprovarDemanda('${id}')">✅ Aprovar</button>
+        <button class="btn btn-warning" onclick="abrirModalAlteracao('${id}')">✏️ Solicitar alterações</button>
+      </div>
+    </div>`;
+}
+
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   const tabs = document.querySelectorAll('.tab');
-  const names = ['info','historico','comentarios','arquivos','entregaveis','aprovacao'];
+  const names = ['info','historico','comentarios','arquivos','entregaveis'];
   const idx = names.indexOf(name);
   if (tabs[idx]) tabs[idx].classList.add('active');
   const panel = document.getElementById('panel-' + name);
@@ -1508,34 +1567,14 @@ async function loadEntregaveis(demandaId) {
 // ═══════════════════════════════════════════════════════
 // APROVAÇÃO DA DEMANDA
 // ═══════════════════════════════════════════════════════
-function loadAprovacaoDemanda(demandaId, demanda) {
-  const panel = document.getElementById('panel-aprovacao');
-  const titulo = demanda.titulo || truncate(demanda.descricao, 60) || 'esta demanda';
-  panel.innerHTML = `
-    <div class="approval-section" style="padding:24px 0">
-      <div class="approval-title">Aprovação da demanda</div>
-      <p style="font-size:13.5px;color:var(--muted);margin-bottom:20px;line-height:1.6">
-        A equipe concluiu o trabalho em <strong>${titulo}</strong> e está aguardando sua aprovação. Revise os entregáveis na aba ao lado e então aprove ou solicite alterações.
-      </p>
-      <div class="approval-btn-row">
-        <button class="btn btn-success" style="font-size:14px;padding:10px 20px" onclick="aprovarDemanda('${demandaId}')">
-          ✅ Aprovar demanda
-        </button>
-        <button class="btn btn-warning" style="font-size:14px;padding:10px 20px" onclick="abrirModalAlteracao('${demandaId}')">
-          ✏️ Solicitar alterações
-        </button>
-      </div>
-    </div>`;
-}
-
 async function aprovarDemanda(demandaId) {
   if (!confirm('Confirmar aprovação desta demanda?')) return;
   try {
     const res = await apiFetch('POST', `/demandas/${demandaId}/aprovacao-demanda`, { acao: 'aprovado' });
     toast(res.mensagem || 'Demanda aprovada!', 'success');
-    document.getElementById('tabAprovacao').style.display = 'none';
-    document.getElementById('panel-aprovacao').innerHTML = '<div class="approval-section" style="padding:24px 0"><div class="approval-done aprovado">✅ Você aprovou esta demanda. Obrigado!</div></div>';
-    switchTab('info');
+    document.getElementById('detailApprovalBanner').innerHTML = '<div class="approval-done aprovado">✅ Você aprovou esta demanda. Obrigado!</div>';
+    if (document.getElementById('aprovacoesList')) loadAprovacoesPendentes();
+    if (allDemandas.length) loadDemandas();
     checkAprovacoesBadge();
   } catch (err) {
     toast(err.message, 'error');
@@ -1566,9 +1605,9 @@ async function confirmarAlteracao() {
       acao: 'alteracao_solicitada', motivo
     });
     toast(res.mensagem || 'Solicitação enviada!', 'success');
-    document.getElementById('tabAprovacao').style.display = 'none';
-    document.getElementById('panel-aprovacao').innerHTML = '<div class="approval-section" style="padding:24px 0"><div class="approval-done alteracao_solicitada">✏️ Solicitação de alteração enviada. A equipe será notificada.</div></div>';
-    switchTab('info');
+    document.getElementById('detailApprovalBanner').innerHTML = '<div class="approval-done alteracao_solicitada">✏️ Solicitação de alteração enviada. A equipe será notificada.</div>';
+    if (document.getElementById('aprovacoesList')) loadAprovacoesPendentes();
+    if (allDemandas.length) loadDemandas();
     checkAprovacoesBadge();
   } catch (err) {
     toast(err.message, 'error');
@@ -1613,8 +1652,7 @@ async function loadAprovacoesPendentes() {
 }
 
 function abrirDetalheAprovacao(demandaId) {
-  goTo('detalhe');
-  loadDetalhe(demandaId);
+  abrirDemanda(demandaId);
 }
 
 async function aprovarDemandaDireta(demandaId) {
