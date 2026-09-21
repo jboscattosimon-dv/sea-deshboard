@@ -41,7 +41,7 @@ async function uploadParaStorage(clienteId, demandaId, base64, nome, tipo, subpa
   const raw = base64.includes('base64,') ? base64.split('base64,')[1] : base64;
   const buffer = Buffer.from(raw, 'base64');
   const { error } = await supabase.storage.from('Portal').upload(storagePath, buffer, { contentType: tipo || 'application/octet-stream' });
-  if (error) return null;
+  if (error) { console.error('[portal] erro ao subir arquivo para o storage:', error.message); return null; }
   const { data: urlData } = supabase.storage.from('Portal').getPublicUrl(storagePath);
   return { url: urlData.publicUrl, storagePath };
 }
@@ -387,7 +387,10 @@ router.post('/demandas/:id/arquivos', async (req, res) => {
     .from('Portal')
     .upload(storagePath, buffer, { contentType: tipo || 'application/octet-stream' });
 
-  if (upErr) return res.status(500).json({ erro: 'Erro ao fazer upload do arquivo' });
+  if (upErr) {
+    console.error('[portal] erro ao fazer upload do arquivo:', upErr.message);
+    return res.status(500).json({ erro: 'Erro ao fazer upload do arquivo' });
+  }
 
   const { data: urlData } = supabase.storage.from('Portal').getPublicUrl(storagePath);
 
@@ -409,7 +412,10 @@ router.post('/demandas/:id/arquivos', async (req, res) => {
     .select()
     .single();
 
-  if (error) return res.status(400).json({ erro: 'Erro ao salvar arquivo' });
+  if (error) {
+    console.error('[portal] erro ao salvar registro do arquivo:', error.message);
+    return res.status(400).json({ erro: 'Erro ao salvar arquivo' });
+  }
 
   await registrarHistorico('upload', id, `Cliente ${req.cliente.nome} enviou o arquivo: ${nome}`, req.cliente.nome);
 
@@ -752,7 +758,10 @@ router.post('/pastas/:id/arquivos', async (req, res) => {
     .from('Portal')
     .upload(storagePath, buffer, { contentType: tipo || 'application/octet-stream' });
 
-  if (upErr) return res.status(500).json({ erro: 'Erro ao fazer upload' });
+  if (upErr) {
+    console.error('[portal] erro ao fazer upload para a pasta:', upErr.message);
+    return res.status(500).json({ erro: 'Erro ao fazer upload' });
+  }
 
   const { data: urlData } = supabase.storage.from('Portal').getPublicUrl(storagePath);
 

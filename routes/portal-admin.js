@@ -96,7 +96,10 @@ router.post('/demandas/:id/artes', async (req, res) => {
     .from('Portal')
     .upload(storagePath, buffer, { contentType: tipo || 'application/octet-stream' });
 
-  if (upErr) return res.status(500).json({ erro: 'Erro ao fazer upload da arte' });
+  if (upErr) {
+    console.error('[portal-admin] erro ao fazer upload da arte:', upErr.message);
+    return res.status(500).json({ erro: 'Erro ao fazer upload da arte' });
+  }
 
   const { data: urlData } = supabase.storage.from('Portal').getPublicUrl(storagePath);
 
