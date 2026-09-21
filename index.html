@@ -1272,6 +1272,10 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           Usuários
         </div>
+        <div class="nav-sub-item" data-page="funcionarios" onclick="goTo('funcionarios')" id="navFuncionarios">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          Funcionárias
+        </div>
         <div class="nav-sub-item" data-page="crm_etapas" onclick="goTo('crm_etapas')" id="navCrmEtapas">
           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
           Etapas do Funil
@@ -1604,6 +1608,22 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ── FUNCIONÁRIAS ── -->
+  <div class="page" id="page-funcionarios">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Funcionárias</div>
+        <div class="page-sub">Cadastro da equipe e financeiro de pagamentos</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Nome</th><th>Cargo</th><th>Usuária vinculada</th><th>Status</th><th style="width:260px"></th></tr></thead>
+        <tbody id="funcionariosTable"></tbody>
+      </table>
     </div>
   </div>
 
@@ -1969,6 +1989,20 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
   </div>
 </div>
 
+<!-- MODAL FINANCEIRO — FUNCIONÁRIA -->
+<div class="modal-overlay" id="modal-financeiro-func">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-title" id="finfunc-modal-title">Financeiro</div>
+    <button class="modal-close" onclick="closeModal('modal-financeiro-func')">×</button>
+    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+      <button class="ctab ctab-active" id="ctab-finfunc-salario" onclick="finFuncSwitchTab('salario')">Salário</button>
+      <button class="ctab" id="ctab-finfunc-pagamentos" onclick="finFuncSwitchTab('pagamentos')">Pagamentos</button>
+    </div>
+    <div id="finfunc-tab-salario"></div>
+    <div id="finfunc-tab-pagamentos" style="display:none"></div>
+  </div>
+</div>
+
 <!-- MODAL NOVO ONBOARDING -->
 <div class="modal-overlay" id="modal-onboarding-novo">
   <div class="modal">
@@ -2278,7 +2312,7 @@ function goTo(page, _semHistorico) {
   });
   // Abrir grupo pai se for sub-item
   const crmPages = ['crm_leads','crm_funil','crm_atividades','crm_relatorios'];
-  const cadastroPages = ['clients','statuses','formats','users'];
+  const cadastroPages = ['clients','statuses','formats','users','funcionarios'];
   if (crmPages.includes(page)) {
     const g = document.getElementById('navGroupCRM');
     if (g) g.classList.add('open');
@@ -2289,7 +2323,7 @@ function goTo(page, _semHistorico) {
   }
   const titles = {
     dashboard:'Dashboard', demands:'Demandas', internal:'Demandas Internas',
-    clients:'Clientes', statuses:'Status', formats:'Formatos', users:'Usuários', history:'Histórico',
+    clients:'Clientes', statuses:'Status', formats:'Formatos', users:'Usuários', funcionarios:'Funcionárias', history:'Histórico',
     crm_leads:'Leads', crm_funil:'Funil de Vendas', crm_atividades:'Atividades', crm_relatorios:'Relatórios CRM',
     crm_etapas:'Etapas do Funil', sdr:'SDR', sdr_topicos:'Tópicos SDR', calendario:'Calendário Editorial',
     onboarding:'Onboarding', onboarding_modelos:'Modelos de Onboarding'
@@ -2306,6 +2340,7 @@ function goTo(page, _semHistorico) {
   if (page === 'statuses')       renderStatuses();
   if (page === 'formats')        renderFormats();
   if (page === 'users')          renderUsers();
+  if (page === 'funcionarios')   renderFuncionarios();
   if (page === 'history')        renderHistory();
   if (page === 'crm_leads')      renderLeads();
   if (page === 'crm_funil')      renderFunil();
@@ -2377,6 +2412,7 @@ function buildHeaderActions(page) {
     statuses:       canEdit('statuses')        ? btnNew('Novo status',      'openStatusForm')    : '',
     formats:        canEdit('formats')         ? btnNew('Novo formato',     'openFormatForm')    : '',
     users:          canEdit('users')           ? btnNew('Novo usuário',     'openUserForm')      : '',
+    funcionarios:   canEdit('funcionarios')    ? btnNew('Nova funcionária', 'openFuncionarioForm') : '',
     crm_leads:      canEdit('crm_leads')       ? btnNew('Novo lead',        'openLeadForm')      : '',
     crm_atividades: canEdit('crm_atividades')  ? btnNew('Nova atividade',   'openAtividadeForm') : '',
     crm_etapas:     canEdit('crm_etapas')      ? btnNew('Nova etapa',       'openEtapaForm')     : '',
@@ -3498,6 +3534,8 @@ function openPermissoes(userId) {
         { key: 'statuses',   label: 'Status' },
         { key: 'formats',    label: 'Formatos' },
         { key: 'users',      label: 'Usuários' },
+        { key: 'funcionarios',            label: 'Funcionárias' },
+        { key: 'funcionarios_financeiro', label: 'Financeiro', sub: true },
         { key: 'crm_etapas',  label: 'Etapas do Funil' },
         { key: 'sdr_topicos',         label: 'Tópicos SDR' },
         { key: 'onboarding_modelos',  label: 'Modelos de Onboarding' },
@@ -3520,7 +3558,7 @@ function openPermissoes(userId) {
     },
   ];
 
-  const PERM_OFF_BY_DEFAULT = ['financeiro','onboarding_modelos'];
+  const PERM_OFF_BY_DEFAULT = ['financeiro','funcionarios_financeiro','onboarding_modelos'];
   function chk(page, perm) {
     const val = perms[page]?.[perm];
     if (val === undefined) return !PERM_OFF_BY_DEFAULT.includes(page);
@@ -3579,7 +3617,7 @@ function onPermEditarChange(page, el) {
 }
 
 async function savePermissoes(userId) {
-  const pages = ['dashboard','demands','internal','clients','financeiro','statuses','formats','users','crm_leads','crm_funil','crm_atividades','crm_relatorios','crm_etapas','sdr','sdr_topicos','calendario','onboarding','onboarding_modelos'];
+  const pages = ['dashboard','demands','internal','clients','financeiro','statuses','formats','users','funcionarios','funcionarios_financeiro','crm_leads','crm_funil','crm_atividades','crm_relatorios','crm_etapas','sdr','sdr_topicos','calendario','onboarding','onboarding_modelos'];
   const permissoes = {};
   pages.forEach(page => {
     const visualizar = document.getElementById(`perm_${page}_visualizar`)?.checked ?? true;
@@ -3595,7 +3633,7 @@ async function savePermissoes(userId) {
   renderUsers();
 }
 
-const _PERM_OFF_DEFAULT = ['financeiro','onboarding_modelos'];
+const _PERM_OFF_DEFAULT = ['financeiro','funcionarios_financeiro','onboarding_modelos'];
 
 function canView(page) {
   const u = JSON.parse(localStorage.getItem('sea_usuario') || '{}');
@@ -6776,6 +6814,347 @@ async function excluirPagamento(pagamentoId) {
   _finPagamentos = _finPagamentos.filter(p => p.id !== pagamentoId);
   toast('Pagamento excluído.');
   renderFinPagamentosTab();
+}
+
+// ═══════════════════════════════════════
+//  FUNCIONÁRIAS
+// ═══════════════════════════════════════
+let funcionarios = [];
+
+async function renderFuncionarios() {
+  const data = await API.get('/funcionarios');
+  if (data.erro) { toast('Erro ao carregar funcionárias: ' + data.erro); return; }
+  funcionarios = data;
+  const editFunc = canEdit('funcionarios');
+  if (!funcionarios.length) {
+    document.getElementById('funcionariosTable').innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted)">Nenhuma funcionária cadastrada.</td></tr>`;
+    return;
+  }
+  document.getElementById('funcionariosTable').innerHTML = funcionarios.map(f => `
+    <tr>
+      <td><strong>${f.nome}</strong></td>
+      <td>${f.cargo || '-'}</td>
+      <td>${f.usuario ? f.usuario.nome : '<span style="color:var(--muted)">Sem usuária vinculada</span>'}</td>
+      <td><span style="padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;background:${f.status==='ativo'?'#D1FAE5':'#F3F4F6'};color:${f.status==='ativo'?'#065F46':'#6B7280'}">${f.status==='ativo'?'Ativa':'Inativa'}</span></td>
+      <td><div class="row-actions">
+        ${canView('funcionarios_financeiro') ? `<button class="btn btn-ghost btn-sm" onclick="abrirModalFinanceiroFunc('${f.id}')">Financeiro</button>` : ''}
+        ${editFunc ? `<button class="btn btn-ghost btn-sm" onclick="openFuncionarioForm('${f.id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteFuncionario('${f.id}')">Excluir</button>` : ''}
+      </div></td>
+    </tr>
+  `).join('');
+}
+
+async function openFuncionarioForm(editId) {
+  await onbCarregarUsuarios();
+  const editing = editId ? funcionarios.find(f => f.id === editId) : null;
+  const usuarioOpts = onbUsuarios
+    .map(u => `<option value="${u.id}" ${editing?.usuario_id===u.id?'selected':''}>${u.nome}</option>`).join('');
+  document.getElementById('formTitle').textContent = editing ? 'Editar Funcionária' : 'Nova Funcionária';
+  document.getElementById('formBody').innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Nome</label>
+      <input class="form-input" type="text" id="fFuncNome" placeholder="Nome completo" value="${editing?.nome||''}">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Cargo</label>
+        <input class="form-input" type="text" id="fFuncCargo" placeholder="Ex: Designer" value="${editing?.cargo||''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-select" id="fFuncStatus">
+          <option value="ativo" ${(!editing || editing.status==='ativo')?'selected':''}>Ativa</option>
+          <option value="inativo" ${editing?.status==='inativo'?'selected':''}>Inativa</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Telefone</label>
+        <input class="form-input" type="text" id="fFuncTelefone" placeholder="(00) 00000-0000" value="${editing?.telefone||''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">E-mail</label>
+        <input class="form-input" type="email" id="fFuncEmail" placeholder="email@exemplo.com" value="${editing?.email||''}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Usuária vinculada <span style="font-weight:400;color:var(--muted)">(acesso ao sistema, opcional)</span></label>
+      <select class="form-select" id="fFuncUsuario">
+        <option value="">Sem usuária vinculada</option>
+        ${usuarioOpts}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Data de admissão</label>
+      <input class="form-input" type="date" id="fFuncAdmissao" value="${editing?.data_admissao||''}">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveFuncionario('${editId||''}')">Salvar</button>
+    </div>
+  `;
+  openModal('formModal');
+}
+
+async function saveFuncionario(editId) {
+  const nome = document.getElementById('fFuncNome').value.trim();
+  if (!nome) { toast('Informe o nome da funcionária.'); return; }
+  const body = {
+    nome,
+    cargo: document.getElementById('fFuncCargo').value.trim() || null,
+    status: document.getElementById('fFuncStatus').value,
+    telefone: document.getElementById('fFuncTelefone').value.trim() || null,
+    email: document.getElementById('fFuncEmail').value.trim() || null,
+    usuario_id: document.getElementById('fFuncUsuario').value || null,
+    data_admissao: document.getElementById('fFuncAdmissao').value || null
+  };
+  try {
+    const res = editId ? await API.put('/funcionarios/' + editId, body) : await API.post('/funcionarios', body);
+    if (res.erro) { toast('Erro ao salvar: ' + res.erro); return; }
+    logHistorico(editId ? 'atualizado' : 'criado', 'funcionaria', res.id, `Funcionária ${editId?'atualizada':'criada'}: ${nome}`);
+    closeModal('formModal');
+    toast(editId ? 'Funcionária atualizada!' : 'Funcionária criada!');
+    renderFuncionarios();
+  } catch(e) { toast('Erro inesperado: ' + e.message); }
+}
+
+async function deleteFuncionario(id) {
+  if (!confirm('Excluir esta funcionária? Os pagamentos registrados também serão apagados.')) return;
+  try {
+    const f = funcionarios.find(x => x.id === id);
+    const res = await API.del('/funcionarios/' + id);
+    if (res.erro) { toast('Erro ao excluir: ' + res.erro); return; }
+    logHistorico('excluido', 'funcionaria', id, `Funcionária excluída: ${f?.nome || id}`);
+    toast('Funcionária excluída.');
+    renderFuncionarios();
+  } catch(e) { toast('Erro inesperado: ' + e.message); }
+}
+
+// ═══════════════════════════════════════
+//  FINANCEIRO — FUNCIONÁRIA
+// ═══════════════════════════════════════
+let _finFuncId = null;
+let _finFuncData = null;
+let _finFuncPagamentos = [];
+let _finFuncAnoFiltro = new Date().getFullYear();
+
+async function abrirModalFinanceiroFunc(funcionarioId) {
+  const f = funcionarios.find(x => x.id === funcionarioId);
+  _finFuncId = funcionarioId;
+  _finFuncData = null;
+  _finFuncPagamentos = [];
+  _finFuncAnoFiltro = new Date().getFullYear();
+  document.getElementById('finfunc-modal-title').textContent = 'Financeiro — ' + (f?.nome || funcionarioId);
+  finFuncSwitchTab('salario');
+  openModal('modal-financeiro-func');
+  await carregarDadosFinanceirosFunc(funcionarioId);
+}
+
+async function carregarDadosFinanceirosFunc(funcionarioId) {
+  const res = await API.get('/funcionarios/' + funcionarioId + '/financeiro');
+  if (res.erro) { toast('Erro ao carregar financeiro: ' + res.erro); return; }
+  _finFuncData = res.financeiro;
+  _finFuncPagamentos = res.pagamentos || [];
+  renderFinFuncSalarioTab();
+}
+
+function finFuncSwitchTab(tab) {
+  document.getElementById('finfunc-tab-salario').style.display = tab === 'salario' ? '' : 'none';
+  document.getElementById('finfunc-tab-pagamentos').style.display = tab === 'pagamentos' ? '' : 'none';
+  document.getElementById('ctab-finfunc-salario').classList.toggle('ctab-active', tab === 'salario');
+  document.getElementById('ctab-finfunc-pagamentos').classList.toggle('ctab-active', tab === 'pagamentos');
+  if (tab === 'pagamentos') renderFinFuncPagamentosTab();
+}
+
+function renderFinFuncSalarioTab() {
+  const d = _finFuncData;
+  document.getElementById('finfunc-tab-salario').innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Valor do salário (R$)</label>
+      <input class="form-input" type="number" id="finfunc-valor" value="${d?.valor_salario ?? ''}" placeholder="0.00" step="0.01" min="0">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Dia de pagamento</label>
+      <input class="form-input" type="number" id="finfunc-dia" value="${d?.dia_pagamento ?? 5}" min="1" max="31">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Observações</label>
+      <textarea class="form-textarea" id="finfunc-obs" rows="3">${d?.observacoes || ''}</textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-financeiro-func')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarDadosFinanceirosFunc()">Salvar dados financeiros</button>
+    </div>
+  `;
+}
+
+function renderFinFuncPagamentosTab() {
+  const anoAtual = new Date().getFullYear();
+  const anos = [anoAtual - 1, anoAtual, anoAtual + 1];
+  const statusBadge = s => {
+    const styles = { pago: 'background:#D1FAE5;color:#065F46', pendente: 'background:#FEF3C7;color:#92400E', atrasado: 'background:#FEE2E2;color:#991B1B', cancelado: 'background:#F3F4F6;color:#6B7280' };
+    const labels = { pago: 'Pago', pendente: 'Pendente', atrasado: 'Atrasado', cancelado: 'Cancelado' };
+    return `<span style="padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;${styles[s] || ''}">${labels[s] || s}</span>`;
+  };
+  const rows = _finFuncPagamentos.length ? _finFuncPagamentos.map(p => {
+    const comp = p.competencia ? new Date(p.competencia + 'T12:00:00').toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }) : '-';
+    const dataPag = p.data_pagamento ? new Date(p.data_pagamento + 'T12:00:00').toLocaleDateString('pt-BR') : '-';
+    const valor = Number(p.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    return `<tr>
+      <td>${comp}</td>
+      <td>${valor}</td>
+      <td>${statusBadge(p.status)}</td>
+      <td>${dataPag}</td>
+      <td>${p.forma_pagamento || '-'}</td>
+      <td style="font-size:11px;color:var(--muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.observacao || '-'}</td>
+      <td><div class="row-actions">
+        <button class="btn btn-ghost btn-sm" onclick="abrirFormPagamentoFunc('${p.id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="excluirPagamentoFunc('${p.id}')">Excluir</button>
+      </div></td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">Nenhum pagamento registrado neste período.</td></tr>`;
+
+  document.getElementById('finfunc-tab-pagamentos').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted)">Ano:</span>
+        <select class="form-select" style="width:auto;padding:6px 10px;font-size:12px" id="finfunc-ano-sel" onchange="finFuncFiltrarAno(this.value)">
+          ${anos.map(a => `<option value="${a}"${a === _finFuncAnoFiltro ? ' selected' : ''}>${a}</option>`).join('')}
+        </select>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="abrirFormPagamentoFunc()">+ Registrar pagamento</button>
+    </div>
+    <div class="table-wrap" style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Competência</th><th>Valor</th><th>Status</th><th>Data pag.</th><th>Forma</th><th>Obs.</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div id="finfunc-form-pagamento"></div>
+  `;
+}
+
+function abrirFormPagamentoFunc(editId) {
+  const pag = editId ? _finFuncPagamentos.find(p => p.id === editId) : null;
+  const compVal = pag?.competencia ? pag.competencia.slice(0, 7) : new Date().toISOString().slice(0, 7);
+  document.getElementById('finfunc-form-pagamento').innerHTML = `
+    <div style="margin-top:20px;padding:16px;background:var(--surface2);border-radius:var(--r);border:1px solid var(--border)">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:16px">${editId ? 'Editar pagamento' : 'Registrar pagamento'}</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Competência</label>
+          <input class="form-input" type="month" id="finfunc-pag-comp" value="${compVal}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Valor (R$)</label>
+          <input class="form-input" type="number" id="finfunc-pag-valor" value="${pag?.valor ?? (_finFuncData?.valor_salario ?? '')}" step="0.01" min="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="finfunc-pag-status">
+            <option value="pendente"${(!pag || pag.status === 'pendente') ? ' selected' : ''}>Pendente</option>
+            <option value="pago"${pag?.status === 'pago' ? ' selected' : ''}>Pago</option>
+            <option value="atrasado"${pag?.status === 'atrasado' ? ' selected' : ''}>Atrasado</option>
+            <option value="cancelado"${pag?.status === 'cancelado' ? ' selected' : ''}>Cancelado</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Data do pagamento</label>
+          <input class="form-input" type="date" id="finfunc-pag-data" value="${pag?.data_pagamento || ''}">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Forma de pagamento</label>
+          <select class="form-select" id="finfunc-pag-forma">
+            <option value="">Selecione...</option>
+            <option value="pix"${pag?.forma_pagamento === 'pix' ? ' selected' : ''}>PIX</option>
+            <option value="transferencia"${pag?.forma_pagamento === 'transferencia' ? ' selected' : ''}>Transferência</option>
+            <option value="dinheiro"${pag?.forma_pagamento === 'dinheiro' ? ' selected' : ''}>Dinheiro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Observação</label>
+          <input class="form-input" type="text" id="finfunc-pag-obs" value="${pag?.observacao || ''}" placeholder="Opcional">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('finfunc-form-pagamento').innerHTML=''">Cancelar</button>
+        <button class="btn btn-primary btn-sm" onclick="${editId ? `salvarEdicaoPagamentoFunc('${editId}')` : 'registrarPagamentoFunc()'}">${editId ? 'Salvar alterações' : 'Registrar'}</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('finfunc-form-pagamento').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function salvarDadosFinanceirosFunc() {
+  const valor = parseFloat(document.getElementById('finfunc-valor')?.value) || 0;
+  const dia = parseInt(document.getElementById('finfunc-dia')?.value) || 5;
+  const obs = document.getElementById('finfunc-obs')?.value?.trim() || null;
+  const res = await API.post('/funcionarios/' + _finFuncId + '/financeiro', { valor_salario: valor, dia_pagamento: dia, observacoes: obs });
+  if (res.erro) { toast('Erro ao salvar: ' + res.erro); return; }
+  _finFuncData = res;
+  toast('Dados financeiros salvos!');
+  renderFinFuncSalarioTab();
+}
+
+async function finFuncFiltrarAno(ano) {
+  _finFuncAnoFiltro = parseInt(ano);
+  const res = await API.get('/funcionarios/' + _finFuncId + '/pagamentos?ano=' + _finFuncAnoFiltro);
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  _finFuncPagamentos = Array.isArray(res) ? res : [];
+  renderFinFuncPagamentosTab();
+}
+
+async function registrarPagamentoFunc() {
+  const compRaw = document.getElementById('finfunc-pag-comp')?.value;
+  if (!compRaw) { toast('Selecione a competência.'); return; }
+  const valor = parseFloat(document.getElementById('finfunc-pag-valor')?.value) || 0;
+  if (!valor) { toast('Informe o valor.'); return; }
+  const body = {
+    competencia: compRaw + '-01',
+    valor,
+    status: document.getElementById('finfunc-pag-status')?.value || 'pendente',
+    data_pagamento: document.getElementById('finfunc-pag-data')?.value || null,
+    forma_pagamento: document.getElementById('finfunc-pag-forma')?.value || null,
+    observacao: document.getElementById('finfunc-pag-obs')?.value?.trim() || null
+  };
+  const res = await API.post('/funcionarios/' + _finFuncId + '/pagamentos', body);
+  if (res.erro) { toast('Erro ao registrar: ' + res.erro); return; }
+  _finFuncPagamentos.unshift(res);
+  toast('Pagamento registrado!');
+  renderFinFuncPagamentosTab();
+}
+
+async function salvarEdicaoPagamentoFunc(pagamentoId) {
+  const compRaw = document.getElementById('finfunc-pag-comp')?.value;
+  const body = {
+    valor: parseFloat(document.getElementById('finfunc-pag-valor')?.value) || 0,
+    status: document.getElementById('finfunc-pag-status')?.value,
+    data_pagamento: document.getElementById('finfunc-pag-data')?.value || null,
+    forma_pagamento: document.getElementById('finfunc-pag-forma')?.value || null,
+    observacao: document.getElementById('finfunc-pag-obs')?.value?.trim() || null
+  };
+  if (compRaw) body.competencia = compRaw + '-01';
+  const res = await API.patch('/funcionarios/pagamentos/' + pagamentoId, body);
+  if (res.erro) { toast('Erro ao atualizar: ' + res.erro); return; }
+  const i = _finFuncPagamentos.findIndex(p => p.id === pagamentoId);
+  if (i >= 0) _finFuncPagamentos[i] = res;
+  toast('Pagamento atualizado!');
+  renderFinFuncPagamentosTab();
+}
+
+async function excluirPagamentoFunc(pagamentoId) {
+  if (!confirm('Excluir este pagamento?')) return;
+  const res = await API.del('/funcionarios/pagamentos/' + pagamentoId);
+  if (res.erro) { toast('Erro ao excluir: ' + res.erro); return; }
+  _finFuncPagamentos = _finFuncPagamentos.filter(p => p.id !== pagamentoId);
+  toast('Pagamento excluído.');
+  renderFinFuncPagamentosTab();
 }
 
 // ═══════════════════════════════════════
