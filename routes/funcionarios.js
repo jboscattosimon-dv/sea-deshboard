@@ -156,24 +156,48 @@ router.get('/:funcionarioId/pagamentos', async (req, res) => {
   res.json(data || []);
 });
 
+async function uploadAnexoPagamento(funcionarioId, base64, nome, tipo) {
+  const sanitized = nome.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const storagePath = `funcionarios/${funcionarioId}/pagamentos/${Date.now()}_${sanitized}`;
+  const raw = base64.includes('base64,') ? base64.split('base64,')[1] : base64;
+  const buffer = Buffer.from(raw, 'base64');
+
+  const { error } = await supabase.storage.from('Portal').upload(storagePath, buffer, { contentType: tipo || 'application/octet-stream' });
+  if (error) { console.error('[funcionarios] erro ao subir anexo do pagamento:', error.message); return null; }
+
+  const { data: urlData } = supabase.storage.from('Portal').getPublicUrl(storagePath);
+  return { url: urlData.publicUrl, storagePath };
+}
+
 router.post('/:funcionarioId/pagamentos', async (req, res) => {
   const { funcionarioId } = req.params;
-  const { competencia, valor, status, data_pagamento, forma_pagamento, observacao } = req.body;
+  const { competencia, valor, status, data_pagamento, forma_pagamento, observacao, anexo_b64, anexo_nome, anexo_tipo } = req.body;
 
   if (!competencia || !valor) return res.status(400).json({ erro: 'competencia e valor são obrigatórios' });
 
+  const insert = {
+    funcionario_id: funcionarioId,
+    competencia,
+    valor,
+    status: status || 'pendente',
+    data_pagamento: data_pagamento || null,
+    forma_pagamento: forma_pagamento || null,
+    observacao: observacao || null,
+    criado_por: req.usuario.id
+  };
+
+  if (anexo_b64 && anexo_nome) {
+    const up = await uploadAnexoPagamento(funcionarioId, anexo_b64, anexo_nome, anexo_tipo);
+    if (!up) return res.status(500).json({ erro: 'Erro ao enviar anexo da folha de pagamento' });
+    insert.anexo_url = up.url;
+    insert.anexo_storage_path = up.storagePath;
+    insert.anexo_nome = anexo_nome;
+    insert.anexo_tipo = anexo_tipo || null;
+  }
+
   const { data, error } = await supabase
     .from('funcionarios_pagamentos')
-    .insert([{
-      funcionario_id: funcionarioId,
-      competencia,
-      valor,
-      status: status || 'pendente',
-      data_pagamento: data_pagamento || null,
-      forma_pagamento: forma_pagamento || null,
-      observacao: observacao || null,
-      criado_por: req.usuario.id
-    }])
+    .insert([insert])
     .select()
     .single();
 
@@ -183,7 +207,7 @@ router.post('/:funcionarioId/pagamentos', async (req, res) => {
 
 router.patch('/pagamentos/:pagamentoId', async (req, res) => {
   const { pagamentoId } = req.params;
-  const { status, data_pagamento, forma_pagamento, observacao, valor, competencia } = req.body;
+  const { status, data_pagamento, forma_pagamento, observacao, valor, competencia, anexo_b64, anexo_nome, anexo_tipo } = req.body;
 
   const updates = {};
   if (status !== undefined) updates.status = status;
@@ -192,6 +216,20 @@ router.patch('/pagamentos/:pagamentoId', async (req, res) => {
   if (observacao !== undefined) updates.observacao = observacao || null;
   if (valor !== undefined) updates.valor = valor;
   if (competencia !== undefined) updates.competencia = competencia;
+
+  if (anexo_b64 && anexo_nome) {
+    const { data: pag } = await supabase.from('funcionarios_pagamentos').select('funcionario_id, anexo_storage_path').eq('id', pagamentoId).single();
+    if (!pag) return res.status(404).json({ erro: 'Pagamento não encontrado' });
+
+    const up = await uploadAnexoPagamento(pag.funcionario_id, anexo_b64, anexo_nome, anexo_tipo);
+    if (!up) return res.status(500).json({ erro: 'Erro ao enviar anexo da folha de pagamento' });
+    if (pag.anexo_storage_path) await supabase.storage.from('Portal').remove([pag.anexo_storage_path]);
+
+    updates.anexo_url = up.url;
+    updates.anexo_storage_path = up.storagePath;
+    updates.anexo_nome = anexo_nome;
+    updates.anexo_tipo = anexo_tipo || null;
+  }
 
   const { data, error } = await supabase
     .from('funcionarios_pagamentos')
@@ -206,6 +244,10 @@ router.patch('/pagamentos/:pagamentoId', async (req, res) => {
 
 router.delete('/pagamentos/:pagamentoId', async (req, res) => {
   const { pagamentoId } = req.params;
+
+  const { data: pag } = await supabase.from('funcionarios_pagamentos').select('anexo_storage_path').eq('id', pagamentoId).single();
+  if (pag?.anexo_storage_path) await supabase.storage.from('Portal').remove([pag.anexo_storage_path]);
+
   const { error } = await supabase.from('funcionarios_pagamentos').delete().eq('id', pagamentoId);
   if (error) return res.status(400).json({ erro: error.message });
   res.json({ ok: true });

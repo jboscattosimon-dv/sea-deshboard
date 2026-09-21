@@ -7010,6 +7010,7 @@ function renderFinFuncPagamentosTab() {
       <td>${p.forma_pagamento || '-'}</td>
       <td style="font-size:11px;color:var(--muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.observacao || '-'}</td>
       <td><div class="row-actions">
+        ${p.anexo_url ? `<a href="${p.anexo_url}" target="_blank" class="btn btn-ghost btn-sm" title="${p.anexo_nome||'Folha de pagamento'}">📎</a>` : ''}
         <button class="btn btn-ghost btn-sm" onclick="abrirFormPagamentoFunc('${p.id}')">Editar</button>
         <button class="btn btn-danger btn-sm" onclick="excluirPagamentoFunc('${p.id}')">Excluir</button>
       </div></td>
@@ -7082,13 +7083,50 @@ function abrirFormPagamentoFunc(editId) {
           <input class="form-input" type="text" id="finfunc-pag-obs" value="${pag?.observacao || ''}" placeholder="Opcional">
         </div>
       </div>
+      <div class="form-group">
+        <label class="form-label">Folha de pagamento <span style="font-weight:400;color:var(--muted)">(opcional)</span></label>
+        ${pag?.anexo_url ? `
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px">
+            <a href="${pag.anexo_url}" target="_blank" style="color:var(--primary);font-weight:600">📎 ${pag.anexo_nome || 'Anexo atual'}</a>
+            <span style="color:var(--muted)">(selecione outro arquivo abaixo para substituir)</span>
+          </div>
+        ` : ''}
+        <input class="form-input" type="file" id="finfunc-pag-anexo" accept="image/*,application/pdf" onchange="finFuncPagAnexoPreview(this)">
+        <div id="finfunc-pag-anexo-preview" style="display:none;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:var(--muted)">
+          <span id="finfunc-pag-anexo-nome"></span>
+          <button type="button" class="btn btn-sm btn-ghost" onclick="finFuncLimparPagAnexo()" style="padding:2px 8px">×</button>
+        </div>
+      </div>
       <div class="form-actions">
         <button class="btn btn-ghost btn-sm" onclick="document.getElementById('finfunc-form-pagamento').innerHTML=''">Cancelar</button>
         <button class="btn btn-primary btn-sm" onclick="${editId ? `salvarEdicaoPagamentoFunc('${editId}')` : 'registrarPagamentoFunc()'}">${editId ? 'Salvar alterações' : 'Registrar'}</button>
       </div>
     </div>
   `;
+  _finFuncPagAnexoFile = null;
   document.getElementById('finfunc-form-pagamento').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+let _finFuncPagAnexoFile = null;
+function finFuncPagAnexoPreview(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 20 * 1024 * 1024) { toast('Arquivo muito grande (máx. 20MB).'); input.value = ''; return; }
+  _finFuncPagAnexoFile = file;
+  document.getElementById('finfunc-pag-anexo-preview').style.display = 'flex';
+  document.getElementById('finfunc-pag-anexo-nome').textContent = file.name;
+}
+function finFuncLimparPagAnexo() {
+  _finFuncPagAnexoFile = null;
+  const input = document.getElementById('finfunc-pag-anexo');
+  if (input) input.value = '';
+  const box = document.getElementById('finfunc-pag-anexo-preview');
+  if (box) box.style.display = 'none';
+}
+async function finFuncPagAnexoToBase64() {
+  if (!_finFuncPagAnexoFile) return null;
+  const b64 = await new Promise(resolve => { const r = new FileReader(); r.onload = e => resolve(e.target.result); r.readAsDataURL(_finFuncPagAnexoFile); });
+  return { anexo_b64: b64, anexo_nome: _finFuncPagAnexoFile.name, anexo_tipo: _finFuncPagAnexoFile.type };
 }
 
 async function salvarDadosFinanceirosFunc() {
@@ -7123,6 +7161,8 @@ async function registrarPagamentoFunc() {
     forma_pagamento: document.getElementById('finfunc-pag-forma')?.value || null,
     observacao: document.getElementById('finfunc-pag-obs')?.value?.trim() || null
   };
+  const anexo = await finFuncPagAnexoToBase64();
+  if (anexo) Object.assign(body, anexo);
   const res = await API.post('/funcionarios/' + _finFuncId + '/pagamentos', body);
   if (res.erro) { toast('Erro ao registrar: ' + res.erro); return; }
   _finFuncPagamentos.unshift(res);
@@ -7140,6 +7180,8 @@ async function salvarEdicaoPagamentoFunc(pagamentoId) {
     observacao: document.getElementById('finfunc-pag-obs')?.value?.trim() || null
   };
   if (compRaw) body.competencia = compRaw + '-01';
+  const anexo = await finFuncPagAnexoToBase64();
+  if (anexo) Object.assign(body, anexo);
   const res = await API.patch('/funcionarios/pagamentos/' + pagamentoId, body);
   if (res.erro) { toast('Erro ao atualizar: ' + res.erro); return; }
   const i = _finFuncPagamentos.findIndex(p => p.id === pagamentoId);
