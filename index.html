@@ -1246,6 +1246,10 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
       <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/><path d="M19 8v6M22 11h-6"/></svg>
       Demandas Internas
     </div>
+    <div class="nav-item" data-page="pagamentos" onclick="goTo('pagamentos')" id="navPagamentos">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      Pagamentos
+    </div>
 
     <!-- Cadastro (colapsável) -->
     <div class="nav-group" id="navGroupCadastro">
@@ -1625,6 +1629,18 @@ tbody tr[onclick]:hover { background: #F7F4EE; }
         <tbody id="funcionariosTable"></tbody>
       </table>
     </div>
+  </div>
+
+  <!-- ── MEUS PAGAMENTOS (autoatendimento) ── -->
+  <div class="page" id="page-pagamentos">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Pagamentos</div>
+        <div class="page-sub">Seus pagamentos e folhas de pagamento</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px" id="pagMeusAnoWrap"></div>
+    </div>
+    <div id="pagMeusConteudo"></div>
   </div>
 
   <div class="page" id="page-history">
@@ -2323,7 +2339,7 @@ function goTo(page, _semHistorico) {
   }
   const titles = {
     dashboard:'Dashboard', demands:'Demandas', internal:'Demandas Internas',
-    clients:'Clientes', statuses:'Status', formats:'Formatos', users:'Usuários', funcionarios:'Funcionárias', history:'Histórico',
+    clients:'Clientes', statuses:'Status', formats:'Formatos', users:'Usuários', funcionarios:'Funcionárias', pagamentos:'Pagamentos', history:'Histórico',
     crm_leads:'Leads', crm_funil:'Funil de Vendas', crm_atividades:'Atividades', crm_relatorios:'Relatórios CRM',
     crm_etapas:'Etapas do Funil', sdr:'SDR', sdr_topicos:'Tópicos SDR', calendario:'Calendário Editorial',
     onboarding:'Onboarding', onboarding_modelos:'Modelos de Onboarding'
@@ -2341,6 +2357,7 @@ function goTo(page, _semHistorico) {
   if (page === 'formats')        renderFormats();
   if (page === 'users')          renderUsers();
   if (page === 'funcionarios')   renderFuncionarios();
+  if (page === 'pagamentos')     renderMeusPagamentos();
   if (page === 'history')        renderHistory();
   if (page === 'crm_leads')      renderLeads();
   if (page === 'crm_funil')      renderFunil();
@@ -3522,6 +3539,7 @@ function openPermissoes(userId) {
         { key: 'dashboard',   label: 'Dashboard' },
         { key: 'demands',     label: 'Demandas' },
         { key: 'internal',    label: 'Demandas Internas' },
+        { key: 'pagamentos',  label: 'Pagamentos (meus)' },
         { key: 'calendario',  label: 'Calendário Editorial' },
         { key: 'onboarding',  label: 'Onboarding' },
       ]
@@ -3617,7 +3635,7 @@ function onPermEditarChange(page, el) {
 }
 
 async function savePermissoes(userId) {
-  const pages = ['dashboard','demands','internal','clients','financeiro','statuses','formats','users','funcionarios','funcionarios_financeiro','crm_leads','crm_funil','crm_atividades','crm_relatorios','crm_etapas','sdr','sdr_topicos','calendario','onboarding','onboarding_modelos'];
+  const pages = ['dashboard','demands','internal','pagamentos','clients','financeiro','statuses','formats','users','funcionarios','funcionarios_financeiro','crm_leads','crm_funil','crm_atividades','crm_relatorios','crm_etapas','sdr','sdr_topicos','calendario','onboarding','onboarding_modelos'];
   const permissoes = {};
   pages.forEach(page => {
     const visualizar = document.getElementById(`perm_${page}_visualizar`)?.checked ?? true;
@@ -7197,6 +7215,71 @@ async function excluirPagamentoFunc(pagamentoId) {
   _finFuncPagamentos = _finFuncPagamentos.filter(p => p.id !== pagamentoId);
   toast('Pagamento excluído.');
   renderFinFuncPagamentosTab();
+}
+
+// ═══════════════════════════════════════
+//  MEUS PAGAMENTOS (autoatendimento)
+// ═══════════════════════════════════════
+let _pagMeusAno = new Date().getFullYear();
+let _pagMeusFuncionario = null;
+
+async function renderMeusPagamentos() {
+  const res = await API.get('/funcionarios/meus-pagamentos?ano=' + _pagMeusAno);
+  if (res.erro) { toast('Erro ao carregar pagamentos: ' + res.erro); return; }
+  _pagMeusFuncionario = res.funcionario;
+
+  const anoAtual = new Date().getFullYear();
+  const anos = [anoAtual - 1, anoAtual, anoAtual + 1];
+  document.getElementById('pagMeusAnoWrap').innerHTML = res.funcionario ? `
+    <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted)">Ano:</span>
+    <select class="form-select" style="width:auto;padding:6px 10px;font-size:12px" onchange="pagMeusFiltrarAno(this.value)">
+      ${anos.map(a => `<option value="${a}"${a === _pagMeusAno ? ' selected' : ''}>${a}</option>`).join('')}
+    </select>
+  ` : '';
+
+  if (!res.funcionario) {
+    document.getElementById('pagMeusConteudo').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">💳</div>
+        <h3>Nenhum cadastro vinculado</h3>
+        <p>Sua usuária ainda não está vinculada a um cadastro de funcionária. Fale com a administração.</p>
+      </div>`;
+    return;
+  }
+
+  const statusBadge = s => {
+    const styles = { pago: 'background:#D1FAE5;color:#065F46', pendente: 'background:#FEF3C7;color:#92400E', atrasado: 'background:#FEE2E2;color:#991B1B', cancelado: 'background:#F3F4F6;color:#6B7280' };
+    const labels = { pago: 'Pago', pendente: 'Pendente', atrasado: 'Atrasado', cancelado: 'Cancelado' };
+    return `<span style="padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;${styles[s] || ''}">${labels[s] || s}</span>`;
+  };
+
+  const pagamentos = res.pagamentos || [];
+  const rows = pagamentos.length ? pagamentos.map(p => {
+    const comp = p.competencia ? new Date(p.competencia + 'T12:00:00').toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }) : '-';
+    const dataPag = p.data_pagamento ? new Date(p.data_pagamento + 'T12:00:00').toLocaleDateString('pt-BR') : '-';
+    const valor = Number(p.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    return `<tr>
+      <td>${comp}</td>
+      <td>${valor}</td>
+      <td>${statusBadge(p.status)}</td>
+      <td>${dataPag}</td>
+      <td>${p.forma_pagamento || '-'}</td>
+      <td>${p.anexo_url ? `<a href="${p.anexo_url}" target="_blank" class="btn btn-ghost btn-sm" title="${p.anexo_nome||'Folha de pagamento'}">📎 Folha</a>` : '<span style="color:var(--muted);font-size:12px">-</span>'}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">Nenhum pagamento registrado neste período.</td></tr>`;
+
+  document.getElementById('pagMeusConteudo').innerHTML = `
+    <div class="table-wrap" style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Competência</th><th>Valor</th><th>Status</th><th>Data pag.</th><th>Forma</th><th>Folha de pagamento</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+function pagMeusFiltrarAno(ano) {
+  _pagMeusAno = parseInt(ano);
+  renderMeusPagamentos();
 }
 
 // ═══════════════════════════════════════

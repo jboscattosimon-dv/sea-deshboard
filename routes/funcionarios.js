@@ -19,6 +19,32 @@ router.get('/', async (req, res) => {
   res.json(data || []);
 });
 
+// ============================================================
+// MEUS PAGAMENTOS (autoatendimento — cada usuária só vê os próprios,
+// vinculados pelo usuario_id do token, nunca por id informado no request)
+// ============================================================
+
+router.get('/meus-pagamentos', async (req, res) => {
+  const { data: funcionario, error: funcErr } = await supabase
+    .from('funcionarios')
+    .select('id, nome, cargo')
+    .eq('usuario_id', req.usuario.id)
+    .maybeSingle();
+
+  if (funcErr) return res.status(500).json({ erro: funcErr.message });
+  if (!funcionario) return res.json({ funcionario: null, pagamentos: [] });
+
+  const { ano } = req.query;
+  let q = supabase.from('funcionarios_pagamentos').select('*').eq('funcionario_id', funcionario.id);
+  if (ano) q = q.gte('competencia', `${ano}-01-01`).lte('competencia', `${ano}-12-31`);
+  q = q.order('competencia', { ascending: false });
+
+  const { data: pagamentos, error: pagErr } = await q;
+  if (pagErr) return res.status(500).json({ erro: pagErr.message });
+
+  res.json({ funcionario, pagamentos: pagamentos || [] });
+});
+
 router.post('/', async (req, res) => {
   const { nome, cargo, telefone, email, usuario_id, status, data_admissao } = req.body;
   if (!nome?.trim()) return res.status(400).json({ erro: 'Nome é obrigatório' });
