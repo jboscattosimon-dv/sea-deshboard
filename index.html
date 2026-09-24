@@ -6655,12 +6655,15 @@ function renderFinPagamentosTab() {
       <td>${dataPag}</td>
       <td>${p.forma_pagamento || '-'}</td>
       <td style="font-size:11px;color:var(--muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.observacao || '-'}</td>
+      <td style="font-size:11px">${p.aviso_atraso_enviado_em
+        ? `<span style="color:var(--muted)" title="${new Date(p.aviso_atraso_enviado_em).toLocaleString('pt-BR')}">✅ Enviado</span>`
+        : (p.status === 'atrasado' ? `<button class="btn btn-ghost btn-sm" onclick="reenviarAvisoAtraso('${p.id}')">🔔 Enviar aviso</button>` : '-')}</td>
       <td><div class="row-actions">
         <button class="btn btn-ghost btn-sm" onclick="abrirFormPagamento('${p.id}')">Editar</button>
         <button class="btn btn-danger btn-sm" onclick="excluirPagamento('${p.id}')">Excluir</button>
       </div></td>
     </tr>`;
-  }).join('') : `<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">Nenhum pagamento registrado neste período.</td></tr>`;
+  }).join('') : `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">Nenhum pagamento registrado neste período.</td></tr>`;
 
   document.getElementById('fin-tab-pagamentos').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
@@ -6670,16 +6673,36 @@ function renderFinPagamentosTab() {
           ${anos.map(a => `<option value="${a}"${a === _finAnoFiltro ? ' selected' : ''}>${a}</option>`).join('')}
         </select>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="abrirFormPagamento()">+ Registrar pagamento</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="verificarAtrasosAgora()" title="Roda a verificação de pagamentos atrasados de todos os clientes agora, sem esperar o horário automático (9h)">🔔 Verificar atrasos agora</button>
+        <button class="btn btn-primary btn-sm" onclick="abrirFormPagamento()">+ Registrar pagamento</button>
+      </div>
     </div>
     <div class="table-wrap" style="overflow-x:auto">
       <table>
-        <thead><tr><th>Competência</th><th>Valor</th><th>Status</th><th>Data pag.</th><th>Forma</th><th>Obs.</th><th></th></tr></thead>
+        <thead><tr><th>Competência</th><th>Valor</th><th>Status</th><th>Data pag.</th><th>Forma</th><th>Obs.</th><th>Aviso WhatsApp</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
     <div id="fin-form-pagamento"></div>
   `;
+}
+
+async function reenviarAvisoAtraso(pagamentoId) {
+  const res = await API.post('/financeiro/pagamentos/' + pagamentoId + '/reenviar-aviso', {});
+  if (res.erro) { toast('Erro ao enviar aviso: ' + res.erro); return; }
+  const i = _finPagamentos.findIndex(p => p.id === pagamentoId);
+  if (i >= 0) _finPagamentos[i] = res;
+  toast('Aviso de atraso enviado por WhatsApp!');
+  renderFinPagamentosTab();
+}
+
+async function verificarAtrasosAgora() {
+  toast('Verificando pagamentos atrasados...');
+  const res = await API.post('/financeiro/verificar-atrasos', {});
+  if (res.erro) { toast('Erro: ' + res.erro); return; }
+  toast('Verificação concluída!');
+  await finFiltrarAno(_finAnoFiltro);
 }
 
 function abrirFormPagamento(editId) {

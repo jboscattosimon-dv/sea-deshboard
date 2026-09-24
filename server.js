@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const cron = require('node-cron');
 
 const authRoutes = require('./routes/auth');
 const demandaRoutes = require('./routes/demandas');
@@ -64,6 +65,13 @@ app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).json({ erro: 'Erro interno do servidor.' });
 });
+
+// Cobrança automática por WhatsApp: todo dia às 9h (horário de Brasília),
+// verifica pagamentos de clientes vencidos e ainda "pendente" e avisa.
+// Sem efeito se o Z-API (whatsapp.js) não estiver configurado — só loga.
+cron.schedule('0 9 * * *', () => {
+  financeiroRoutes.verificarPagamentosAtrasados().catch(e => console.error('[cobranca] erro no job diário:', e.message));
+}, { timezone: 'America/Sao_Paulo' });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));

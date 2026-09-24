@@ -2,8 +2,103 @@ const express = require('express');
 const router = express.Router();
 const supabase = require('../supabase');
 const auth = require('../middleware/auth');
+const whatsapp = require('../whatsapp');
 
 router.use(auth);
+
+// ============================================================
+// COBRANÇA AUTOMÁTICA POR WHATSAPP (pagamentos atrasados)
+// ============================================================
+
+// competencia é sempre o dia 1 do mês (ex: '2026-09-01'); o vencimento real
+// é o dia_vencimento configurado no financeiro do cliente, dentro desse mês.
+function calcularVencimento(competencia, diaVencimento) {
+  const [ano, mes] = competencia.split('-').map(Number);
+  const ultimoDiaDoMes = new Date(ano, mes, 0).getDate();
+  const dia = Math.min(diaVencimento || 10, ultimoDiaDoMes);
+  return new Date(ano, mes - 1, dia);
+}
+
+function montarMensagemAtraso(clienteNome, pagamento) {
+  const valorFmt = Number(pagamento.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const mesFmt = new Date(pagamento.competencia + 'T12:00:00').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  return `Olá, ${clienteNome || ''}! 👋\n\nIdentificamos que o pagamento referente a ${mesFmt} (${valorFmt}) está em atraso.\n\nSe você já efetuou o pagamento, pode desconsiderar esta mensagem. Qualquer dúvida, estamos à disposição!`;
+}
+
+// Roda 1x ao dia (agendada em server.js). Verifica pagamentos ainda "pendente"
+// cujo vencimento já passou, manda o aviso por WhatsApp e marca como "atrasado"
+// — assim, uma vez processado, não entra de novo nessa varredura.
+async function verificarPagamentosAtrasados() {
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  const { data: pendentes, error } = await supabase
+    .from('clientes_pagamentos')
+    .select('*, clientes(id, nome, telefone)')
+    .eq('status', 'pendente');
+
+  if (error) { console.error('[cobranca] erro ao buscar pagamentos pendentes:', error.message); return; }
+
+  for (const pag of pendentes || []) {
+    const { data: fin } = await supabase
+      .from('clientes_financeiro')
+      .select('dia_vencimento')
+      .eq('cliente_id', pag.cliente_id)
+      .single();
+
+    const vencimento = calcularVencimento(pag.competencia, fin?.dia_vencimento);
+    if (vencimento >= hoje) continue; // ainda não venceu
+
+    const cliente = pag.clientes;
+    const mensagem = montarMensagemAtraso(cliente?.nome, pag);
+    const enviado = cliente?.telefone ? await whatsapp.enviarWhatsApp(cliente.telefone, mensagem) : false;
+
+    const updates = { status: 'atrasado' };
+    if (enviado) updates.aviso_atraso_enviado_em = new Date().toISOString();
+    await supabase.from('clientes_pagamentos').update(updates).eq('id', pag.id);
+
+    console.log(enviado
+      ? `[cobranca] aviso de atraso enviado — cliente: ${cliente?.nome}, pagamento: ${pag.id}`
+      : `[cobranca] pagamento marcado atrasado mas aviso NÃO enviado (sem telefone ou WhatsApp não configurado) — cliente: ${cliente?.nome}, pagamento: ${pag.id}`);
+  }
+}
+
+// Disparo manual (admin), útil pra testar sem esperar o horário do job diário.
+router.post('/verificar-atrasos', async (req, res) => {
+  try {
+    await verificarPagamentosAtrasados();
+    res.json({ mensagem: 'Verificação de pagamentos atrasados concluída.' });
+  } catch (e) {
+    res.status(500).json({ erro: e.message });
+  }
+});
+
+// Reenvia o aviso de um pagamento específico (ex.: telefone foi cadastrado depois).
+router.post('/pagamentos/:pagamentoId/reenviar-aviso', async (req, res) => {
+  const { pagamentoId } = req.params;
+
+  const { data: pag, error } = await supabase
+    .from('clientes_pagamentos')
+    .select('*, clientes(id, nome, telefone)')
+    .eq('id', pagamentoId)
+    .single();
+
+  if (error || !pag) return res.status(404).json({ erro: 'Pagamento não encontrado' });
+  if (!pag.clientes?.telefone) return res.status(400).json({ erro: 'Cliente sem telefone cadastrado' });
+
+  const mensagem = montarMensagemAtraso(pag.clientes.nome, pag);
+  const enviado = await whatsapp.enviarWhatsApp(pag.clientes.telefone, mensagem);
+  if (!enviado) return res.status(500).json({ erro: 'Erro ao enviar WhatsApp. Confira a configuração do Z-API.' });
+
+  const { data: atualizado } = await supabase
+    .from('clientes_pagamentos')
+    .update({ aviso_atraso_enviado_em: new Date().toISOString() })
+    .eq('id', pagamentoId)
+    .select()
+    .single();
+
+  res.json(atualizado);
+});
 
 // GET /api/financeiro/resumo/inadimplencia
 router.get('/resumo/inadimplencia', async (req, res) => {
@@ -257,3 +352,4 @@ router.post('/:clienteId', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.verificarPagamentosAtrasados = verificarPagamentosAtrasados;
